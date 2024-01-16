@@ -35,6 +35,7 @@ export default function RegistrationScreen({ navigation }){
       .then((response) => {
         console.log(response.data);
         Alert.alert("Registration completed successfully");
+        
         // Clear input fields
         setName("");
         setEmail("");
@@ -43,7 +44,12 @@ export default function RegistrationScreen({ navigation }){
         setPhoneNumber("");
         setProfilePicture(null);
         
-        navigation.navigate("Home");
+        if(isPetOwner){
+          navigation.navigate("Pet Owner Home Screen");
+        }
+        else {
+          navigation.navigate("Veterinarian Home Screen", {vetId:   newUser.vetId});
+        }
       })
       .catch((error) => {
         console.error("Error registering new user", error);
