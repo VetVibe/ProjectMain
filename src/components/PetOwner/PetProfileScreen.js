@@ -1,46 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import DetailsContainer from "./DetailsContainer";
+import { initialPetDetails } from "./data";
 import tw from "twrnc";
-
-const initialPetDetails = {
-  basicInfo: {
-    petName: {
-      title: 'Pet Name',
-      value: '---'
-    },
-    animalType: {
-      title: 'Animal Type', 
-      value: '---'
-    },
-    age: {
-      title: 'Age', 
-      value: '---'
-    },
-    gender: {
-      title: 'Gender', 
-      value: '---'
-    }
-  },
-  medicalInfo: {
-    lastVaccinationDate: { 
-      title: 'Last Vaccination Date', 
-      value: '---' 
-    },
-    lastVetVisit: { 
-      title: 'Last Vet Visit', 
-      value: '---' 
-    },
-    medications: { 
-      title: 'Medications', 
-      value: '---' 
-    },
-    allergies: { 
-      title: 'Allergies', 
-      value: '---'
-    }
-  }
-};
 
 export default function PetProfileScreen({ route, navigation }){
   const [petDetails, setPetDetails] = useState({...initialPetDetails});
@@ -48,7 +10,7 @@ export default function PetProfileScreen({ route, navigation }){
   useEffect(() => {
     // Check if there are updated details from EditPetProfileScreen
     if (route.params) {
-      setPetDetails(route.params);
+      setPetDetails(route.params.petDetails);
     }
   }, [route.params]);
 
@@ -67,7 +29,7 @@ export default function PetProfileScreen({ route, navigation }){
       </TouchableOpacity>
 
       <View style={styles.petImageContainer}>
-        <Image style={styles.petImage} source={{ uri: "https://placekitten.com/200/200" }} // Replace with the actual image source
+        <Image style={styles.petImage} source={{ uri: petDetails.imgSrc}}
         />
       </View>
 
