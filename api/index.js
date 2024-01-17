@@ -34,7 +34,7 @@ app.listen(port, () => {
 // Import the User model
 const User = require("./models/pet_owner");
 
-// Endpoint to register a user
+// Endpoint to register a pet owner
 app.post("/register", async (req, res) => {
   try {
     const { name, email, password, profilePicture } = req.body;
@@ -69,7 +69,7 @@ const generateSecretKey = () => {
 // Generate a secret key
 const secretKey = generateSecretKey();
 
-// Endpoint to handle user login
+// Endpoint to handle pet owner login
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -147,7 +147,7 @@ app.get("/checkVetId/:id", async (req, res) => {
 
 app.post("/registerVeterinarian", async (req, res) => {
   try {
-    const { name, vetId, password, phoneNumber } = req.body;
+    const { name, email, vetId, password, phoneNumber } = req.body;
     const existingV = await Veterinarian.findOne({ vetId });
 
     if (existingV) {
@@ -157,6 +157,7 @@ app.post("/registerVeterinarian", async (req, res) => {
     // Create a new veterinarian user
     const newVeterinarian = new Veterinarian({
       name,
+      email,
       vetId,
       password,
       phoneNumber,
