@@ -36,13 +36,11 @@ export default function LoginScreen({route}){
     axios
       .post(selectors.postUrl, owner)
       .then((response) => {
-        // If login is successful, store authToken in AsyncStorage and navigate to "Pet Owner Home Screen"
         const token = response.data.token;
         AsyncStorage.setItem("authToken", token);
         navigation.navigate(selectors.navigationScreen);
       })
       .catch((error) => {
-        // If login fails, show an alert and log the error
         Alert.alert("Login error");
         console.log("Error during login", error);
       });

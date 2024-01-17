@@ -1,42 +1,30 @@
 import React, { useState } from "react";
-import { View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Button } from "react-native";
+import PetContainer from "./PetContainer";
+import initialPetDetails from "./data";
 
 export default function PetOwnerHomeScreen({ navigation }) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [ searchQuery, setSearchQuery ] = useState("");
+  const [ userPets, setUserPets ] = useState();
 
   const handleSearch = () => {
     // Implement your search functionality here
     console.log("Searching for:", searchQuery);
   };
-  const handleNavigateToProfile = () => {
-    navigation.navigate("Pet Profile Screen");
+  const handleNavigateToEditProfile = () => {
+    navigation.navigate("Pet Profile Screen Edit", {petDetails: initialPetDetails});
   };
 
   return (
     <View style={styles.container}>
+      {userPets && <PetContainer userPets={userPets} navi={navigation} />}
+      {!userPets && <Button onPress={handleNavigateToEditProfile} title={"Add pet"} />} 
+      
       <Text style={styles.title}>Find a Vet</Text>
-
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search for vets"
-        value={searchQuery}
-        onChangeText={(text) => setSearchQuery(text)}
-      />
+      <TextInput style={styles.searchInput} placeholder="Search for vets" value={searchQuery} onChangeText={(text) => setSearchQuery(text)}/>
 
       <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
         <Text style={styles.buttonText}>Search</Text>
-      </TouchableOpacity>
-      {/* Button to navigate to the PetProfileScreen */}
-      <TouchableOpacity
-        style={styles.profileButton}
-        onPress={handleNavigateToProfile}
-      >
-        <Text style={styles.buttonText}>View Pet Profile</Text>
       </TouchableOpacity>
     </View>
   );
