@@ -8,10 +8,17 @@ const veterinarianSchema = new mongoose.Schema({
     type: String,
     required: true, // Field is required
   },
+  email: {
+    type: String,
+    required: true, // Field is required
+    unique: true, // Ensure uniqueness in the database
+  },
+
   // Unique identifier for the veterinarian (e.g., employee ID)
   vetId: {
     type: String,
     required: true, // Field is required
+    unique: true, // Ensure uniqueness in the database
   },
   // Veterinarian's password
   password: {
