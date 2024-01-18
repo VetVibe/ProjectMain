@@ -1,57 +1,61 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
+import { titleMappings, mapPetDetails } from "./support/utils";
+import axios from "axios";
 import DetailsContainer from "./DetailsContainer";
-import { initialPetDetails } from "./data";
 import tw from "twrnc";
 
-export default function PetProfileScreen({ route, navigation }){
-  const [petDetails, setPetDetails] = useState({...initialPetDetails});
+export default function PetProfileScreen({ route, navigation }) {
+  const [petDetails, setPetDetails] = useState({});
+
+  const petId = route.params.petId;
 
   useEffect(() => {
-    // Check if there are updated details from EditPetProfileScreen
-    if (route.params) {
-      setPetDetails(route.params.petDetails);
-    }
-  }, [route.params]);
+    axios
+      .get(`http://localhost:3000/pet/${petId}`)
+      .then((response) => {
+        const mapedPetDetails = mapPetDetails(response.data);
+        setPetDetails(mapedPetDetails);
+      })
+      .catch((error) => {
+        console.error("Error fetching pet details:", error);
+      });
+  }, [petId]);
 
   const navigateToEditScreen = () => {
-    navigation.navigate("Pet Profile Screen Edit", {petDetails: petDetails});
-  };
-
-  const navigateToFindVetScreen = () => {
-    navigation.navigate("Pet Owner Home Screen");
+    navigation.navigate("Pet Profile Screen Edit", { petId: petId });
   };
 
   return (
-    <ScrollView style={{ flexGrow: 1 }}>
+    <View>
       <TouchableOpacity onPress={navigateToEditScreen} style={styles.editButton}>
         <Text style={tw`text-2xl font-semibold pr-2 tracking-wide`}>Edit Profile</Text>
       </TouchableOpacity>
 
-      <View style={styles.petImageContainer}>
-        <Image style={styles.petImage} source={{ uri: petDetails.imgSrc}}
-        />
-      </View>
+      <ScrollView style={{ flexGrow: 1 }}>
+        <Image source={{ uri: petDetails.imgSrc }} style={styles.petImage} />
 
-      <View style={tw`bg-white rounded-lg mt-3 px-4`}>  
-        <View style={styles.sectionTitle}>
-          <Text style={tw`text-2xl p-3 tracking-wide font-bold`}>Basic Info</Text>
+        <View style={tw`bg-white rounded-lg mt-3 px-4`}>
+          {Object.entries(petDetails).map(([section, sectionDetails]) => {
+            // Skip imgSrc section
+            if (section === "imgSrc") {
+              return null;
+            }
+
+            return (
+              <View key={section} style={styles.sectionTitle}>
+                <Text style={tw`text-2xl p-3 tracking-wide font-bold`}>{section}</Text>
+                {Object.entries(sectionDetails).map(([key, value]) => (
+                  <DetailsContainer key={key} title={titleMappings[key]} value={value} />
+                ))}
+              </View>
+            );
+          })}
         </View>
-        {Object.values(petDetails.basicInfo).map((item, index) => <DetailsContainer key={index} title={item.title} value={item.value} />)}
-
-        <View style={styles.sectionTitle}>
-          <Text style={tw`text-2xl p-3 tracking-wide font-bold`}>Medical History</Text>
-        </View>
-        {Object.values(petDetails.medicalInfo).map((item, index) => <DetailsContainer key={index} title={item.title} value={item.value} />)}
-
-        {/* Find Vet Button */}
-        <TouchableOpacity onPress={navigateToFindVetScreen} style={styles.findVetButton}>
-          <Text style={tw`text-2xl font-semibold pr-2 tracking-wide`}>Find a Vet Nearby</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {

@@ -1,14 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from "react-native";
+import { View, Text, TextInput, Button, Image, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
 
@@ -85,7 +76,6 @@ export default function RegistrationScreen({ navigation }) {
     axios
       .post(postUrl, newUser)
       .then((response) => {
-        console.log(response.data);
         Alert.alert("Registration completed successfully");
 
         // Clear input fields
@@ -102,6 +92,7 @@ export default function RegistrationScreen({ navigation }) {
           navigation.navigate("Veterinarian Home Screen", {
             vetId: newUser.vetId,
           });
+
         }
       })
       .catch((error) => {
@@ -119,6 +110,7 @@ export default function RegistrationScreen({ navigation }) {
         }
       });
   };
+
   const handleImagePick = async () => {
     // Request permission to access the device's photo library
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -141,10 +133,7 @@ export default function RegistrationScreen({ navigation }) {
         }
       }
     } else {
-      Alert.alert(
-        "Permission denied",
-        "Permission to access the photo library was denied."
-      );
+      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
     }
   };
 
@@ -167,12 +156,7 @@ export default function RegistrationScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
-      />
+      <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
 
       <TextInput
         style={styles.input}
@@ -192,12 +176,7 @@ export default function RegistrationScreen({ navigation }) {
 
       {!isPetOwner && (
         <>
-          <TextInput
-            style={styles.input}
-            placeholder="Veterinarian ID"
-            value={id}
-            onChangeText={setId}
-          />
+          <TextInput style={styles.input} placeholder="Veterinarian ID" value={id} onChangeText={setId} />
 
           <TextInput
             style={styles.input}

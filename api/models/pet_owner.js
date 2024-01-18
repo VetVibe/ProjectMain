@@ -1,12 +1,9 @@
-// Import the mongoose library
 const mongoose = require("mongoose");
 
-// Define the user schema using mongoose.Schema
 const PetOwnerSchema = new mongoose.Schema({
   // User's name
   name: {
     type: String,
-    unique: true, // Ensure uniqueness in the database
     required: true, // Field is required
   },
   // User's email
@@ -29,6 +26,9 @@ const PetOwnerSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  pets: {
+    type: [mongoose.Types.ObjectId]
+  }
 });
 
 // Create a mongoose model named "User" based on the user schema

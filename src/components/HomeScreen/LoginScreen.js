@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { StackActions, useNavigation } from "@react-navigation/native";
 
 const roleSelectors = {
   PetOwner: {
@@ -36,9 +36,11 @@ export default function LoginScreen({ route }) {
     axios
       .post(selectors.postUrl, userData)
       .then((response) => {
-        const token = response.data.token;
+        const data = response.data;
+        const token = data.token;
+        const userId = data.ownerId;
         AsyncStorage.setItem("authToken", token);
-        navigation.navigate(selectors.navigationScreen);
+        navigation.navigate(selectors.navigationScreen, { userId: userId });
       })
       .catch((error) => {
         if (error.response) {
@@ -63,12 +65,7 @@ export default function LoginScreen({ route }) {
   return (
     <View style={styles.container}>
       <Text>Welcome back</Text>
-      <TextInput
-        placeholder={selectors.emailPlaceholder}
-        value={email}
-        onChangeText={setEmail}
-        style={styles.input}
-      />
+      <TextInput placeholder={selectors.emailPlaceholder} value={email} onChangeText={setEmail} style={styles.input} />
       <TextInput
         placeholder="Password"
         value={password}
@@ -76,11 +73,7 @@ export default function LoginScreen({ route }) {
         secureTextEntry
         style={styles.input}
       />
-      <Button
-        title="Login"
-        onPress={handleLogin}
-        color="#FFA500" // Orange color
-      />
+      <Button title="Login" onPress={handleLogin} color="#FFA500" />
     </View>
   );
 }
