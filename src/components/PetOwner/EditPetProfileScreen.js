@@ -1,39 +1,61 @@
-import React, { useState } from "react";
-import { View, Text, Button, Image, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, Button, Image, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import InputDetailsContainer from "./InputDetailsContainer";
+import axios from "axios";
+import { mapPetDetails, mapPetDetailsToSchema } from "./support/utils";
 
 const EditPetProfileScreen = ({ route, navigation }) => {
-  let petBasicInfo = route.params.petDetails.basicInfo;
-  let petMedicalInfo = route.params.petDetails.medicalInfo;
-
-  const [ petBasicInfoInput, setPetBasicInfoInput ] = useState(petBasicInfo);
-  const [ petMedicalInfoInput, setMedicalInfoInput ] = useState(petMedicalInfo);
   const [activeTab, setActiveTab] = useState("petInfo"); // petInfo or medicalHistory
-  const [petImage, setPetImage] = useState(route.params.petDetails.imgSrc || "https://placekitten.com/200/200"); // Default pet image
-  const [medicalHistoryImage, setMedicalHistoryImage] = useState("https://example.com/medical_history_image.png"); // Default medical history image
+  const [petBasicInfoInput, setPetBasicInfoInput] = useState({});
+  const [petMedicalInfoInput, setMedicalInfoInput] = useState({});
+  const [petImage, setPetImage] = useState(
+    "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/65761296352685.5eac4787a4720.jpg"
+  );
+
+  const petId = route.params.petId;
+  const petOwnerId = route.params.petOwnerId;
+
+  useEffect(() => {
+    if (petId) {
+      axios
+        .get(`http://localhost:3000/pet/${petId}`)
+        .then((response) => {
+          const mapedPetDetails = mapPetDetails(response.data);
+          setPetBasicInfoInput(mapedPetDetails.basicInfo);
+          setMedicalInfoInput(mapedPetDetails.medicalInfo);
+          setPetImage(mapedPetDetails.imgSrc);
+        })
+        .catch((error) => {
+          console.error("Error fetching pet details:", error);
+        });
+    } else {
+      const mapedPetDetails = mapPetDetails();
+      setPetBasicInfoInput(mapedPetDetails.basicInfo);
+      setMedicalInfoInput(mapedPetDetails.medicalInfo);
+      setPetImage(mapedPetDetails.imgSrc);
+    }
+  }, [petId]);
 
   const handleTabPress = (tab) => {
     setActiveTab(tab);
   };
 
   function handleChange(inputIdentifier, newValue, activeTab) {
-    if(activeTab == "petInfo") {
+    if (activeTab == "petInfo") {
       setPetBasicInfoInput((prevUserInput) => {
         return {
           ...prevUserInput,
-          [inputIdentifier]: {
-            ...prevUserInput[inputIdentifier],
-            value: newValue,
-      }}});
-    }
-    else if(activeTab == "medicalHistory") {
+          [inputIdentifier]: newValue,
+        };
+      });
+    } else if (activeTab == "medicalHistory") {
       setMedicalInfoInput((prevUserInput) => {
         return {
           ...prevUserInput,
-          [inputIdentifier]: {
-            ...prevUserInput[inputIdentifier],
-            value: newValue,
-      }}});
+          [inputIdentifier]: newValue,
+        };
+      });
     }
   }
 
@@ -48,17 +70,58 @@ const EditPetProfileScreen = ({ route, navigation }) => {
 
   const saveChanges = () => {
     const updatedData = {
-      basicInfo: {...petBasicInfoInput},
-      medicalInfo: {...petMedicalInfoInput}
+      basicInfo: { ...petBasicInfoInput },
+      medicalInfo: { ...petMedicalInfoInput },
+      imgSrc: petImage,
+    };
+    const petDetailsSchema = mapPetDetailsToSchema(updatedData);
+
+    if (petId) {
+      axios
+        .put(`http://localhost:3000/pet/updateInfo/${petId}`, { updatedData: petDetailsSchema })
+        .then((response) => {
+          navigation.navigate("Pet Profile Screen", { petId: petId });
+        })
+        .catch((error) => {
+          console.error(`Error during updating pet ${petId} details:`, error);
+        });
+    } else if (petOwnerId) {
+      axios
+        .post(`http://localhost:3000/pet/addPet/${petOwnerId}`, petDetailsSchema)
+        .then((response) => {
+          const petId = response.data.petId;
+          navigation.navigate("Pet Profile Screen", { petId: petId });
+        })
+        .catch((error) => {
+          console.log("Error during adding pet", error);
+        });
     }
-    navigation.navigate("Pet Profile Screen", updatedData);
   };
 
-  const handleImagePicker = () => {
-    // Logic to open image picker and update petImage state
-    // You need to implement the image picker functionality here
-    // Example:
-    // openImagePicker().then((selectedImage) => setPetImage(selectedImage));
+  const handleImagePicker = async () => {
+    // Request permission to access the device's photo library
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status === "granted") {
+      // Launch the image picker
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        // Set the selected image URI to the profile picture state
+        if (result.assets && result.assets.length > 0) {
+          const selectedAsset = result.assets[0];
+
+          setPetImage(selectedAsset.uri);
+        }
+      }
+    } else {
+      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
+    }
   };
 
   return (
@@ -67,36 +130,27 @@ const EditPetProfileScreen = ({ route, navigation }) => {
         <TabButton tab="petInfo" title="Pet Info" />
         <TabButton tab="medicalHistory" title="Medical History" />
       </View>
-      {activeTab === "petInfo" && (
-        <View>
-          <TouchableOpacity onPress={handleImagePicker}>
-            <Image source={{ uri: petImage }} style={styles.petImage} />
-          </TouchableOpacity>
 
+      <ScrollView style={{ flexGrow: 1 }}>
+        {activeTab === "petInfo" && (
           <View>
-            <InputDetailsContainer title={"Pet's Name:"} placeholder={"Pet's Name"} value={petBasicInfoInput.petName.value} onChangeText={(text) => handleChange('petName', text, activeTab)} />
-            <InputDetailsContainer title={"Animal Type:"} placeholder={"Animal Type"} value={petBasicInfoInput.animalType.value} onChangeText={(text) => handleChange('animalType', text, activeTab)}/>
-            <InputDetailsContainer title={"Age:"} placeholder={"age"} value={petBasicInfoInput.age.value} onChangeText={(text) => handleChange('age', text, activeTab)} />
-            <InputDetailsContainer title={"Gender:"} placeholder={"Gender"} value={petBasicInfoInput.gender.value} onChangeText={(text) => handleChange('gender', text, activeTab)} />
+            <TouchableOpacity onPress={handleImagePicker}>
+              <Image source={{ uri: petImage }} style={styles.petImage} />
+            </TouchableOpacity>
+            <InputDetailsContainer
+              petDetails={petBasicInfoInput}
+              onChangeText={(key, text) => handleChange(key, text, activeTab)}
+            />
           </View>
-        </View>
-      )}
+        )}
 
-      {activeTab === "medicalHistory" && (
-        <View>
-          <TouchableOpacity onPress={handleImagePicker}>
-            <Image source={{ uri: petImage }} style={styles.petImage} />
-          </TouchableOpacity>
-
-          <View>
-          <InputDetailsContainer title={"Last Vaccination Date"} placeholder={"Last Vaccination Date"} value={petMedicalInfoInput.lastVaccinationDate.value} onChangeText={(text) => handleChange('lastVaccinationDate', text, activeTab)} />
-          <InputDetailsContainer title={"Last Vet Visit:"} placeholder={"Last Vet Visit"} value={petMedicalInfoInput.lastVetVisit.value} onChangeText={(text) => handleChange('lastVetVisit', text, activeTab)} />
-          <InputDetailsContainer title={"Medications:"} placeholder={"Medications"} value={petMedicalInfoInput.medications.value} onChangeText={(text) => handleChange('medications', text, activeTab)} />
-          <InputDetailsContainer title={"Allergies:"} placeholder={"Allergies"} value={petMedicalInfoInput.allergies.value} onChangeText={(text) => handleChange('allergies', text, activeTab)} />
-          </View>
-        </View>
-      )}
-
+        {activeTab === "medicalHistory" && (
+          <InputDetailsContainer
+            petDetails={petMedicalInfoInput}
+            onChangeText={(key, text) => handleChange(key, text, activeTab)}
+          />
+        )}
+      </ScrollView>
       <Button title="Save Changes" onPress={saveChanges} />
     </View>
   );
