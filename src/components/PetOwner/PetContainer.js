@@ -1,21 +1,20 @@
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 
-export default function PetContainer({userPets, navi}) {
-    const navigateToEditScreen = (petDetails) => {
-        navi.navigate("Pet Profile Screen", {petDetails: petDetails});
-    };
+export default function PetContainer({ userPets, navi }) {
+  const navigateToEditScreen = (petId) => {
+    navi.navigate("Pet Profile Screen", { petId: petId });
+  };
 
-    return (
-        <View>
-            <Text style={styles.header}>Your Pets</Text>
-            {Object.entries(userPets).map(([petId, petData]) => 
-                <TouchableOpacity key={petId} onPress={() => navigateToEditScreen(petData)}>
-                    <Image source={{ uri: petData.imgSrc }} style={styles.pawImage} resizeMode="contain" />
-                    <Text style={styles.title}>{petData.basicInfo.petName.value}</Text>
-                </TouchableOpacity>
-            )}
-      </View>
-    );
+  return (
+    <View>
+      {userPets.map((pet) => (
+        <TouchableOpacity key={pet._id} onPress={() => navigateToEditScreen(pet._id)}>
+          <Image source={{ uri: pet.imgSrc }} style={styles.pawImage} resizeMode="contain" />
+          <Text style={styles.title}>{pet.name}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -33,5 +32,5 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: "#333333",
     marginTop: 10,
-  }
+  },
 });

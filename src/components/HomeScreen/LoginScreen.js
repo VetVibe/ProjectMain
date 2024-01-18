@@ -2,22 +2,22 @@ import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { StackActions, useNavigation } from "@react-navigation/native";
 
 const roleSelectors = {
   PetOwner: {
     postUrl: "http://localhost:3000/login",
     navigationScreen: "Pet Owner Home Screen",
-    emailPlaceholder: "email"
+    emailPlaceholder: "email",
   },
   Vet: {
     postUrl: "http://localhost:3000/loginv",
     navigationScreen: "Veterinarian Home Screen",
-    emailPlaceholder: "Veterinarian ID"
-  }
+    emailPlaceholder: "Veterinarian ID",
+  },
 };
 
-export default function LoginScreen({route}){
+export default function LoginScreen({ route }) {
   const userRole = route.params.role;
   const selectors = roleSelectors[userRole];
 
@@ -36,9 +36,11 @@ export default function LoginScreen({route}){
     axios
       .post(selectors.postUrl, owner)
       .then((response) => {
-        const token = response.data.token;
+        const data = response.data;
+        const token = data.token;
+        const userId = data.ownerId;
         AsyncStorage.setItem("authToken", token);
-        navigation.navigate(selectors.navigationScreen);
+        navigation.navigate(selectors.navigationScreen, { userId: userId });
       })
       .catch((error) => {
         Alert.alert("Login error");
@@ -49,12 +51,7 @@ export default function LoginScreen({route}){
   return (
     <View style={styles.container}>
       <Text>Welcome back</Text>
-      <TextInput
-        placeholder={selectors.emailPlaceholder}
-        value={email}
-        onChangeText={setEmail}
-        style={styles.input}
-      />
+      <TextInput placeholder={selectors.emailPlaceholder} value={email} onChangeText={setEmail} style={styles.input} />
       <TextInput
         placeholder="Password"
         value={password}
@@ -62,14 +59,10 @@ export default function LoginScreen({route}){
         secureTextEntry
         style={styles.input}
       />
-      <Button
-        title="Login"
-        onPress={handleLogin}
-        color="#FFA500" // Orange color
-      />
+      <Button title="Login" onPress={handleLogin} color="#FFA500" />
     </View>
   );
-};
+}
 
 // Styles for the component
 const styles = StyleSheet.create({
@@ -87,5 +80,3 @@ const styles = StyleSheet.create({
     width: 200,
   },
 });
-
-

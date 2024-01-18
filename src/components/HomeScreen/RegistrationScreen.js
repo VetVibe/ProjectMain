@@ -1,31 +1,33 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Image, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import React, { useState } from "react";
+import { View, Text, TextInput, Button, Image, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
 
-export default function RegistrationScreen({ navigation }){
+export default function RegistrationScreen({ navigation }) {
   const [isPetOwner, setIsPetOwner] = useState(true);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [id, setId] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [id, setId] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [profilePicture, setProfilePicture] = useState(null);
 
   const handleRegistration = () => {
-    const newUser = isPetOwner ? {
-      name: name,
-      email: email,
-      password: password,
-      profilePicture: profilePicture,
-    } : {
-      name: name,
-      email: email,
-      password: password,
-      vetId: id,
-      phoneNumber: phoneNumber,
-      profilePicture: profilePicture,
-    };
+    const newUser = isPetOwner
+      ? {
+          name: name,
+          email: email,
+          password: password,
+          profilePicture: profilePicture,
+        }
+      : {
+          name: name,
+          email: email,
+          password: password,
+          vetId: id,
+          phoneNumber: phoneNumber,
+          profilePicture: profilePicture,
+        };
 
     const postUrl = isPetOwner ? "http://localhost:3000/register" : "http://localhost:3000/registerVeterinarian";
 
@@ -33,9 +35,8 @@ export default function RegistrationScreen({ navigation }){
     axios
       .post(postUrl, newUser)
       .then((response) => {
-        console.log(response.data);
         Alert.alert("Registration completed successfully");
-        
+
         // Clear input fields
         setName("");
         setEmail("");
@@ -43,12 +44,11 @@ export default function RegistrationScreen({ navigation }){
         setId("");
         setPhoneNumber("");
         setProfilePicture(null);
-        
-        if(isPetOwner){
-          navigation.navigate("Pet Owner Home Screen");
-        }
-        else {
-          navigation.navigate("Veterinarian Home Screen", {vetId:   newUser.vetId});
+
+        if (isPetOwner) {
+          navigation.navigate("Pet Owner Home Screen", { userId: response.data.userId });
+        } else {
+          navigation.navigate("Veterinarian Home Screen", { vetId: newUser.vetId });
         }
       })
       .catch((error) => {
@@ -58,7 +58,7 @@ export default function RegistrationScreen({ navigation }){
       });
   };
 
-  const handleImagePick = async () =>{
+  const handleImagePick = async () => {
     // Request permission to access the device's photo library
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -80,10 +80,7 @@ export default function RegistrationScreen({ navigation }){
         }
       }
     } else {
-      Alert.alert(
-        "Permission denied",
-        "Permission to access the photo library was denied."
-      );
+      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
     }
   };
 
@@ -98,12 +95,7 @@ export default function RegistrationScreen({ navigation }){
         </TouchableOpacity>
       </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
-      />
+      <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
 
       <TextInput
         style={styles.input}
@@ -123,12 +115,7 @@ export default function RegistrationScreen({ navigation }){
 
       {!isPetOwner && (
         <>
-          <TextInput
-            style={styles.input}
-            placeholder="Veterinarian ID"
-            value={id}
-            onChangeText={setId}
-          />
+          <TextInput style={styles.input} placeholder="Veterinarian ID" value={id} onChangeText={setId} />
 
           <TextInput
             style={styles.input}
@@ -148,52 +135,52 @@ export default function RegistrationScreen({ navigation }){
       <Button title="Register" onPress={handleRegistration} />
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
     marginBottom: 20,
   },
   userType: {
     fontSize: 16,
     marginVertical: 20,
-    color: 'black',
+    color: "black",
   },
   selectedUserType: {
-    fontWeight: 'bold',
-    color: 'black',
+    fontWeight: "bold",
+    color: "black",
     backgroundColor: "#ff8c00",
     padding: 15,
     marginLeft: 10,
-    marginRight: 10, 
+    marginRight: 10,
     alignItems: "center",
   },
   input: {
     height: 40,
-    borderColor: 'gray',
+    borderColor: "gray",
     borderWidth: 1,
     marginBottom: 10,
     paddingLeft: 10,
     borderRadius: 5,
-    width: '100%',
+    width: "100%",
   },
   button: {
-    backgroundColor: 'blue',
+    backgroundColor: "blue",
     padding: 10,
     borderRadius: 5,
     marginTop: 10,
   },
   buttonText: {
-    color: 'white',
+    color: "white",
   },
   profileImage: {
     width: 100,

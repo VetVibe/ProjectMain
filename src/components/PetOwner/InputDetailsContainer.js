@@ -1,11 +1,21 @@
 import React from "react";
-import { View, Text, TextInput, StyleSheet } from "react-native";
+import { View, Text, TextInput, StyleSheet, DatePicker } from "react-native";
+import { titleMappings } from "./support/utils";
 
-export default function InputDetailsContainer({ title, placeholder, value, onChangeText }) {
+export default function InputDetailsContainer({ petDetails, onChangeText }) {
   return (
     <View>
-      <Text style={styles.label}>{title}</Text>
-      <TextInput style={styles.input} placeholder={placeholder} value={value || ""} onChangeText={onChangeText}/>
+      {Object.entries(petDetails).map(([key, value]) => (
+        <View key={key}>
+          <Text style={styles.label}>{titleMappings[key]}:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder={titleMappings[key]}
+            value={value !== undefined ? value.toString() : ""}
+            onChangeText={(text) => onChangeText(key, text)}
+          />
+        </View>
+      ))}
     </View>
   );
 }
