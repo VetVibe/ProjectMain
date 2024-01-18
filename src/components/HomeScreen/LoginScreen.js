@@ -27,14 +27,14 @@ export default function LoginScreen({ route }) {
 
   // Function to handle user login
   const handleLogin = () => {
-    const owner = {
-      email: email,
-      password: password,
-    };
+    const userData =
+      userRole === "PetOwner"
+        ? { email, password }
+        : { vetId: email, password };
 
     // Send a login request to the server
     axios
-      .post(selectors.postUrl, owner)
+      .post(selectors.postUrl, userData)
       .then((response) => {
         const data = response.data;
         const token = data.token;
@@ -43,11 +43,25 @@ export default function LoginScreen({ route }) {
         navigation.navigate(selectors.navigationScreen, { userId: userId });
       })
       .catch((error) => {
-        Alert.alert("Login error");
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          const status = error.response.status;
+
+          if (status === 404) {
+            Alert.alert("User not found");
+          } else if (status === 401) {
+            Alert.alert("Invalid password", "The password is incorrect.");
+          } else {
+            Alert.alert("Login error", "An error occurred during login.");
+          }
+        } else {
+          // The request was made but no response was received
+          Alert.alert("Network error", "Unable to connect to the server.");
+        }
+
         console.log("Error during login", error);
       });
   };
-
   return (
     <View style={styles.container}>
       <Text>Welcome back</Text>

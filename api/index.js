@@ -40,7 +40,7 @@ app.post("/register", async (req, res) => {
     const existingOwner = await PetOwner.findOne({ email });
 
     if (existingOwner) {
-      return res.status(400).json({ message: "Email already registered" });
+      return res.status(404).json({ message: "Email already registered" });
     }
 
     // Create a new user
@@ -75,11 +75,11 @@ app.post("/login", async (req, res) => {
     const owner = await PetOwner.findOne({ email });
 
     if (!owner) {
-      return res.status(404).json({ message: "Invalid email" });
+      return res.status(404).json({ message: "Email doesnt register" });
     }
 
     if (owner.password !== password) {
-      return res.status(404).json({ message: "Invalid password" });
+      return res.status(401).json({ message: "Invalid password" });
     }
 
     // Sign a JWT token with the user's ID and the secret key
@@ -102,7 +102,7 @@ app.post("/loginv", async (req, res) => {
     }
 
     if (veterinarian.password !== password) {
-      return res.status(404).json({ message: "Invalid password" });
+      return res.status(401).json({ message: "Invalid password" });
     }
 
     // Sign a JWT token with the user's ID and the secret key
@@ -146,7 +146,9 @@ app.post("/registerVeterinarian", async (req, res) => {
     const existingV = await Veterinarian.findOne({ vetId });
 
     if (existingV) {
-      return res.status(400).json({ message: "Email already registered" });
+      return res
+        .status(404)
+        .json({ message: "Veterinarian already registered" });
     }
 
     // Create a new veterinarian user

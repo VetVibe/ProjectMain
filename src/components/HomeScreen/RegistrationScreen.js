@@ -29,8 +29,49 @@ export default function RegistrationScreen({ navigation }) {
           profilePicture: profilePicture,
         };
 
-    const postUrl = isPetOwner ? "http://localhost:3000/register" : "http://localhost:3000/registerVeterinarian";
+    const postUrl = isPetOwner
+      ? "http://localhost:3000/register"
+      : "http://localhost:3000/registerVeterinarian";
 
+    // If registering as a veterinarian, check if the vet ID is valid first
+    if (!isPetOwner) {
+      axios
+        .get(`http://localhost:3000/checkVetId/${id}`)
+        .then((response) => {
+          if (response.data.isValid) {
+            // Vet ID is valid, proceed with registration
+            performRegistration(newUser, postUrl);
+          } else {
+            // Vet ID is not valid, show an error message
+            Alert.alert(
+              "Invalid Veterinarian ID",
+              "Please enter a valid Veterinarian ID : VET-XXX"
+            );
+          }
+        })
+        .catch((error) => {
+          if (error.response && error.response.status === 404) {
+            // Vet ID already exists, show an error message
+            Alert.alert(
+              "Veterinarian ID already registered",
+              "This Veterinarian ID is already associated with an account."
+            );
+          } else {
+            // Other error occurred while checking vet ID, show a general error message
+            console.error("Error checking vet ID:", error);
+            Alert.alert(
+              "Error",
+              "An error occurred while checking Veterinarian ID"
+            );
+          }
+        });
+    } else {
+      // For pet owners, directly proceed with registration
+      performRegistration(newUser, postUrl);
+    }
+  };
+
+  const performRegistration = (newUser, postUrl) => {
     // Make an Axios request to register the new user
     axios
       .post(postUrl, newUser)
@@ -46,15 +87,27 @@ export default function RegistrationScreen({ navigation }) {
         setProfilePicture(null);
 
         if (isPetOwner) {
-          navigation.navigate("Pet Owner Home Screen", { userId: response.data.userId });
+          navigation.navigate("Pet Owner Home Screen");
         } else {
-          navigation.navigate("Veterinarian Home Screen", { vetId: newUser.vetId });
+          navigation.navigate("Veterinarian Home Screen", {
+            vetId: newUser.vetId,
+          });
+
         }
       })
       .catch((error) => {
         console.error("Error registering new user", error);
-        // Show an alert for failed registration and log the error
-        Alert.alert("Registration failed.");
+
+        // Check if the error is a 404 error indicating that the user (veterinarian) is already registered
+        if (error.response && error.response.status === 404) {
+          Alert.alert(
+            "Registration failed",
+            "This user is already registered."
+          );
+        } else {
+          // Show a generic error message for other registration failures
+          Alert.alert("Registration failed.");
+        }
       });
   };
 
@@ -88,10 +141,18 @@ export default function RegistrationScreen({ navigation }) {
     <View style={styles.container}>
       <View style={styles.buttonContainer}>
         <TouchableOpacity onPress={() => setIsPetOwner(true)}>
-          <Text style={[styles.userType, isPetOwner && styles.selectedUserType]}>Pet Owner</Text>
+          <Text
+            style={[styles.userType, isPetOwner && styles.selectedUserType]}
+          >
+            Pet Owner
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => setIsPetOwner(false)}>
-          <Text style={[styles.userType, !isPetOwner && styles.selectedUserType]}>Veterinarian</Text>
+          <Text
+            style={[styles.userType, !isPetOwner && styles.selectedUserType]}
+          >
+            Veterinarian
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -130,7 +191,9 @@ export default function RegistrationScreen({ navigation }) {
       <TouchableOpacity style={styles.button} onPress={handleImagePick}>
         <Text style={styles.buttonText}>Choose Profile Picture</Text>
       </TouchableOpacity>
-      {profilePicture && <Image source={{ uri: profilePicture }} style={styles.profileImage} />}
+      {profilePicture && (
+        <Image source={{ uri: profilePicture }} style={styles.profileImage} />
+      )}
 
       <Button title="Register" onPress={handleRegistration} />
     </View>
