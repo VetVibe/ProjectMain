@@ -33,7 +33,7 @@ app.listen(port, () => {
   console.log("Server is running on port 3000");
 });
 
-// Endpoint to register as a pet owner
+// Endpoint to register a pet owner
 app.post("/register", async (req, res) => {
   try {
     const { name, email, password, profilePicture } = req.body;
@@ -142,7 +142,7 @@ app.get("/checkVetId/:id", async (req, res) => {
 // Endpoint to register a veterinarian
 app.post("/registerVeterinarian", async (req, res) => {
   try {
-    const { name, vetId, password, phoneNumber } = req.body;
+    const { name, email, vetId, password, phoneNumber } = req.body;
     const existingV = await Veterinarian.findOne({ vetId });
 
     if (existingV) {
@@ -152,6 +152,7 @@ app.post("/registerVeterinarian", async (req, res) => {
     // Create a new veterinarian user
     const newVeterinarian = new Veterinarian({
       name,
+      email,
       vetId,
       password,
       phoneNumber,
