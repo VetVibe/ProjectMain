@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Button } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
-import PetContainer from "./PetContainer";
+import PetContainer from "../../components/PetOwner/PetContainer";
 import axios from "axios";
 
 export default function PetOwnerHomeScreen({ route, navigation }) {
@@ -11,10 +11,9 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
   const petOwnerId = route.params.userId;
 
   useEffect(() => {
-    // Fetch the pet IDs associated with the pet owner
-    axios
-      .get(`http://localhost:3000/petOwner/${petOwnerId}/pets`)
-      .then((response) => {
+    const updateUserPetDetails = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/petOwner/${petOwnerId}/pets`);
         const petIds = response.data.pets;
 
         // Fetch details of each pet concurrently
@@ -23,18 +22,24 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
         );
 
         // Wait for all fetches to complete
-        Promise.all(fetchPetDetails)
-          .then((petDetailsArray) => {
-            setUserPets(petDetailsArray);
-          })
-          .catch((error) => {
-            console.error("Error fetching pet details:", error);
-          });
-      })
-      .catch((error) => {
+        Promise.all(fetchPetDetails).then((petDetailsArray) => {
+          setUserPets(petDetailsArray);
+        });
+      } catch (error) {
         console.error("Error fetching user pets:", error);
-      });
-  }, [petOwnerId]);
+      }
+    };
+
+    // Listen for changes and update petDetails
+    const subscription = navigation.addListener("focus", updateUserPetDetails);
+
+    // Clean up the subscription when the component unmounts
+    return () => {
+      if (subscription) {
+        subscription();
+      }
+    };
+  }, [petOwnerId, navigation]);
 
   const handleSearch = () => {
     // Implement your search functionality here
@@ -45,8 +50,8 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <View>
+    <ScrollView>
+      <View style={styles.addButton}>
         <TouchableOpacity onPress={handleNavigateToEditProfile}>
           <Icon name="plus" size={20} color="black" />
         </TouchableOpacity>
@@ -69,11 +74,12 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
       <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
         <Text style={styles.buttonText}>Search</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  addButton: {},
   container: {
     flex: 1,
     padding: 20,

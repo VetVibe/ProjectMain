@@ -1,14 +1,3 @@
-export const titleMappings = {
-  petName: "Pet Name",
-  animalType: "Animal Type",
-  age: "Age",
-  gender: "Gender",
-  lastVaccinationDate: "Last Vaccination Date",
-  lastVetVisit: "Last Vet Visit",
-  medications: "Medications",
-  allergies: "Allergies",
-};
-
 export const mapPetDetails = (petData) => {
   return {
     basicInfo: {
@@ -18,8 +7,8 @@ export const mapPetDetails = (petData) => {
       gender: petData?.gender || "",
     },
     medicalInfo: {
-      lastVaccinationDate: petData?.lastVaccinationDate || "",
-      lastVetVisit: petData?.lastVetVisit || "",
+      lastVaccinationDate: new Date(petData?.lastVaccinationDate) || new Date(),
+      lastVetVisit: new Date(petData?.lastVetVisit) || new Date(),
       medications: petData?.medications ? petData.medications.join(", ") : "",
       allergies: petData?.allergies ? petData.allergies.join(", ") : "",
     },

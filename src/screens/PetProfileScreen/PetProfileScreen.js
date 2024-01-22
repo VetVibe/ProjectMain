@@ -1,26 +1,36 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
-import { titleMappings, mapPetDetails } from "./support/utils";
+import DetailsContainer from "../../components/DetailsContainer/DetailsContainer";
+import { mapPetDetails } from "../../utils";
+import { TITELS } from "../../constants";
 import axios from "axios";
-import DetailsContainer from "./DetailsContainer";
 import tw from "twrnc";
 
 export default function PetProfileScreen({ route, navigation }) {
   const [petDetails, setPetDetails] = useState({});
-
   const petId = route.params.petId;
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:3000/pet/${petId}`)
-      .then((response) => {
-        const mapedPetDetails = mapPetDetails(response.data);
-        setPetDetails(mapedPetDetails);
-      })
-      .catch((error) => {
-        console.error("Error fetching pet details:", error);
-      });
-  }, [petId]);
+    const updatePetDetails = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/pet/${petId}`);
+        const mappedPetDetails = mapPetDetails(response.data);
+        setPetDetails(mappedPetDetails);
+      } catch (error) {
+        console.error("Error updating pet details:", error);
+      }
+    };
+
+    // Listen for changes and update petDetails
+    const subscription = navigation.addListener("focus", updatePetDetails);
+
+    // Clean up the subscription when the component unmounts
+    return () => {
+      if (subscription) {
+        subscription();
+      }
+    };
+  }, [petId, navigation]);
 
   const navigateToEditScreen = () => {
     navigation.navigate("Pet Profile Screen Edit", { petId: petId });
@@ -46,7 +56,7 @@ export default function PetProfileScreen({ route, navigation }) {
               <View key={section} style={styles.sectionTitle}>
                 <Text style={tw`text-2xl p-3 tracking-wide font-bold`}>{section}</Text>
                 {Object.entries(sectionDetails).map(([key, value]) => (
-                  <DetailsContainer key={key} title={titleMappings[key]} value={value} />
+                  <DetailsContainer key={key} title={TITELS[key]} value={value} />
                 ))}
               </View>
             );
@@ -63,7 +73,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   editButton: {
-    flexDirection: "row-reverse", // Change from 'row' to 'row-reverse'
+    flexDirection: "row-reverse",
     alignItems: "center",
     marginTop: 10,
   },

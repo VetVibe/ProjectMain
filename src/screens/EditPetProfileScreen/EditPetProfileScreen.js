@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Button, Image, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { View, Button, Image, StyleSheet, TouchableOpacity, ScrollView, Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import InputDetailsContainer from "./InputDetailsContainer";
+import { StackActions } from "@react-navigation/native";
+import TabsContainer from "../../components/TabsContainer/TabsContainer";
+import InputContainer from "../../components/InputContainer/InputContainer";
+import { mapPetDetails, mapPetDetailsToSchema } from "../../utils";
+import { PET_PROFILE_TABS } from "../../constants";
 import axios from "axios";
-import { mapPetDetails, mapPetDetailsToSchema } from "./support/utils";
 
 const EditPetProfileScreen = ({ route, navigation }) => {
   const [activeTab, setActiveTab] = useState("petInfo"); // petInfo or medicalHistory
@@ -25,6 +28,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
           setPetBasicInfoInput(mapedPetDetails.basicInfo);
           setMedicalInfoInput(mapedPetDetails.medicalInfo);
           setPetImage(mapedPetDetails.imgSrc);
+          console.log(mapedPetDetails.medicalInfo);
         })
         .catch((error) => {
           console.error("Error fetching pet details:", error);
@@ -59,15 +63,6 @@ const EditPetProfileScreen = ({ route, navigation }) => {
     }
   }
 
-  const TabButton = ({ tab, title }) => (
-    <TouchableOpacity
-      style={[styles.tabButton, activeTab === tab && styles.activeTab]}
-      onPress={() => handleTabPress(tab)}
-    >
-      <Text style={styles.tabButtonText}>{title}</Text>
-    </TouchableOpacity>
-  );
-
   const saveChanges = () => {
     const updatedData = {
       basicInfo: { ...petBasicInfoInput },
@@ -80,7 +75,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
       axios
         .put(`http://localhost:3000/pet/updateInfo/${petId}`, { updatedData: petDetailsSchema })
         .then((response) => {
-          navigation.navigate("Pet Profile Screen", { petId: petId });
+          navigation.goBack();
         })
         .catch((error) => {
           console.error(`Error during updating pet ${petId} details:`, error);
@@ -90,7 +85,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
         .post(`http://localhost:3000/pet/addPet/${petOwnerId}`, petDetailsSchema)
         .then((response) => {
           const petId = response.data.petId;
-          navigation.navigate("Pet Profile Screen", { petId: petId });
+          navigation.dispatch(StackActions.replace("Pet Profile Screen", { petId: petId }));
         })
         .catch((error) => {
           console.log("Error during adding pet", error);
@@ -126,10 +121,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.tabsContainer}>
-        <TabButton tab="petInfo" title="Pet Info" />
-        <TabButton tab="medicalHistory" title="Medical History" />
-      </View>
+      <TabsContainer tabs={PET_PROFILE_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
 
       <ScrollView style={{ flexGrow: 1 }}>
         {activeTab === "petInfo" && (
@@ -137,7 +129,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
             <TouchableOpacity onPress={handleImagePicker}>
               <Image source={{ uri: petImage }} style={styles.petImage} />
             </TouchableOpacity>
-            <InputDetailsContainer
+            <InputContainer
               petDetails={petBasicInfoInput}
               onChangeText={(key, text) => handleChange(key, text, activeTab)}
             />
@@ -145,7 +137,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
         )}
 
         {activeTab === "medicalHistory" && (
-          <InputDetailsContainer
+          <InputContainer
             petDetails={petMedicalInfoInput}
             onChangeText={(key, text) => handleChange(key, text, activeTab)}
           />
@@ -192,6 +184,13 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     marginBottom: 20,
+  },
+  datePickerContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
   },
 });
 

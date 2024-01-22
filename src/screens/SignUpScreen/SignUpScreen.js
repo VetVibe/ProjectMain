@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Button, Image, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import axios from "axios";
+import TabsContainer from "../../components/TabsContainer/TabsContainer";
+import { ROLES_TABS } from "../../constants";
+import { StackActions } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 
-export default function RegistrationScreen({ navigation }) {
-  const [isPetOwner, setIsPetOwner] = useState(true);
+export default function SignUpScreen({ navigation }) {
+  const [activeTab, setActiveTab] = useState("petOwner");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -12,29 +15,33 @@ export default function RegistrationScreen({ navigation }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [profilePicture, setProfilePicture] = useState(null);
 
-  const handleRegistration = () => {
-    const newUser = isPetOwner
-      ? {
-          name: name,
-          email: email,
-          password: password,
-          profilePicture: profilePicture,
-        }
-      : {
-          name: name,
-          email: email,
-          password: password,
-          vetId: id,
-          phoneNumber: phoneNumber,
-          profilePicture: profilePicture,
-        };
+  const handleTabPress = (tab) => {
+    setActiveTab(tab);
+  };
 
-    const postUrl = isPetOwner
-      ? "http://localhost:3000/register"
-      : "http://localhost:3000/registerVeterinarian";
+  const handleRegistration = () => {
+    const newUser =
+      activeTab == "petOwner"
+        ? {
+            name: name,
+            email: email,
+            password: password,
+            profilePicture: profilePicture,
+          }
+        : {
+            name: name,
+            email: email,
+            password: password,
+            vetId: id,
+            phoneNumber: phoneNumber,
+            profilePicture: profilePicture,
+          };
+
+    const postUrl =
+      activeTab == "petOwner" ? "http://localhost:3000/register" : "http://localhost:3000/registerVeterinarian";
 
     // If registering as a veterinarian, check if the vet ID is valid first
-    if (!isPetOwner) {
+    if (activeTab == "vet") {
       axios
         .get(`http://localhost:3000/checkVetId/${id}`)
         .then((response) => {
@@ -43,10 +50,7 @@ export default function RegistrationScreen({ navigation }) {
             performRegistration(newUser, postUrl);
           } else {
             // Vet ID is not valid, show an error message
-            Alert.alert(
-              "Invalid Veterinarian ID",
-              "Please enter a valid Veterinarian ID : VET-XXX"
-            );
+            Alert.alert("Invalid Veterinarian ID", "Please enter a valid Veterinarian ID : VET-XXX");
           }
         })
         .catch((error) => {
@@ -59,10 +63,7 @@ export default function RegistrationScreen({ navigation }) {
           } else {
             // Other error occurred while checking vet ID, show a general error message
             console.error("Error checking vet ID:", error);
-            Alert.alert(
-              "Error",
-              "An error occurred while checking Veterinarian ID"
-            );
+            Alert.alert("Error", "An error occurred while checking Veterinarian ID");
           }
         });
     } else {
@@ -86,24 +87,14 @@ export default function RegistrationScreen({ navigation }) {
         setPhoneNumber("");
         setProfilePicture(null);
 
-        if (isPetOwner) {
-          navigation.navigate("Pet Owner Home Screen");
-        } else {
-          navigation.navigate("Veterinarian Home Screen", {
-            vetId: newUser.vetId,
-          });
-
-        }
+        navigation.dispatch(StackActions.replace("Home"));
       })
       .catch((error) => {
         console.error("Error registering new user", error);
 
         // Check if the error is a 404 error indicating that the user (veterinarian) is already registered
         if (error.response && error.response.status === 404) {
-          Alert.alert(
-            "Registration failed",
-            "This user is already registered."
-          );
+          Alert.alert("Registration failed", "This user is already registered.");
         } else {
           // Show a generic error message for other registration failures
           Alert.alert("Registration failed.");
@@ -139,26 +130,13 @@ export default function RegistrationScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={() => setIsPetOwner(true)}>
-          <Text
-            style={[styles.userType, isPetOwner && styles.selectedUserType]}
-          >
-            Pet Owner
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setIsPetOwner(false)}>
-          <Text
-            style={[styles.userType, !isPetOwner && styles.selectedUserType]}
-          >
-            Veterinarian
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <TabsContainer tabs={ROLES_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
 
-      <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
+      <TextInput autoCorrect={false} style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
 
       <TextInput
+        autoCorrect={false}
+        autoCapitalize="none"
         style={styles.input}
         placeholder="Email"
         value={email}
@@ -167,6 +145,8 @@ export default function RegistrationScreen({ navigation }) {
       />
 
       <TextInput
+        autoCorrect={false}
+        autoCapitalize="none"
         style={styles.input}
         placeholder="Password"
         value={password}
@@ -174,7 +154,7 @@ export default function RegistrationScreen({ navigation }) {
         secureTextEntry
       />
 
-      {!isPetOwner && (
+      {activeTab == "vet" && (
         <>
           <TextInput style={styles.input} placeholder="Veterinarian ID" value={id} onChangeText={setId} />
 
@@ -191,9 +171,7 @@ export default function RegistrationScreen({ navigation }) {
       <TouchableOpacity style={styles.button} onPress={handleImagePick}>
         <Text style={styles.buttonText}>Choose Profile Picture</Text>
       </TouchableOpacity>
-      {profilePicture && (
-        <Image source={{ uri: profilePicture }} style={styles.profileImage} />
-      )}
+      {profilePicture && <Image source={{ uri: profilePicture }} style={styles.profileImage} />}
 
       <Button title="Register" onPress={handleRegistration} />
     </View>
@@ -206,6 +184,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
+  },
+  tabsContainer: {
+    flexDirection: "row",
+    marginBottom: 20,
   },
   buttonContainer: {
     flexDirection: "row",
