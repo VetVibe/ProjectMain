@@ -89,7 +89,7 @@ export default function RegistrationScreen({ navigation }) {
         if (isPetOwner) {
           navigation.navigate("Pet Owner Home Screen");
         } else {
-          navigation.navigate("Veterinarian Home Screen", {
+          navigation.navigate("Vet Profile", {
             vetId: newUser.vetId,
           });
 

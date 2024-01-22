@@ -6,13 +6,13 @@ import { StackActions, useNavigation } from "@react-navigation/native";
 
 const roleSelectors = {
   PetOwner: {
-    postUrl: "http://localhost:3000/login",
+    postUrl: "http://10.0.2.2:3000/login",
     navigationScreen: "Pet Owner Home Screen",
     emailPlaceholder: "email",
   },
   Vet: {
-    postUrl: "http://localhost:3000/loginv",
-    navigationScreen: "Veterinarian Home Screen",
+    postUrl: "http://10.0.2.2:3000/loginv",
+    navigationScreen: "Vet Profile",
     emailPlaceholder: "Veterinarian ID",
   },
 };
@@ -58,9 +58,8 @@ export default function LoginScreen({ route }) {
           // The request was made but no response was received
           Alert.alert("Network error", "Unable to connect to the server.");
         }
-
         console.log("Error during login", error);
-      });
+        });
   };
   return (
     <View style={styles.container}>

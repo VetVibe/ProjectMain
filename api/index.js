@@ -33,6 +33,8 @@ app.listen(port, () => {
   console.log("Server is running on port 3000");
 });
 
+
+
 // Endpoint to register a pet owner
 app.post("/register", async (req, res) => {
   try {
@@ -304,6 +306,7 @@ app.put("/veterinarian/:vetId/about", async (req, res) => {
 app.get("/veterinarian/:vetId", async (req, res) => {
   try {
     const vetId = req.params.vetId;
+    console.log(vetId)
     const veterinarian = await Veterinarian.findOne({ vetId });
     if (!veterinarian) {
       return res.status(404).json({ message: "Veterinarian not found" });
