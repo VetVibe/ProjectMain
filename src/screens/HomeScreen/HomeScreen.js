@@ -11,13 +11,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const roleSelectors = {
   petOwner: {
-    postUrl: "http://localhost:3000/login",
+    postUrl: "http://localhost:3000/petOwner/login",
     navigationScreen: "Pet Owner Home Screen",
     emailPlaceholder: "email",
   },
   vet: {
-    postUrl: "http://localhost:3000/loginv",
-    navigationScreen: "Veterinarian Home Screen",
+    postUrl: "http://localhost:3000/veterinarian/login",
+    navigationScreen: "Vet Home Screen",
     emailPlaceholder: "Veterinarian ID",
   },
 };
@@ -51,29 +51,21 @@ const HomeScreen = ({ navigation }) => {
     return true;
   };
 
-  const checkValidation = () => {
-    let isValid = true;
-    isValid = isValid && checkField(form.email, incorrectInput.incorrectEmail, isEmailValid);
-    isValid = isValid && checkField(form.password, incorrectInput.incorrectPassword, isPasswordValid);
-    return isValid;
-  };
-
   const onSignInPress = () => {
     Keyboard.dismiss();
-    if (!checkValidation()) {
-      console.log("wrong input");
-      return;
-    }
 
-    // Send a login request to the server
     axios
       .post(selectors.postUrl, form)
       .then((response) => {
         const data = response.data;
         const token = data.token;
-        const userId = data.ownerId;
+        const userId = data.userId;
         AsyncStorage.setItem("authToken", token);
-        navigation.dispatch(StackActions.replace(selectors.navigationScreen, { userId: userId }));
+        if (activeTab == "vet") {
+          navigation.dispatch(StackActions.replace(selectors.navigationScreen, { userId: userId, userType: "vet" }));
+        } else {
+          navigation.dispatch(StackActions.replace(selectors.navigationScreen, { userId: userId }));
+        }
       })
       .catch((error) => {
         if (error.response) {
@@ -108,7 +100,7 @@ const HomeScreen = ({ navigation }) => {
         <Text style={styles.label}>Email</Text>
         <View style={styles.inputContainer}>
           <TextInput
-            placeholder={activeTab == "vet" ? "Email/Vet ID" : "Email"}
+            placeholder={"Email"}
             keyboardType="email-address"
             autoCorrect={false}
             autoCapitalize="none"

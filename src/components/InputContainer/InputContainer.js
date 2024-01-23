@@ -3,10 +3,14 @@ import { View, Text, TextInput, StyleSheet } from "react-native";
 import DatePickerContainer from "../DatePickerContainer/DatePickerContainer";
 import { TITELS } from "../../constants";
 
-export default function InputContainer({ petDetails, onChangeText }) {
+export default function InputContainer({ details, onChangeText }) {
+  const noDisplay = ["email", "password", "vetId", "profilePicture", "tips", "isAvailable", "rate", "clientsCount"];
+
+  const filteredDetails = Object.fromEntries(Object.entries(details).filter(([key]) => !noDisplay.includes(key)));
+
   return (
     <View>
-      {Object.entries(petDetails).map(([key, value]) => (
+      {Object.entries(filteredDetails).map(([key, value]) => (
         <View key={key}>
           <Text style={styles.label}>{TITELS[key]}:</Text>
           {key === "lastVaccinationDate" || key === "lastVetVisit" ? (
@@ -17,6 +21,8 @@ export default function InputContainer({ petDetails, onChangeText }) {
               placeholder={TITELS[key]}
               value={value !== undefined ? value.toString() : ""}
               onChangeText={(text) => onChangeText(key, text)}
+              editable={true}
+              secureTextEntry={key === "password"}
             />
           )}
         </View>

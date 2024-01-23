@@ -28,7 +28,6 @@ const EditPetProfileScreen = ({ route, navigation }) => {
           setPetBasicInfoInput(mapedPetDetails.basicInfo);
           setMedicalInfoInput(mapedPetDetails.medicalInfo);
           setPetImage(mapedPetDetails.imgSrc);
-          console.log(mapedPetDetails.medicalInfo);
         })
         .catch((error) => {
           console.error("Error fetching pet details:", error);
@@ -130,7 +129,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
               <Image source={{ uri: petImage }} style={styles.petImage} />
             </TouchableOpacity>
             <InputContainer
-              petDetails={petBasicInfoInput}
+              details={petBasicInfoInput}
               onChangeText={(key, text) => handleChange(key, text, activeTab)}
             />
           </View>
@@ -138,7 +137,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
 
         {activeTab === "medicalHistory" && (
           <InputContainer
-            petDetails={petMedicalInfoInput}
+            details={petMedicalInfoInput}
             onChangeText={(key, text) => handleChange(key, text, activeTab)}
           />
         )}

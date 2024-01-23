@@ -7,4 +7,9 @@ export const TITELS = {
   lastVetVisit: "Last Vet Visit",
   medications: "Medications",
   allergies: "Allergies",
+  name: "Name",
+  phoneNumber: "Phone Number",
+  about: "About",
+  location: "Location",
+  specialization: "Specialization",
 };
