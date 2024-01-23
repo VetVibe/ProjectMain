@@ -6,6 +6,8 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { mapVetDetails } from "../../utils";
 import axios from "axios";
 import { style } from "twrnc";
+import { Font } from 'expo';
+
 
 export default function VetHomeScreen({ route, navigation }) {
   const [vetDetails, setVetDetails] = useState({});
