@@ -13,6 +13,8 @@ export default function SignUpScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [id, setId] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [location, setLocation] = useState("");
+  const [specialization, setSpecialization] = useState("");
   const [profilePicture, setProfilePicture] = useState(null);
 
   const handleTabPress = (tab) => {
@@ -34,16 +36,20 @@ export default function SignUpScreen({ navigation }) {
             password: password,
             vetId: id,
             phoneNumber: phoneNumber,
+            location: location,
+            specialization: specialization,
             profilePicture: profilePicture,
           };
 
     const postUrl =
-      activeTab == "petOwner" ? "http://localhost:3000/register" : "http://localhost:3000/registerVeterinarian";
+      activeTab == "petOwner"
+        ? "http://localhost:3000/petOwner/register"
+        : "http://localhost:3000/veterinarian/register";
 
     // If registering as a veterinarian, check if the vet ID is valid first
     if (activeTab == "vet") {
       axios
-        .get(`http://localhost:3000/checkVetId/${id}`)
+        .get(`http://localhost:3000/veterinarianId/checkId/${id}`)
         .then((response) => {
           if (response.data.isValid) {
             // Vet ID is valid, proceed with registration
@@ -87,7 +93,7 @@ export default function SignUpScreen({ navigation }) {
         setPhoneNumber("");
         setProfilePicture(null);
 
-        navigation.dispatch(StackActions.replace("Home"));
+        navigation.goBack();
       })
       .catch((error) => {
         console.error("Error registering new user", error);
@@ -164,6 +170,13 @@ export default function SignUpScreen({ navigation }) {
             value={phoneNumber}
             onChangeText={setPhoneNumber}
             keyboardType="phone-pad"
+          />
+          <TextInput style={styles.input} placeholder="Location" value={location} onChangeText={setLocation} />
+          <TextInput
+            style={styles.input}
+            placeholder="Specialization"
+            value={specialization}
+            onChangeText={setSpecialization}
           />
         </>
       )}

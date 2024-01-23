@@ -25,10 +25,10 @@ const PetSchema = new mongoose.Schema({
     type: Date,
   },
   medications: {
-    type: [String],
+    type: String,
   },
   allergies: {
-    type: [String],
+    type: String,
   },
   imgSrc: {
     type: String,

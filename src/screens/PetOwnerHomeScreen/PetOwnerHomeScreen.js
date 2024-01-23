@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
-import PetContainer from "../../components/PetOwner/PetContainer";
+import PetContainer from "./PetContainer";
 import axios from "axios";
 
 export default function PetOwnerHomeScreen({ route, navigation }) {
