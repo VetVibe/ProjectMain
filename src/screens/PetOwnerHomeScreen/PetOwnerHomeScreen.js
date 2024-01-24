@@ -48,7 +48,7 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
     if (searchQuery) queryParams.append('location', searchQuery);
     queryParams.append('isAvailable', true);
 
-    axios.get(`http://10.0.2.2:3000/veterinarians?${queryParams.toString()}`)
+    axios.get(`http://localhost:3000/veterinarians?${queryParams.toString()}`)
       .then((response) => {
         setVeterinarians(response.data);
       })
@@ -61,9 +61,11 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
     navigation.navigate("Pet Profile Screen Edit", { petOwnerId: petOwnerId });
   };
 
-  const handleVetPress = (vet) => {
-    console.log("vetId: check", vet._id);
+  const handleNavigateToTipsScreen = () => {
+    navigation.navigate("Tips Screen Pet");
+  };
 
+  const handleVetPress = (vet) => {
     // Navigate to VetHomeScreen with the selected vet's ID and pet owner's ID
     navigation.navigate("Vet Home Screen", {userId: vet._id, userType: "petOwner" // ID of the pet owner
     });
@@ -100,6 +102,9 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
           <Text>{vet.name} - {vet.location}</Text>
         </TouchableOpacity>
       ))}
+      <TouchableOpacity style={styles.viewTipsButton} onPress={handleNavigateToTipsScreen}>
+        <Text style={styles.buttonText}>View Tips</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -140,5 +145,18 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     marginTop: 20,
+  },
+  viewTipsButton: {
+    backgroundColor: "#FFA500",
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center", // Center the text inside the button
   },
 });

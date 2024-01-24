@@ -11,6 +11,7 @@ import {
   ShareTipScreen,
   EditVetProfileScreen,
   TipsScreen,
+  TipsScreenPet,
 } from "./src/screens";
 
 const Stack = createStackNavigator();
@@ -28,6 +29,8 @@ export default function App() {
         <Stack.Screen name="Share Tip Screen" component={ShareTipScreen} />
         <Stack.Screen name="Edit Vet Profile Screen" component={EditVetProfileScreen} />
         <Stack.Screen name="Tips Screen" component={TipsScreen} />
+        <Stack.Screen name="Tips Screen Pet" component={TipsScreenPet} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );

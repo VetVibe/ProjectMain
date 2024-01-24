@@ -7,6 +7,8 @@ import VetHomeScreen from "./VetHomeScreen/VetHomeScreen";
 import ShareTipScreen from "./ShareTipScreen/ShareTipScreen";
 import EditVetProfileScreen from "./EditVetProfileScreen/EditVetProfileScreen";
 import TipsScreen from "./TipsScreen/TipsScreen";
+import TipsScreenPet from "./TipsScreenPet/TipsScreenPet";
+
 
 export {
   HomeScreen,
@@ -18,4 +20,5 @@ export {
   ShareTipScreen,
   EditVetProfileScreen,
   TipsScreen,
+  TipsScreenPet,
 };
