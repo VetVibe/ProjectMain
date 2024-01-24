@@ -1,8 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+} from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import PetContainer from "./PetContainer";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { MaterialIcons } from "@expo/vector-icons";
+import { COLORS, FONTS, SIZES, images } from "../../constants";
 
 export default function PetOwnerHomeScreen({ route, navigation }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -13,12 +23,16 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
   useEffect(() => {
     const updateUserPetDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/petOwner/${petOwnerId}/pets`);
+        const response = await axios.get(
+          `http://localhost:3000/petOwner/${petOwnerId}/pets`
+        );
         const petIds = response.data.pets;
 
         // Fetch details of each pet concurrently
         const fetchPetDetails = petIds.map((petId) =>
-          axios.get(`http://localhost:3000/pet/${petId}`).then((response) => response.data)
+          axios
+            .get(`http://localhost:3000/pet/${petId}`)
+            .then((response) => response.data)
         );
 
         // Wait for all fetches to complete
@@ -40,6 +54,14 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
       }
     };
   }, [petOwnerId, navigation]);
+  const LogoutClick = () => {
+    clearAuthToken();
+  };
+  const clearAuthToken = async () => {
+    await AsyncStorage.removeItem("authToken");
+    console.log("Cleared auth token");
+    navigation.replace("Home");
+  };
 
   const handleSearch = () => {
     // Implement your search functionality here
@@ -70,7 +92,9 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
         value={searchQuery}
         onChangeText={(text) => setSearchQuery(text)}
       />
-
+      <TouchableOpacity style={styles.logoutButton} onPress={LogoutClick}>
+        <MaterialIcons name="logout" size={24} color={COLORS.white} />
+      </TouchableOpacity>
       <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
         <Text style={styles.buttonText}>Search</Text>
       </TouchableOpacity>
@@ -114,5 +138,17 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     marginTop: 20,
+  },
+  logoutButton: {
+    position: "absolute",
+    right: 20,
+    top: 100, // Adjust the position based on your layout
+    zIndex: 3,
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
   },
 });
