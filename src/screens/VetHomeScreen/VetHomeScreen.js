@@ -92,19 +92,12 @@ export default function VetHomeScreen({ route, navigation }) {
             </View>
           )}
 
-          {userType === "vet" && (
+          {userType === "petOwner" && (
             <>
               <View style={styles.availabilityContainer}>
                 <Text style={{ ...FONTS.h4, color: COLORS.black, marginRight: 10 }}>
                   {vetDetails.isAvailable ? "Available" : "Unavailable"}
                 </Text>
-                <Switch
-                  trackColor={{ false: "#767577", true: "#FFA500" }}
-                  thumbColor={vetDetails.isAvailable ? "#FFFFFF" : "#FFFFFF"}
-                  ios_backgroundColor="#3e3e3e"
-                  onValueChange={toggleSwitch}
-                  value={vetDetails.isAvailable}
-                />
               </View>
             </>
           )}
