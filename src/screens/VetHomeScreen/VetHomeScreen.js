@@ -48,7 +48,6 @@ export default function VetHomeScreen({ route, navigation }) {
   };
   const LogoutClick = () => {
     clearAuthToken();
-    
   };
   const clearAuthToken = async () => {
     await AsyncStorage.removeItem("authToken");
@@ -150,12 +149,13 @@ export default function VetHomeScreen({ route, navigation }) {
           ) : (
             <>
               <View style={styles.availabilityContainer}>
-                <Text style={{ ...FONTS.h4, color: COLORS.black, marginRight: 10 }}>
+                <Text
+                  style={{ ...FONTS.h4, color: COLORS.black, marginRight: 10 }}
+                >
                   {vetDetails.isAvailable ? "Available" : "Unavailable"}
                 </Text>
               </View>
             </>
-
           )}
         </View>
       </ScrollView>

@@ -19,7 +19,6 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
   const [userPets, setUserPets] = useState([]);
   const [veterinarians, setVeterinarians] = useState([]);
 
-
   const petOwnerId = route.params.userId;
 
   useEffect(() => {
@@ -67,10 +66,11 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
 
   const handleSearch = () => {
     const queryParams = new URLSearchParams();
-    if (searchQuery) queryParams.append('location', searchQuery);
-    queryParams.append('isAvailable', true);
+    if (searchQuery) queryParams.append("location", searchQuery);
+    queryParams.append("isAvailable", true);
 
-    axios.get(`http://10.0.2.2:3000/veterinarians?${queryParams.toString()}`)
+    axios
+      .get(`http://localhost:3000/veterinarians?${queryParams.toString()}`)
       .then((response) => {
         setVeterinarians(response.data);
       })
@@ -87,7 +87,9 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
     console.log("vetId: check", vet._id);
 
     // Navigate to VetHomeScreen with the selected vet's ID and pet owner's ID
-    navigation.navigate("Vet Home Screen", {userId: vet._id, userType: "petOwner" // ID of the pet owner
+    navigation.navigate("Vet Home Screen", {
+      userId: vet._id,
+      userType: "petOwner", // ID of the pet owner
     });
   };
 
@@ -120,8 +122,14 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
       </TouchableOpacity>
 
       {veterinarians.map((vet, index) => (
-        <TouchableOpacity key={index} onPress={() => handleVetPress(vet)} style={styles.vetItem}>
-          <Text>{vet.name} - {vet.location}</Text>
+        <TouchableOpacity
+          key={index}
+          onPress={() => handleVetPress(vet)}
+          style={styles.vetItem}
+        >
+          <Text>
+            {vet.name} - {vet.location}
+          </Text>
         </TouchableOpacity>
       ))}
     </ScrollView>

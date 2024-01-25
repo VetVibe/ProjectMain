@@ -1,10 +1,20 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, Button, Image, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from "react-native";
 import axios from "axios";
 import TabsContainer from "../../components/TabsContainer/TabsContainer";
 import { ROLES_TABS } from "../../constants";
-import { StackActions } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
+import { Picker } from "@react-native-picker/picker";
+import { Modal } from "react-native";
 
 export default function SignUpScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState("petOwner");
@@ -16,38 +26,59 @@ export default function SignUpScreen({ navigation }) {
   const [location, setLocation] = useState("");
   const [specialization, setSpecialization] = useState("");
   const [profilePicture, setProfilePicture] = useState(null);
+  const [cityList, setCityList] = useState([]);
+  const [selectedCity, setSelectedCity] = useState("");
+  const [isCityPickerVisible, setCityPickerVisible] = useState(false);
+
+  useEffect(() => {
+    // Fetch the list of cities from your MongoDB database
+    axios
+      .get("http://localhost:3000/cities")
+      .then((response) => {
+        // Extract only the "city" field from each object in the response data
+        const cities = response.data.map((cityObject) => cityObject.city);
+
+        console.log("Cities response:", cities);
+        setCityList(cities);
+      })
+      .catch((error) => {
+        console.error("Error fetching cities:", error);
+      });
+  }, []);
 
   const handleTabPress = (tab) => {
     setActiveTab(tab);
   };
+  const toggleCityPicker = () => {
+    setCityPickerVisible(!isCityPickerVisible);
+  };
+
+  const handleCitySelect = (itemValue) => {
+    setSelectedCity(itemValue);
+    toggleCityPicker();
+  };
 
   const handleRegistration = () => {
-    const newUser =
-      activeTab == "petOwner"
-        ? {
-            name: name,
-            email: email,
-            password: password,
-            profilePicture: profilePicture,
-          }
-        : {
-            name: name,
-            email: email,
-            password: password,
-            vetId: id,
-            phoneNumber: phoneNumber,
-            location: location,
-            specialization: specialization,
-            profilePicture: profilePicture,
-          };
+    const newUser = {
+      name,
+      email,
+      password,
+      location: selectedCity,
+      profilePicture,
+      ...(activeTab === "vet" && {
+        vetId: id,
+        phoneNumber,
+        specialization,
+      }),
+    };
 
     const postUrl =
-      activeTab == "petOwner"
+      activeTab === "petOwner"
         ? "http://localhost:3000/petOwner/register"
         : "http://localhost:3000/veterinarian/register";
 
     // If registering as a veterinarian, check if the vet ID is valid first
-    if (activeTab == "vet") {
+    if (activeTab === "vet") {
       axios
         .get(`http://localhost:3000/veterinarianId/checkId/${id}`)
         .then((response) => {
@@ -56,7 +87,10 @@ export default function SignUpScreen({ navigation }) {
             performRegistration(newUser, postUrl);
           } else {
             // Vet ID is not valid, show an error message
-            Alert.alert("Invalid Veterinarian ID", "Please enter a valid Veterinarian ID : VET-XXX");
+            Alert.alert(
+              "Invalid Veterinarian ID",
+              "Please enter a valid Veterinarian ID: VET-XXX"
+            );
           }
         })
         .catch((error) => {
@@ -69,7 +103,10 @@ export default function SignUpScreen({ navigation }) {
           } else {
             // Other error occurred while checking vet ID, show a general error message
             console.error("Error checking vet ID:", error);
-            Alert.alert("Error", "An error occurred while checking Veterinarian ID");
+            Alert.alert(
+              "Error",
+              "An error occurred while checking Veterinarian ID"
+            );
           }
         });
     } else {
@@ -91,6 +128,7 @@ export default function SignUpScreen({ navigation }) {
         setPassword("");
         setId("");
         setPhoneNumber("");
+        setLocation("");
         setProfilePicture(null);
 
         navigation.goBack();
@@ -100,7 +138,10 @@ export default function SignUpScreen({ navigation }) {
 
         // Check if the error is a 404 error indicating that the user (veterinarian) is already registered
         if (error.response && error.response.status === 404) {
-          Alert.alert("Registration failed", "This user is already registered.");
+          Alert.alert(
+            "Registration failed",
+            "This user is already registered."
+          );
         } else {
           // Show a generic error message for other registration failures
           Alert.alert("Registration failed.");
@@ -125,20 +166,32 @@ export default function SignUpScreen({ navigation }) {
         // Set the selected image URI to the profile picture state
         if (result.assets && result.assets.length > 0) {
           const selectedAsset = result.assets[0];
-
           setProfilePicture(selectedAsset.uri);
         }
       }
     } else {
-      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
+      Alert.alert(
+        "Permission denied",
+        "Permission to access the photo library was denied."
+      );
     }
   };
 
   return (
     <View style={styles.container}>
-      <TabsContainer tabs={ROLES_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
+      <TabsContainer
+        tabs={ROLES_TABS}
+        activeTab={activeTab}
+        handleTabPress={handleTabPress}
+      />
 
-      <TextInput autoCorrect={false} style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
+      <TextInput
+        autoCorrect={false}
+        style={styles.input}
+        placeholder="Name"
+        value={name}
+        onChangeText={setName}
+      />
 
       <TextInput
         autoCorrect={false}
@@ -160,9 +213,40 @@ export default function SignUpScreen({ navigation }) {
         secureTextEntry
       />
 
-      {activeTab == "vet" && (
+      {activeTab === "petOwner" || activeTab === "vet" ? (
+        <View style={styles.pickerContainer}>
+          <TouchableOpacity
+            onPress={toggleCityPicker}
+            style={styles.pickerButton}
+          >
+            <Text>{selectedCity || "Select City"}</Text>
+          </TouchableOpacity>
+          <Modal visible={isCityPickerVisible} animationType="slide">
+            <View style={styles.modalContainer}>
+              <Picker
+                style={styles.picker}
+                selectedValue={selectedCity}
+                onValueChange={handleCitySelect}
+              >
+                <Picker.Item label="Select City" value="" />
+                {cityList.map((city) => (
+                  <Picker.Item key={city} label={city} value={city} />
+                ))}
+              </Picker>
+              <Button title="Close" onPress={toggleCityPicker} />
+            </View>
+          </Modal>
+        </View>
+      ) : null}
+
+      {activeTab === "vet" && (
         <>
-          <TextInput style={styles.input} placeholder="Veterinarian ID" value={id} onChangeText={setId} />
+          <TextInput
+            style={styles.input}
+            placeholder="Veterinarian ID"
+            value={id}
+            onChangeText={setId}
+          />
 
           <TextInput
             style={styles.input}
@@ -171,7 +255,7 @@ export default function SignUpScreen({ navigation }) {
             onChangeText={setPhoneNumber}
             keyboardType="phone-pad"
           />
-          <TextInput style={styles.input} placeholder="Location" value={location} onChangeText={setLocation} />
+
           <TextInput
             style={styles.input}
             placeholder="Specialization"
@@ -184,7 +268,9 @@ export default function SignUpScreen({ navigation }) {
       <TouchableOpacity style={styles.button} onPress={handleImagePick}>
         <Text style={styles.buttonText}>Choose Profile Picture</Text>
       </TouchableOpacity>
-      {profilePicture && <Image source={{ uri: profilePicture }} style={styles.profileImage} />}
+      {profilePicture && (
+        <Image source={{ uri: profilePicture }} style={styles.profileImage} />
+      )}
 
       <Button title="Register" onPress={handleRegistration} />
     </View>
@@ -198,30 +284,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
   },
-  tabsContainer: {
-    flexDirection: "row",
-    marginBottom: 20,
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  userType: {
-    fontSize: 16,
-    marginVertical: 20,
-    color: "black",
-  },
-  selectedUserType: {
-    fontWeight: "bold",
-    color: "black",
-    backgroundColor: "#ff8c00",
-    padding: 15,
-    marginLeft: 10,
-    marginRight: 10,
-    alignItems: "center",
-  },
   input: {
     height: 40,
     borderColor: "gray",
@@ -231,11 +293,33 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     width: "100%",
   },
+  pickerButton: {
+    height: 40,
+    borderColor: "gray",
+    borderWidth: 1,
+    borderRadius: 5,
+    justifyContent: "center",
+    paddingLeft: 0,
+    marginBottom: 10,
+    width: "100%",
+  },
+  modalContainer: {
+    flex: 5,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+  },
+  picker: {
+    height: 200, // Adjust the height as needed
+    width: "100%",
+  },
+
   button: {
     backgroundColor: "blue",
     padding: 10,
     borderRadius: 5,
     marginTop: 10,
+    width: "80%",
   },
   buttonText: {
     color: "white",
@@ -244,6 +328,6 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     marginTop: 10,
-    borderRadius: 50,
+    borderRadius: 5, // Adjusted border radius
   },
 });
