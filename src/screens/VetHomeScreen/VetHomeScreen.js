@@ -1,11 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Image, TouchableOpacity, SafeAreaView, ScrollView, Switch, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  SafeAreaView,
+  ScrollView,
+  Switch,
+  StyleSheet,
+} from "react-native";
 import { COLORS, FONTS, SIZES, images } from "../../constants";
 import { StatusBar } from "expo-status-bar";
 import { MaterialIcons } from "@expo/vector-icons";
 import { mapVetDetails } from "../../utils";
 import axios from "axios";
 import { style } from "twrnc";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function VetHomeScreen({ route, navigation }) {
   const [vetDetails, setVetDetails] = useState({});
@@ -36,7 +46,15 @@ export default function VetHomeScreen({ route, navigation }) {
   const EditVetProfileClick = () => {
     navigation.navigate("Edit Vet Profile Screen", { vetId: vetId });
   };
-
+  const LogoutClick = () => {
+    clearAuthToken();
+    
+  };
+  const clearAuthToken = async () => {
+    await AsyncStorage.removeItem("authToken");
+    console.log("Cleared auth token");
+    navigation.replace("Home");
+  };
   const ShowTips = () => {
     navigation.navigate("Tips Screen", { vetId: vetId, userType: userType });
   };
@@ -48,22 +66,37 @@ export default function VetHomeScreen({ route, navigation }) {
         <View style={{ alignItems: "center" }}>
           {userType === "vet" ? (
             <>
-              <TouchableOpacity style={styles.editProfileButton} onPress={EditVetProfileClick}>
+              <TouchableOpacity
+                style={styles.editProfileButton}
+                onPress={EditVetProfileClick}
+              >
                 <MaterialIcons name="edit" size={24} color={COLORS.white} />
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.tipsButton} onPress={ShowTips}>
-                <MaterialIcons name="my-library-books" size={24} color={COLORS.white} />
+                <MaterialIcons
+                  name="my-library-books"
+                  size={24}
+                  color={COLORS.white}
+                />
               </TouchableOpacity>
             </>
           ) : (
             <>
               <TouchableOpacity onPress={ShowTips}>
-                <MaterialIcons name="my-library-books" size={24} color={COLORS.white} />
+                <MaterialIcons
+                  name="my-library-books"
+                  size={24}
+                  color={COLORS.white}
+                />
               </TouchableOpacity>
             </>
           )}
-          <Image source={images.Vetprofile} resizeMode="contain" style={styles.vetProfileImage} />
+          <Image
+            source={images.Vetprofile}
+            resizeMode="contain"
+            style={styles.vetProfileImage}
+          />
 
           <Text style={styles.name}>{vetDetails.name}</Text>
           <Text style={styles.specialization}>{vetDetails.specialization}</Text>
@@ -80,7 +113,9 @@ export default function VetHomeScreen({ route, navigation }) {
 
           <View style={{ paddingVertical: 8, flexDirection: "row" }}>
             <View style={styles.infoBox}>
-              <Text style={{ ...FONTS.h3, color: "black" }}>{vetDetails.rate}</Text>
+              <Text style={{ ...FONTS.h3, color: "black" }}>
+                {vetDetails.rate}
+              </Text>
               <Text style={{ ...FONTS.body4, color: "black" }}>Rating</Text>
             </View>
           </View>
@@ -91,11 +126,16 @@ export default function VetHomeScreen({ route, navigation }) {
               <Text style={styles.description}>{vetDetails.about}</Text>
             </View>
           )}
+          <TouchableOpacity style={styles.logoutButton} onPress={LogoutClick}>
+            <MaterialIcons name="logout" size={24} color={COLORS.white} />
+          </TouchableOpacity>
 
           {userType === "vet" ? (
             <>
               <View style={styles.availabilityContainer}>
-                <Text style={{ ...FONTS.h4, color: COLORS.black, marginRight: 10 }}>
+                <Text
+                  style={{ ...FONTS.h4, color: COLORS.black, marginRight: 10 }}
+                >
                   {vetDetails.isAvailable ? "Available" : "Unavailable"}
                 </Text>
                 <Switch
@@ -125,7 +165,11 @@ export default function VetHomeScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   safeAreaContainer: { flex: 1, backgroundColor: COLORS.white },
-  detailsContainer: { flexDirection: "row", marginVertical: 6, alignItems: "center" },
+  detailsContainer: {
+    flexDirection: "row",
+    marginVertical: 6,
+    alignItems: "center",
+  },
   aboutContainer: { width: "100%", paddingHorizontal: SIZES.padding },
   button: {
     width: "90%",
@@ -227,5 +271,17 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 20,
     marginTop: 20,
+  },
+  logoutButton: {
+    position: "absolute",
+    right: 20,
+    top: 100, // Adjust the position based on your layout
+    zIndex: 3,
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
   },
 });
