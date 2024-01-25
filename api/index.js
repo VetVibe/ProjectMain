@@ -21,7 +21,10 @@ const Tip = require("./models/tip");
 
 // Connect to MongoDB
 mongoose
-  .connect("mongodb+srv://vivianu2014:vivi123m@cluster1.6ieglfk.mongodb.net/", {})
+  .connect(
+    "mongodb+srv://vivianu2014:vivi123m@cluster1.6ieglfk.mongodb.net/",
+    {}
+  )
   .then(() => {
     console.log("Connected to MongoDB");
   })
@@ -48,7 +51,7 @@ const secretKey = generateSecretKey();
 // Register a pet owner
 app.post("/petOwner/register", async (req, res) => {
   try {
-    const { name, email, password, profilePicture } = req.body;
+    const { name, email, password, location, profilePicture } = req.body;
     const existingOwner = await PetOwner.findOne({ email });
 
     if (existingOwner) {
@@ -56,7 +59,13 @@ app.post("/petOwner/register", async (req, res) => {
     }
 
     // Create a new user
-    const newOwner = new PetOwner({ name, email, password, profilePicture });
+    const newOwner = new PetOwner({
+      name,
+      email,
+      password,
+      location,
+      profilePicture,
+    });
 
     // Generate and store the verification token
     newOwner.verificationToken = crypto.randomBytes(20).toString("hex");
@@ -64,7 +73,9 @@ app.post("/petOwner/register", async (req, res) => {
     // Save the new user to the database
     await newOwner.save();
 
-    res.status(201).json({ message: "Registration successful", userId: newOwner._id });
+    res
+      .status(201)
+      .json({ message: "Registration successful", userId: newOwner._id });
   } catch (error) {
     console.log("Error registering user", error);
     res.status(500).json({ message: "Error registering user" });
@@ -117,11 +128,21 @@ app.get("/petOwner/:petOwnerId/pets", async (req, res) => {
 // Register a veterinarian
 app.post("/veterinarian/register", async (req, res) => {
   try {
-    const { name, email, vetId, password, phoneNumber, location, specialization } = req.body;
+    const {
+      name,
+      email,
+      vetId,
+      password,
+      phoneNumber,
+      location,
+      specialization,
+    } = req.body;
     const existingV = await Veterinarian.findOne({ vetId });
 
     if (existingV) {
-      return res.status(404).json({ message: "Veterinarian already registered" });
+      return res
+        .status(404)
+        .json({ message: "Veterinarian already registered" });
     }
 
     // Create a new veterinarian user
@@ -142,7 +163,10 @@ app.post("/veterinarian/register", async (req, res) => {
     await newVeterinarian.save();
 
     // Send a response indicating successful registration
-    res.status(201).json({ message: "Registration successful for veterinarian", userId: newVeterinarian._id });
+    res.status(201).json({
+      message: "Registration successful for veterinarian",
+      userId: newVeterinarian._id,
+    });
   } catch (error) {
     console.log("Error registering veterinarian", error);
     res.status(500).json({ message: "Error registering veterinarian" });
@@ -179,7 +203,7 @@ app.get("/veterinarians", async (req, res) => {
   try {
     let query = {};
     if (location) query.location = location;
-    if (isAvailable !== undefined) query.isAvailable = isAvailable === 'true';
+    if (isAvailable !== undefined) query.isAvailable = isAvailable === "true";
 
     const veterinarians = await Veterinarian.find(query);
     res.status(200).json(veterinarians);
@@ -223,7 +247,9 @@ app.put("/veterinarian/updateInfo/:vetId", async (req, res) => {
     }
 
     console.log(`Vet with ID ${vetId} updated successfully.`);
-    res.status(200).json({ message: `Vet with ID ${vetId} updated successfully.` });
+    res
+      .status(200)
+      .json({ message: `Vet with ID ${vetId} updated successfully.` });
   } catch (error) {
     console.error("Error updating vet:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -255,7 +281,8 @@ app.get("/veterinarianId/checkId/:vetId", async (req, res) => {
     const enteredVetId = req.params.vetId;
 
     // Check if the vet ID exists in the VetId collection
-    const vetIdCollection = mongoose.connection.db.collection("VeterinarianIDs");
+    const vetIdCollection =
+      mongoose.connection.db.collection("VeterinarianIDs");
 
     // Check if the vet ID exists in the collection
     const existingVetId = await vetIdCollection.findOne({
@@ -334,7 +361,9 @@ app.put("/tip/updateInfo/:tipId", async (req, res) => {
     }
 
     console.log(`Tip with ID ${tipId} updated successfully.`);
-    res.status(200).json({ message: `Tip with ID ${tipId} updated successfully.` });
+    res
+      .status(200)
+      .json({ message: `Tip with ID ${tipId} updated successfully.` });
   } catch (error) {
     console.error("Error updating tip:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -368,7 +397,9 @@ app.post("/pet/addPet/:petOwnerId", async (req, res) => {
     // Save the updated PetOwner document
     await petOwner.save();
 
-    res.status(201).json({ message: "Pet added successfully", petId: newPet._id });
+    res
+      .status(201)
+      .json({ message: "Pet added successfully", petId: newPet._id });
   } catch (error) {
     console.log("Error adding a pet:", error);
     res.status(500).json({ message: "Error adding a pet" });
@@ -409,9 +440,26 @@ app.put("/pet/updateInfo/:petId", async (req, res) => {
     }
 
     console.log(`Pet with ID ${petId} updated successfully.`);
-    res.status(200).json({ message: `Pet with ID ${petId} updated successfully.` });
+    res
+      .status(200)
+      .json({ message: `Pet with ID ${petId} updated successfully.` });
   } catch (error) {
     console.error("Error updating pet:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+app.get("/cities", async (req, res) => {
+  try {
+    // Fetch all cities from the "City" collection
+    const cities = await mongoose.connection.db
+      .collection("city")
+      .find()
+      .toArray();
+
+    // Respond with the fetched cities
+    res.status(200).json(cities);
+  } catch (error) {
+    console.error("Error fetching cities:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

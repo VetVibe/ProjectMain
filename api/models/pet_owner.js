@@ -17,6 +17,11 @@ const PetOwnerSchema = new mongoose.Schema({
   profilePicture: {
     type: String,
   },
+  location: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   pets: {
     type: [mongoose.Types.ObjectId],
   },
