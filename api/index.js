@@ -172,6 +172,23 @@ app.post("/veterinarian/login", async (req, res) => {
   }
 });
 
+// Endpoint to fetch veterinarians based on availability and location
+app.get("/veterinarians", async (req, res) => {
+  const { location, isAvailable } = req.query;
+
+  try {
+    let query = {};
+    if (location) query.location = location;
+    if (isAvailable !== undefined) query.isAvailable = isAvailable === 'true';
+
+    const veterinarians = await Veterinarian.find(query);
+    res.status(200).json(veterinarians);
+  } catch (error) {
+    console.error("Error fetching veterinarians", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // Fetch vet information
 app.get("/veterinarian/:vetId", async (req, res) => {
   try {
