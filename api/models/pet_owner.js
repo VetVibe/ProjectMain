@@ -20,7 +20,6 @@ const PetOwnerSchema = new mongoose.Schema({
   location: {
     type: String,
     required: true,
-    unique: true,
   },
   pets: {
     type: [mongoose.Types.ObjectId],

@@ -35,13 +35,27 @@ export default function VetHomeScreen({ route, navigation }) {
       });
   }, [vetId]);
 
-  const toggleSwitch = () =>
-    setVetDetails((prevUserInput) => {
-      return {
-        ...prevUserInput,
-        ["isAvailable"]: !vetDetails.isAvailable,
-      };
-    });
+  const toggleSwitch = () => {
+    // Update the local state
+    setVetDetails((prevUserInput) => ({
+      ...prevUserInput,
+      isAvailable: !vetDetails.isAvailable,
+    }));
+
+    // Make a PUT request to update the availability on the server
+    axios
+      .put(`http://localhost:3000/veterinarian/updateInfo/${vetId}`, {
+        updatedData: { isAvailable: !vetDetails.isAvailable },
+      })
+      .then((response) => {
+        // Handle success if needed
+        console.log("Availability updated successfully");
+      })
+      .catch((error) => {
+        // Handle error if needed
+        console.error("Error updating availability:", error);
+      });
+  };
 
   const EditVetProfileClick = () => {
     navigation.navigate("Edit Vet Profile Screen", { vetId: vetId });

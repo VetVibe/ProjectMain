@@ -463,3 +463,18 @@ app.get("/cities", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+app.get("/specialization", async (req, res) => {
+  try {
+    const specialization = await mongoose.connection.db
+      .collection("Specialisation")
+      .find()
+      .toArray();
+
+    // Respond with the fetched cities
+    res.status(200).json(specialization);
+  } catch (error) {
+    console.error("Error fetching cities:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
