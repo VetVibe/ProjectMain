@@ -23,12 +23,14 @@ export default function SignUpScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [id, setId] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [location, setLocation] = useState("");
-  const [specialization, setSpecialization] = useState("");
   const [profilePicture, setProfilePicture] = useState(null);
   const [cityList, setCityList] = useState([]);
   const [selectedCity, setSelectedCity] = useState("");
+  const [specializationList, setSpecializationList] = useState([]);
+  const [selectedSpecialization, setSelectedSpecialization] = useState("");
   const [isCityPickerVisible, setCityPickerVisible] = useState(false);
+  const [isSpecializationPickerVisible, setSpecializationPickerVisible] =
+    useState(false);
 
   useEffect(() => {
     // Fetch the list of cities from your MongoDB database
@@ -46,16 +48,41 @@ export default function SignUpScreen({ navigation }) {
       });
   }, []);
 
+  useEffect(() => {
+    // Fetch the list of spec from your MongoDB database
+    axios
+      .get("http://localhost:3000/specialization")
+      .then((response) => {
+        // Extract only the "city" field from each object in the response data
+        const specializations = response.data.map(
+          (specObject) => specObject.specialisation
+        );
+
+        console.log("specializations response:", specializations);
+        setSpecializationList(specializations);
+      })
+      .catch((error) => {
+        console.error("Error fetching specializations:", error);
+      });
+  }, []);
+
   const handleTabPress = (tab) => {
     setActiveTab(tab);
   };
   const toggleCityPicker = () => {
     setCityPickerVisible(!isCityPickerVisible);
   };
+  const toggleSpecializationPicker = () => {
+    setSpecializationPickerVisible(!isSpecializationPickerVisible);
+  };
 
   const handleCitySelect = (itemValue) => {
     setSelectedCity(itemValue);
     toggleCityPicker();
+  };
+  const handleSpecializationSelect = (itemValue) => {
+    setSelectedSpecialization(itemValue);
+    toggleSpecializationPicker();
   };
 
   const handleRegistration = () => {
@@ -68,7 +95,7 @@ export default function SignUpScreen({ navigation }) {
       ...(activeTab === "vet" && {
         vetId: id,
         phoneNumber,
-        specialization,
+        specialization: selectedSpecialization,
       }),
     };
 
@@ -128,7 +155,7 @@ export default function SignUpScreen({ navigation }) {
         setPassword("");
         setId("");
         setPhoneNumber("");
-        setLocation("");
+        setSelectedCity("");
         setProfilePicture(null);
 
         navigation.goBack();
@@ -256,12 +283,37 @@ export default function SignUpScreen({ navigation }) {
             keyboardType="phone-pad"
           />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Specialization"
-            value={specialization}
-            onChangeText={setSpecialization}
-          />
+          {/* Specialization picker for veterinarians */}
+          <View style={styles.pickerContainer}>
+            <TouchableOpacity
+              onPress={toggleSpecializationPicker}
+              style={styles.pickerButton}
+            >
+              <Text>{selectedSpecialization || "Select Specialization"}</Text>
+            </TouchableOpacity>
+
+            <Modal
+              visible={isSpecializationPickerVisible}
+              animationType="slide"
+            >
+              <View style={styles.modalContainer}>
+                <Picker
+                  style={styles.picker}
+                  selectedValue={selectedSpecialization}
+                  onValueChange={handleSpecializationSelect}
+                >
+                  <Picker.Item label="Select Specialization" value="" />
+                  {specializationList.map((spec) => (
+                    <Picker.Item key={spec} label={spec} value={spec} />
+                  ))}
+                </Picker>
+                <Button
+                  title="Close"
+                  onPress={() => setSpecializationPickerVisible(false)}
+                />
+              </View>
+            </Modal>
+          </View>
         </>
       )}
 
