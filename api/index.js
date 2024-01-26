@@ -47,7 +47,6 @@ const generateSecretKey = () => {
 const secretKey = generateSecretKey();
 
 // ------------ Pet Owner ------------
-
 // Register a pet owner
 app.post("/petOwner/register", async (req, res) => {
   try {
@@ -123,6 +122,10 @@ app.get("/petOwner/:petOwnerId/pets", async (req, res) => {
   }
 });
 
+
+
+
+
 // ------------ Veterinarian ------------
 
 // Register a veterinarian
@@ -196,14 +199,14 @@ app.post("/veterinarian/login", async (req, res) => {
   }
 });
 
-// Endpoint to fetch veterinarians based on availability and location
+// Endpoint to fetch veterinarians based on specialization and location
 app.get("/veterinarians", async (req, res) => {
-  const { location, isAvailable } = req.query;
+  const { location, specialization } = req.query;
 
   try {
     let query = {};
     if (location) query.location = location;
-    if (isAvailable !== undefined) query.isAvailable = isAvailable === "true";
+    if (specialization) query.specialization = specialization;
 
     const veterinarians = await Veterinarian.find(query);
     res.status(200).json(veterinarians);
@@ -476,5 +479,27 @@ app.get("/specialization", async (req, res) => {
   } catch (error) {
     console.error("Error fetching cities:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// DELETE endpoint to remove a pet and update the pet owner's list of pets
+app.delete('/pet/:petId', async (req, res) => {
+  try {
+    const petId = req.params.petId;
+
+    // Find and delete the pet
+    const pet = await Pet.findByIdAndDelete(petId);
+    if (!pet) {
+      return res.status(404).json({ message: 'Pet not found' });
+    }
+
+    // If the pet has an owner, update the PetOwner's pets array
+    if (pet.ownerId) {
+      await PetOwner.findByIdAndUpdate(pet.ownerId, { $pull: { pets: pet._id } });
+    }
+
+    res.status(200).json({ message: 'Pet deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting pet', error });
   }
 });

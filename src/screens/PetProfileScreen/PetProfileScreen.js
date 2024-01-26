@@ -13,7 +13,7 @@ export default function PetProfileScreen({ route, navigation }) {
   useEffect(() => {
     const updatePetDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/pet/${petId}`);
+        const response = await axios.get(`http://10.0.2.2:3000/pet/${petId}`);
         const mappedPetDetails = mapPetDetails(response.data);
         setPetDetails(mappedPetDetails);
       } catch (error) {
@@ -36,11 +36,25 @@ export default function PetProfileScreen({ route, navigation }) {
     navigation.navigate("Pet Profile Screen Edit", { petId: petId });
   };
 
+  const deletePet = async () => {
+    try {
+      await axios.delete(`http://localhost:3000/pet/${petId}`);
+      // Navigate back or to another screen after successful deletion
+      navigation.goBack();
+    } catch (error) {
+      console.error("Error deleting pet:", error);
+    }
+  };
+
   return (
     <View>
       <TouchableOpacity onPress={navigateToEditScreen} style={styles.editButton}>
         <Text style={tw`text-2xl font-semibold pr-2 tracking-wide`}>Edit Profile</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity onPress={deletePet} style={styles.deleteButton}>
+      <Text style={tw`text-2xl font-semibold pr-2 tracking-wide text-red-500`}>Delete Pet</Text>
+    </TouchableOpacity>
 
       <ScrollView style={{ flexGrow: 1 }}>
         <Image source={{ uri: petDetails.imgSrc }} style={styles.petImage} />
@@ -73,6 +87,11 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   editButton: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  deleteButton: {
     flexDirection: "row-reverse",
     alignItems: "center",
     marginTop: 10,

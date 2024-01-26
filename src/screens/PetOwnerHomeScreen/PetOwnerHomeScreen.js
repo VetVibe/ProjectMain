@@ -11,13 +11,19 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import PetContainer from "./PetContainer";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import VetSearchForm from "../../components/VetSearchForm/VetSearchForm"; 
+import PetModal from "../../components/PetModal/PetModal"; 
+
 import { MaterialIcons } from "@expo/vector-icons";
 import { COLORS, FONTS, SIZES, images } from "../../constants";
 
 export default function PetOwnerHomeScreen({ route, navigation }) {
-  const [searchQuery, setSearchQuery] = useState("");
   const [userPets, setUserPets] = useState([]);
   const [veterinarians, setVeterinarians] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedSpecialization, setSelectedSpecialization] = useState('');
+  const [isPetModalVisible, setIsPetModalVisible] = useState(false);
+
 
   const petOwnerId = route.params.userId;
 
@@ -45,16 +51,20 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
       }
     };
 
-    // Listen for changes and update petDetails
-    const subscription = navigation.addListener("focus", updateUserPetDetails);
+  
+  const focusListener = navigation.addListener("focus", () => {
+      updateUserPetDetails();
+      resetModalState();
+    });
 
-    // Clean up the subscription when the component unmounts
-    return () => {
-      if (subscription) {
-        subscription();
-      }
-    };
-  }, [petOwnerId, navigation]);
+   // Clean up the subscription when the component unmounts
+  return () => {
+    if (focusListener) {
+      focusListener();
+    }
+  };
+  }, [petOwnerId, navigation, isPetModalVisible]);
+
   const LogoutClick = () => {
     clearAuthToken();
   };
@@ -66,8 +76,8 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
 
   const handleSearch = () => {
     const queryParams = new URLSearchParams();
-    if (searchQuery) queryParams.append("location", searchQuery);
-    queryParams.append("isAvailable", true);
+    if (selectedLocation) queryParams.append('location', selectedLocation);
+    if (selectedSpecialization) queryParams.append('specialization', selectedSpecialization);
 
     axios
       .get(`http://localhost:3000/veterinarians?${queryParams.toString()}`)
@@ -78,6 +88,7 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
         console.error("Error fetching veterinarians:", error);
       });
   };
+
 
   const handleNavigateToEditProfile = () => {
     navigation.navigate("Pet Profile Screen Edit", { petOwnerId: petOwnerId });
@@ -92,6 +103,16 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
       userType: "petOwner", // ID of the pet owner
     });
   };
+  const resetModalState = () => {
+    if (isPetModalVisible) {
+      setIsPetModalVisible(false);
+    }
+  };
+
+
+  const togglePetModal = () => {
+    setIsPetModalVisible(!isPetModalVisible);
+  };
 
   return (
     <ScrollView>
@@ -101,22 +122,23 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
         </TouchableOpacity>
       </View>
 
-      {userPets.length > 0 ? (
-        <PetContainer userPets={userPets} navi={navigation} />
-      ) : (
-        <Text>No pets in your collection</Text>
-      )}
-
-      <Text style={styles.title}>Find a Vet</Text>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search for vets"
-        value={searchQuery}
-        onChangeText={(text) => setSearchQuery(text)}
-      />
-      <TouchableOpacity style={styles.logoutButton} onPress={LogoutClick}>
-        <MaterialIcons name="logout" size={24} color={COLORS.white} />
+      <TouchableOpacity onPress={togglePetModal} style={styles.viewPetsButton}>
+        <Text>View My Pets</Text>
       </TouchableOpacity>
+
+      <PetModal
+      isPetModalVisible={isPetModalVisible}
+      togglePetModal={togglePetModal}
+      userPets={userPets}
+      navigation={navigation}
+    />
+
+    <View style={styles.searchSection}>
+     <Text style={styles.title}>Find a Vet</Text>
+     <VetSearchForm
+        setSelectedLocation={setSelectedLocation}
+        setSelectedSpecialization={setSelectedSpecialization}
+      />
       <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
         <Text style={styles.buttonText}>Search</Text>
       </TouchableOpacity>
@@ -127,11 +149,19 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
           onPress={() => handleVetPress(vet)}
           style={styles.vetItem}
         >
-          <Text>
-            {vet.name} - {vet.location}
-          </Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+         <View style={[styles.availabilityIndicator, vet.isAvailable ? styles.available : styles.notAvailable]} />
+         <Text style={{ marginLeft: 5 }}>
+         {vet.name} - {vet.location}
+        </Text>
+       </View>
+      </TouchableOpacity>
+
       ))}
+      </View>
+      <TouchableOpacity style={styles.logoutButton} onPress={LogoutClick}>
+        <MaterialIcons name="logout" size={24} color={COLORS.white} />
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -172,6 +202,26 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     marginTop: 20,
+  },
+  searchSection: {
+    paddingTop: 90, // Added top padding to push the entire section down
+  },
+  vetItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  availabilityIndicator: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginLeft: 5,
+  },
+  available: {
+    backgroundColor: '#00FF00',
+  },
+  notAvailable: {
+    backgroundColor: 'red',
   },
   logoutButton: {
     position: "absolute",
