@@ -1,29 +1,45 @@
-// VetSearchForm.js
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import RNPickerSelect from 'react-native-picker-select';
+import axios from 'axios';
 
 const VetSearchForm = ({ setSelectedLocation, setSelectedSpecialization }) => {
+  const [cityList, setCityList] = useState([]);
+  const [specializationList, setSpecializationList] = useState([]);
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:3000/cities")
+      .then(response => {
+        const cities = response.data.map(cityObject => cityObject.city);
+        setCityList(cities.map(city => ({ label: city, value: city })));
+      })
+      .catch(error => {
+        console.error("Error fetching cities:", error);
+      });
+  }, []);
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:3000/specialization")
+      .then(response => {
+        const specializations = response.data.map(specObject => specObject.specialisation);
+        setSpecializationList(specializations.map(spec => ({ label: spec, value: spec })));
+      })
+      .catch(error => {
+        console.error("Error fetching specializations:", error);
+      });
+  }, []);
+
   return (
     <>
       <RNPickerSelect
         onValueChange={(value) => setSelectedLocation(value)}
-        items={[
-          { label: 'Tel Aviv', value: 'Tel Aviv' },
-          { label: 'Ariel', value: 'Ariel' },
-          { label: 'Jerusalem', value: 'Jerusalem' },
-          { label: 'Haifa', value: 'Haifa' },
-        ]}
+        items={cityList}
         placeholder={{ label: 'Select Location', value: null }}
       />
       <RNPickerSelect
         onValueChange={(value) => setSelectedSpecialization(value)}
-        items={[
-          { label: 'Cardiology', value: 'Cardiology' },
-          { label: 'Large animal internal medicine', value: 'Large animal internal medicine' },
-          { label: 'Neurology', value: 'Neurology' },
-          { label: 'Oncology', value: 'Oncology' },
-          { label: 'Nutrition', value: 'Nutrition' },
-        ]}
+        items={specializationList}
         placeholder={{ label: 'Select Specialization', value: null }}
       />
     </>
