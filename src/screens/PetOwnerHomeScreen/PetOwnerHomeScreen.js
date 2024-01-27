@@ -31,14 +31,14 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
     const updateUserPetDetails = async () => {
       try {
         const response = await axios.get(
-          `http://10.0.2.2:3000/petOwner/${petOwnerId}/pets`
+          `http://localhost:3000/petOwner/${petOwnerId}/pets`
         );
         const petIds = response.data.pets;
 
         // Fetch details of each pet concurrently
         const fetchPetDetails = petIds.map((petId) =>
           axios
-            .get(`http://10.0.2.2:3000/pet/${petId}`)
+            .get(`http://localhost:3000/pet/${petId}`)
             .then((response) => response.data)
         );
 
@@ -80,7 +80,7 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
     if (selectedSpecialization) queryParams.append('specialization', selectedSpecialization);
 
     axios
-      .get(`http://10.0.2.2:3000/veterinarians?${queryParams.toString()}`)
+      .get(`http://localhost:3000/veterinarians?${queryParams.toString()}`)
       .then((response) => {
         setVeterinarians(response.data);
       })

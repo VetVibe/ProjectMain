@@ -11,12 +11,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const roleSelectors = {
   petOwner: {
-    postUrl: "http://10.0.2.2:3000/petOwner/login",
+    postUrl: "http://localhost:3000/petOwner/login",
     navigationScreen: "Pet Owner Home Screen",
     emailPlaceholder: "email",
   },
   vet: {
-    postUrl: "http://10.0.2.2:3000/veterinarian/login",
+    postUrl: "http://localhost:3000/veterinarian/login",
     navigationScreen: "Vet Home Screen",
     emailPlaceholder: "Veterinarian ID",
   },

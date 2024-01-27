@@ -35,7 +35,7 @@ export default function SignUpScreen({ navigation }) {
   useEffect(() => {
     // Fetch the list of cities from your MongoDB database
     axios
-      .get("http://10.0.2.2:3000/cities")
+      .get("http://localhost:3000/cities")
       .then((response) => {
         // Extract only the "city" field from each object in the response data
         const cities = response.data.map((cityObject) => cityObject.city);
@@ -51,7 +51,7 @@ export default function SignUpScreen({ navigation }) {
   useEffect(() => {
     // Fetch the list of spec from your MongoDB database
     axios
-      .get("http://10.0.2.2:3000/specialization")
+      .get("http://localhost:3000/specialization")
       .then((response) => {
         // Extract only the "city" field from each object in the response data
         const specializations = response.data.map(
@@ -101,13 +101,13 @@ export default function SignUpScreen({ navigation }) {
 
     const postUrl =
       activeTab === "petOwner"
-        ? "http://10.0.2.2:3000/petOwner/register"
-        : "http://10.0.2.2:3000/veterinarian/register";
+        ? "http://localhost:3000/petOwner/register"
+        : "http://localhost:3000/veterinarian/register";
 
     // If registering as a veterinarian, check if the vet ID is valid first
     if (activeTab === "vet") {
       axios
-        .get(`http://10.0.2.2:3000/veterinarianId/checkId/${id}`)
+        .get(`http://localhost:3000/veterinarianId/checkId/${id}`)
         .then((response) => {
           if (response.data.isValid) {
             // Vet ID is valid, proceed with registration

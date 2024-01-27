@@ -10,7 +10,6 @@ const Rating = ({ navigation, vetDetails,onNewRating }) => {
     const handleRatingCompleted = (rating) => {
         console.log("Rating is: " + rating);
         setRating(rating);
-        // Add logic to handle the rating value
     };
 
     const saveRating = async () => {
@@ -50,11 +49,8 @@ const Rating = ({ navigation, vetDetails,onNewRating }) => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>
-                Are you a customer of this vet?
-            </Text>
             <Text style={styles.subtitle}>
-                If so, how satisfied are you with his services?
+                Rate this vet:
             </Text>
             <StarRating
                 rating={rating}
@@ -76,13 +72,9 @@ const styles = StyleSheet.create({
         padding: 20,
         backgroundColor: 'white', // Changed background color to white
     },
-    title: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        textAlign: 'center'
-    },
     subtitle: {
         fontSize: 18,
+        fontWeight: 'bold',
         textAlign: 'center',
         marginVertical: 20
     },

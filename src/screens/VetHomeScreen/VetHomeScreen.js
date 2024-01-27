@@ -26,7 +26,7 @@ export default function VetHomeScreen({ route, navigation }) {
 
   useEffect(() => {
     axios
-      .get(`http://10.0.2.2:3000/veterinarian/${vetId}`)
+      .get(`http://localhost:3000/veterinarian/${vetId}`)
       .then((response) => {
         const mapedVetDetails = mapVetDetails(response.data);
         setVetDetails(mapedVetDetails);
@@ -45,7 +45,7 @@ export default function VetHomeScreen({ route, navigation }) {
 
     // Make a PUT request to update the availability on the server
     axios
-      .put(`http://10.0.2.2:3000/veterinarian/updateInfo/${vetId}`, {
+      .put(`http://localhost:3000/veterinarian/updateInfo/${vetId}`, {
         updatedData: { isAvailable: !vetDetails.isAvailable },
       })
       .then((response) => {
@@ -165,7 +165,7 @@ export default function VetHomeScreen({ route, navigation }) {
             <>
               <View style={styles.availabilityContainer}>
                 <Text
-                  style={{ ...FONTS.h4, color: COLORS.black, marginRight: 10 }}
+                  style={{ ...FONTS.h3, color: COLORS.black, marginRight: 10 }}
                 >
                   {vetDetails.isAvailable ? "Available" : "Unavailable"}
                 </Text>
@@ -199,15 +199,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   availabilityContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "90%",
-    height: 40,
-    padding: 10,
-    marginVertical: 20,
-    backgroundColor: COLORS.lightGray,
-    borderRadius: 10,
+    ...FONTS.h2,
+    color: COLORS.black,
+    textAlign: "left",
+    marginTop: 15,
   },
   infoBox: {
     flexDirection: "column",
