@@ -13,7 +13,7 @@ export default function PetProfileScreen({ route, navigation }) {
   useEffect(() => {
     const updatePetDetails = async () => {
       try {
-        const response = await axios.get(`http://10.0.2.2:3000/pet/${petId}`);
+        const response = await axios.get(`http://localhost:3000/pet/${petId}`);
         const mappedPetDetails = mapPetDetails(response.data);
         setPetDetails(mappedPetDetails);
       } catch (error) {
