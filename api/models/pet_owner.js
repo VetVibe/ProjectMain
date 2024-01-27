@@ -24,6 +24,7 @@ const PetOwnerSchema = new mongoose.Schema({
   pets: {
     type: [mongoose.Types.ObjectId],
   },
+  ratings:     { type: [String] ,default: []} ,
 });
 
 const PetOwner = mongoose.model("Pet Owner", PetOwnerSchema);

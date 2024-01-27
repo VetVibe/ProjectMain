@@ -16,6 +16,7 @@ import { mapVetDetails } from "../../utils";
 import axios from "axios";
 import { style } from "twrnc";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Rating from "../../components/Rating/Rating";
 
 export default function VetHomeScreen({ route, navigation }) {
   const [vetDetails, setVetDetails] = useState({});
@@ -25,7 +26,7 @@ export default function VetHomeScreen({ route, navigation }) {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3000/veterinarian/${vetId}`)
+      .get(`http://10.0.2.2:3000/veterinarian/${vetId}`)
       .then((response) => {
         const mapedVetDetails = mapVetDetails(response.data);
         setVetDetails(mapedVetDetails);
@@ -44,7 +45,7 @@ export default function VetHomeScreen({ route, navigation }) {
 
     // Make a PUT request to update the availability on the server
     axios
-      .put(`http://localhost:3000/veterinarian/updateInfo/${vetId}`, {
+      .put(`http://10.0.2.2:3000/veterinarian/updateInfo/${vetId}`, {
         updatedData: { isAvailable: !vetDetails.isAvailable },
       })
       .then((response) => {
@@ -127,7 +128,7 @@ export default function VetHomeScreen({ route, navigation }) {
           <View style={{ paddingVertical: 8, flexDirection: "row" }}>
             <View style={styles.infoBox}>
               <Text style={{ ...FONTS.h3, color: "black" }}>
-                {vetDetails.rate}
+                {+vetDetails.rateCount > 0 ?  (+vetDetails.rate / +vetDetails.rateCount).toFixed(1) :0}
               </Text>
               <Text style={{ ...FONTS.body4, color: "black" }}>Rating</Text>
             </View>
@@ -168,6 +169,9 @@ export default function VetHomeScreen({ route, navigation }) {
                 >
                   {vetDetails.isAvailable ? "Available" : "Unavailable"}
                 </Text>
+              </View>
+              <View>
+                <Rating vetDetails={vetDetails}  onNewRating={({newRating, newRatingCount}) => setVetDetails({...vetDetails, rating: newRating, ratingCount: newRatingCount})}/>
               </View>
             </>
           )}

@@ -31,6 +31,10 @@ const veterinarianSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  rateCount: {
+    type: Number,
+    default: 0,
+  },
   clientsCount: {
     type: Number,
     default: 0,
