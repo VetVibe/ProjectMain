@@ -16,6 +16,7 @@ import { mapVetDetails } from "../../utils";
 import axios from "axios";
 import { style } from "twrnc";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Rating from "../../components/Rating/Rating";
 
 export default function VetHomeScreen({ route, navigation }) {
   const [vetDetails, setVetDetails] = useState({});
@@ -127,7 +128,7 @@ export default function VetHomeScreen({ route, navigation }) {
           <View style={{ paddingVertical: 8, flexDirection: "row" }}>
             <View style={styles.infoBox}>
               <Text style={{ ...FONTS.h3, color: "black" }}>
-                {vetDetails.rate}
+                {+vetDetails.rateCount > 0 ?  (+vetDetails.rate / +vetDetails.rateCount).toFixed(1) :0}
               </Text>
               <Text style={{ ...FONTS.body4, color: "black" }}>Rating</Text>
             </View>
@@ -164,10 +165,13 @@ export default function VetHomeScreen({ route, navigation }) {
             <>
               <View style={styles.availabilityContainer}>
                 <Text
-                  style={{ ...FONTS.h4, color: COLORS.black, marginRight: 10 }}
+                  style={{ ...FONTS.h3, color: COLORS.black, marginRight: 10 }}
                 >
                   {vetDetails.isAvailable ? "Available" : "Unavailable"}
                 </Text>
+              </View>
+              <View>
+                <Rating vetDetails={vetDetails}  onNewRating={({newRating, newRatingCount}) => setVetDetails({...vetDetails, rating: newRating, ratingCount: newRatingCount})}/>
               </View>
             </>
           )}
@@ -195,15 +199,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   availabilityContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "90%",
-    height: 40,
-    padding: 10,
-    marginVertical: 20,
-    backgroundColor: COLORS.lightGray,
-    borderRadius: 10,
+    ...FONTS.h2,
+    color: COLORS.black,
+    textAlign: "left",
+    marginTop: 15,
   },
   infoBox: {
     flexDirection: "column",

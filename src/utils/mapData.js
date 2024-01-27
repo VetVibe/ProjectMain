@@ -40,6 +40,7 @@ export const mapVetDetails = (vetData) => {
     phoneNumber: vetData?.phoneNumber || "",
     profilePicture: vetData?.profilePicture || "https://www.behance.net/gallery/189614555/VetProfile.jpg",
     rate: vetData?.rate || 0,
+    rateCount: vetData.rateCount || 0,
     clientsCount: vetData?.clientsCount || 0,
     about: vetData?.about || "",
     tips: vetData?.tips || [],

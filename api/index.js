@@ -199,6 +199,36 @@ app.post("/veterinarian/login", async (req, res) => {
   }
 });
 
+// Endpoint to add rating to a vet
+app.post("/veterinarian/rate", async (req, res) => {
+  try {
+    let token = req.headers['authorization'] || req.headers['Authorization']
+    token = token.split("Bearer ")[1] 
+    const {userId} = jwt.decode(token);
+    const { email , rating} = req.body;
+    const veterinarian = await Veterinarian.findOne({ email });
+    const petOwner = await PetOwner.findById(userId);
+   
+    if (!petOwner || !veterinarian) {
+      return res.status(404).json({ message: "Vet/Pet owner email not found" });
+    }
+
+    if (veterinarian && petOwner.ratings.includes(email)) {
+      return res.status(400).json({ message: "You have already rated this vert" });
+    }
+    petOwner.ratings.push(email)
+    veterinarian.rate += rating
+    veterinarian.rateCount++
+
+    await petOwner.save()
+    await veterinarian.save()
+
+    res.status(200).json({  newRating: veterinarian.rate, newRatingCount: veterinarian.rateCount  });
+  } catch (error) {
+    res.status(500).json({ message: "Login failed" });
+  }
+});
+
 // Endpoint to fetch veterinarians based on specialization and location
 app.get("/veterinarians", async (req, res) => {
   const { location, specialization } = req.query;
@@ -223,6 +253,9 @@ app.get("/veterinarian/:vetId", async (req, res) => {
     const veterinarian = await Veterinarian.findById(vetId);
     if (!veterinarian) {
       return res.status(404).json({ message: "Veterinarian not found" });
+    }
+    if(veterinarian.rateCount === undefined) {
+      veterinarian.rateCount = 0
     }
     res.status(200).json(veterinarian);
   } catch (error) {
