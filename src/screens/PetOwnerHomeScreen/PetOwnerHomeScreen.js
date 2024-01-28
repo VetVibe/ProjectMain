@@ -94,9 +94,11 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
     navigation.navigate("Pet Profile Screen Edit", { petOwnerId: petOwnerId });
   };
 
-  const handleVetPress = (vet) => {
-    console.log("vetId: check", vet._id);
+  const handleNavigateToTipsScreen = () => {
+    navigation.navigate("Tips Screen Pet");
+  };
 
+  const handleVetPress = (vet) => {
     // Navigate to VetHomeScreen with the selected vet's ID and pet owner's ID
     navigation.navigate("Vet Home Screen", {
       userId: vet._id,
@@ -161,6 +163,9 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
       </View>
       <TouchableOpacity style={styles.logoutButton} onPress={LogoutClick}>
         <MaterialIcons name="logout" size={24} color={COLORS.white} />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.viewTipsButton} onPress={handleNavigateToTipsScreen}>
+        <Text style={styles.buttonText}>View Tips</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -234,5 +239,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: COLORS.primary,
     borderRadius: 10,
+  },
+  viewTipsButton: {
+    backgroundColor: "#FFA500",
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 20,
+    marginBottom: 20,
   },
 });

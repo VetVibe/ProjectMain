@@ -338,6 +338,22 @@ app.get("/veterinarianId/checkId/:vetId", async (req, res) => {
 
 // ------------ Tip------------
 
+app.get("/tips/all", async (req, res) => {
+  try {
+    // Populate the 'vetId' field in each tip with the 'name' field from the referenced veterinarian document
+    const tips = await Tip.find().populate('vetId', 'name');
+    const tipsWithVetNames = tips.map(tip => ({
+      _id: tip._id,
+      content: tip.content,
+      vetName: tip.vetId ? tip.vetId.name : 'Unknown'
+    }));
+    res.status(200).json(tipsWithVetNames);
+  } catch (error) {
+    console.error("Error fetching all tips", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // Add tip
 app.post("/tip/addTip/:vetId", async (req, res) => {
   try {
