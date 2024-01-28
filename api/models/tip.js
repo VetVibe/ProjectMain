@@ -8,6 +8,7 @@ const tipSchema = new mongoose.Schema({
   },
   vetId: {
     type: mongoose.Types.ObjectId,
+    ref: 'Veterinarian',
     required: true,
   },
 });
