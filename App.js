@@ -12,11 +12,13 @@ import {
   EditVetProfileScreen,
   TipsScreen,
 } from "./src/screens";
+import { VetDetailsContextProvider } from "./src/context/VetDetailsContext";
 
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
+    <VetDetailsContextProvider>
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Home">
         <Stack.Screen name="Home" component={HomeScreen} />
@@ -30,5 +32,6 @@ export default function App() {
         <Stack.Screen name="Tips Screen" component={TipsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
+    </VetDetailsContextProvider>
   );
 }

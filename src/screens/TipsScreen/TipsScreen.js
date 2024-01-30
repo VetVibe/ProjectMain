@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { View, TouchableOpacity, Text, TextInput, Button, FlatList, StyleSheet } from "react-native";
+import { View, TouchableOpacity, Text, TextInput, Button, ScrollView, FlatList, StyleSheet } from "react-native";
 import { COLORS, FONTS, SIZES, images } from "../../constants";
 import { MaterialIcons, AntDesign } from "@expo/vector-icons";
 import axios from "axios";
+import TipsScreenPet, { useAllTips } from "../TipsScreenPet/TipsScreenPet";
+
 
 export default function TipsScreen({ route, navigation }) {
   const [vetTips, setVetTips] = useState([]);
@@ -11,7 +13,10 @@ export default function TipsScreen({ route, navigation }) {
 
   const vetId = route.params.vetId;
   const userType = route.params.userType;
-
+  const   {fetchAllTips, vetTips: allVetTips} = useAllTips()
+  useEffect(() => {
+    fetchAllTips();
+  },[navigation])
   useEffect(() => {
     const updateTips = async () => {
       try {
@@ -75,6 +80,16 @@ export default function TipsScreen({ route, navigation }) {
     navigation.navigate("Share Tip Screen", { vetId: vetId });
   };
 
+  const renderItemOtherVet = ({ item }) => {
+    if(item.vetId == vetId) return null
+    return (
+        <View style={styles.tipContainer}>
+        <Text style={styles.tipContent}>{item.content}</Text>
+        <Text style={styles.vetName}>By: {item.vetName}</Text>
+      </View>
+    );
+  };
+
   const renderItem = ({ item }) => {
     const isEditing = item._id === editingTipId;
 
@@ -105,12 +120,17 @@ export default function TipsScreen({ route, navigation }) {
   return (
     <View>
       {userType === "vet" && (
+        <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}> My Tips:</Text>
+      )}
+      {userType === "vet" && (
         <TouchableOpacity onPress={ShareTipClick}>
           <AntDesign name="pluscircleo" size={24} color="black" />
         </TouchableOpacity>
       )}
-      <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>Vet Tips</Text>
+      {/* <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>My Tips</Text> */}
       <FlatList data={vetTips} renderItem={renderItem} keyExtractor={(item) => item._id} />
+      <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}> Vet Tips:</Text>
+      <FlatList data={allVetTips} renderItem={renderItemOtherVet} keyExtractor={(item) => item._id} />
     </View>
   );
 }
@@ -145,6 +165,10 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     borderRadius: 20, // Added to make it round
     backgroundColor: "#FFFFFF", // White
+  },
+  vetName: {
+    fontStyle: 'italic',
+    marginTop: 5,
   },
   editProfileButton: {
     position: "absolute",

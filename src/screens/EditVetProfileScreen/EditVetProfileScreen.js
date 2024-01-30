@@ -19,29 +19,22 @@ import InputContainer from "../../components/InputContainer/InputContainer";
 import { mapVetDetailsToSchema, mapVetDetails } from "../../utils";
 import { useEffect } from "react";
 import axios from "axios";
+import { useVetPage } from "../../context/VetDetailsContext";
 
-const VetEditUrls = {
+export const VetEditUrls = {
   info: (id) => `http://localhost:3000/veterinarian/${id}`,
 };
 
 export default function EditVetProfileScreen({ route, navigation }) {
   const [selectedImage, setSelectedImage] = useState(imagesDataURL[0]);
-  const [vetDetails, setVetDetails] = useState({});
+  const {vetDetails, updateVetDetails,fetchVetDetails} = useVetPage()
 
   const vetId = route.params.vetId;
 
   useEffect(() => {
-    const fetchVetDetails = async () => {
-      try {
-        const { data } = await axios.get(VetEditUrls.info(vetId));
-        const mapedVetDetails = mapVetDetails(data);
-        setVetDetails(mapedVetDetails);
-        setSelectedImage(mapVetDetails.profilePicture);
-      } catch (e) {
-        Alert.alert(e.message);
-      }
-    };
-    fetchVetDetails();
+    if(vetId !== vetDetails?._id) {
+      fetchVetDetails(vetId);
+    }
   }, [vetId]);
 
   const handleImageSelection = async () => {
@@ -58,7 +51,7 @@ export default function EditVetProfileScreen({ route, navigation }) {
   };
 
   const handleChange = (inputIdentifier, newValue) => {
-    setVetDetails((prevUserInput) => {
+    updateVetDetails((prevUserInput) => {
       return {
         ...prevUserInput,
         [inputIdentifier]: newValue,
@@ -76,6 +69,7 @@ export default function EditVetProfileScreen({ route, navigation }) {
     axios
       .put(`http://localhost:3000/veterinarian/updateInfo/${vetId}`, { updatedData: vetDetailsSchema })
       .then((response) => {
+        updateVetDetails(vetDetailsSchema)
         navigation.goBack();
       })
       .catch((error) => {

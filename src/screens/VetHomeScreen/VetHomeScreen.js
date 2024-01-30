@@ -17,28 +17,23 @@ import axios from "axios";
 import { style } from "twrnc";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Rating from "../../components/Rating/Rating";
+import { useVetPage } from "../../context/VetDetailsContext";
 
 export default function VetHomeScreen({ route, navigation }) {
-  const [vetDetails, setVetDetails] = useState({});
+  const {vetDetails, updateVetDetils,fetchVetDetails} = useVetPage();
 
   const vetId = route.params.userId;
   const userType = route.params.userType;
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:3000/veterinarian/${vetId}`)
-      .then((response) => {
-        const mapedVetDetails = mapVetDetails(response.data);
-        setVetDetails(mapedVetDetails);
-      })
-      .catch((error) => {
-        console.error("Error fetching vet details:", error);
-      });
+    if(vetId !== vetDetails?._id) {
+      fetchVetDetails(vetId);
+    }
   }, [vetId]);
 
   const toggleSwitch = () => {
     // Update the local state
-    setVetDetails((prevUserInput) => ({
+    updateVetDetils((prevUserInput) => ({
       ...prevUserInput,
       isAvailable: !vetDetails.isAvailable,
     }));
@@ -171,7 +166,7 @@ export default function VetHomeScreen({ route, navigation }) {
                 </Text>
               </View>
               <View>
-                <Rating vetDetails={vetDetails}  onNewRating={({newRating, newRatingCount}) => setVetDetails({...vetDetails, rating: newRating, ratingCount: newRatingCount})}/>
+                <Rating vetDetails={vetDetails}  onNewRating={({newRating, newRatingCount}) => updateVetDetils({...vetDetails, rating: newRating, ratingCount: newRatingCount})}/>
               </View>
             </>
           )}
