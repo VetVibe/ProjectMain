@@ -22,7 +22,7 @@ import axios from "axios";
 import { useVetPage } from "../../context/VetDetailsContext";
 
 export const VetEditUrls = {
-  info: (id) => `http://localhost:3000/veterinarian/${id}`,
+  info: (id) => `http://10.0.2.2:3000/veterinarian/${id}`,
 };
 
 export default function EditVetProfileScreen({ route, navigation }) {
@@ -67,7 +67,7 @@ export default function EditVetProfileScreen({ route, navigation }) {
     const vetDetailsSchema = mapVetDetailsToSchema(updatedData);
 
     axios
-      .put(`http://localhost:3000/veterinarian/updateInfo/${vetId}`, { updatedData: vetDetailsSchema })
+      .put(`http://10.0.2.2:3000/veterinarian/updateInfo/${vetId}`, { updatedData: vetDetailsSchema })
       .then((response) => {
         updateVetDetails(vetDetailsSchema)
         navigation.goBack();

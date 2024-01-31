@@ -40,7 +40,7 @@ export default function VetHomeScreen({ route, navigation }) {
 
     // Make a PUT request to update the availability on the server
     axios
-      .put(`http://localhost:3000/veterinarian/updateInfo/${vetId}`, {
+      .put(`http://10.0.2.2:3000/veterinarian/updateInfo/${vetId}`, {
         updatedData: { isAvailable: !vetDetails.isAvailable },
       })
       .then((response) => {
