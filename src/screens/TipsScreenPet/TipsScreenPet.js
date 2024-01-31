@@ -1,28 +1,35 @@
 import React, { useState, useEffect } from "react";
-import { View, TouchableOpacity, Text, FlatList, StyleSheet } from "react-native";
+import { View, TouchableOpacity, Text, FlatList, StyleSheet, Alert } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
 import axios from "axios";
 import { COLORS } from "../../constants";
 
-export default function TipsScreenPet({ route, navigation }) {
-  const [vetTips, setVetTips] = useState([]);
 
-  useEffect(() => {
-    const fetchAllTips = async () => {
-      try {
-        const response = await axios.get('http://10.0.2.2:3000/tips/all');
-        if (response.data) {
-          setVetTips(response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching tips:", error);
+export const useAllTips = () => {
+  const  [vetTips,setVetTips] = useState([])
+  const fetchAllTips = async () => {
+    try {
+      const response = await axios.get('http://10.0.2.2:3000/tips/all');
+      if (response.data) {
+        setVetTips(response.data);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching tips:", error);
+    }
+  };
 
+  return {
+    fetchAllTips,
+    vetTips,
+    setVetTips
+  }
+}
+
+export default function TipsScreenPet({ route, navigation }) {
+  const   {fetchAllTips,vetTips }= useAllTips()
+  useEffect(() => {
     fetchAllTips();
-
-    const subscription = navigation.addListener("focus", fetchAllTips);
-
+    const subscription = navigation?.addListener("focus", fetchAllTips);
     return () => {
       if (subscription) {
         subscription();
