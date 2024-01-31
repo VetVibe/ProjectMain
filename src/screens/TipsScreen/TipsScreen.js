@@ -15,12 +15,12 @@ export default function TipsScreen({ route, navigation }) {
   useEffect(() => {
     const updateTips = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/veterinarian/${vetId}/tips`);
+        const response = await axios.get(`http://10.0.2.2:3000/veterinarian/${vetId}/tips`);
         const tipIds = response.data;
 
         if (tipIds) {
           const fetchTipsDetails = tipIds.map((tipId) =>
-            axios.get(`http://localhost:3000/tip/${tipId}`).then((response) => response.data)
+            axios.get(`http://10.0.2.2:3000/tip/${tipId}`).then((response) => response.data)
           );
 
           // Wait for all fetches to complete
@@ -53,7 +53,7 @@ export default function TipsScreen({ route, navigation }) {
     setVetTips((prevTips) => prevTips.map((tip) => (tip._id === tipId ? { ...tip, content: editedTipContent } : tip)));
 
     axios
-      .put(`http://localhost:3000/tip/updateInfo/${tipId}`, {
+      .put(`http://10.0.2.2:3000/tip/updateInfo/${tipId}`, {
         updatedData: { vetId: vetId, content: editedTipContent },
       })
       .catch((error) => {
