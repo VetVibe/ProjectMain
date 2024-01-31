@@ -2,7 +2,7 @@ import axios from "axios";
 import { createContext, useContext, useState } from "react";
 import { Alert } from "react-native";
 import { mapVetDetails } from "../utils";
-import { VetEditUrls } from "../screens/EditVetProfileScreen/EditVetProfileScreen";
+import { VetEditUrls } from "../context/vetApi";
 
 
 

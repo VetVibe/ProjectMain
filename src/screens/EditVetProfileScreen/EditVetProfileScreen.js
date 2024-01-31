@@ -19,11 +19,12 @@ import InputContainer from "../../components/InputContainer/InputContainer";
 import { mapVetDetailsToSchema, mapVetDetails } from "../../utils";
 import { useEffect } from "react";
 import axios from "axios";
+import { VetEditUrls } from "../../context/vetApi";
 import { useVetPage } from "../../context/VetDetailsContext";
 
-export const VetEditUrls = {
-  info: (id) => `http://10.0.2.2:3000/veterinarian/${id}`,
-};
+// export const VetEditUrls = {
+//   info: (id) => `http://10.0.2.2:3000/veterinarian/${id}`,
+// };
 
 export default function EditVetProfileScreen({ route, navigation }) {
   const [selectedImage, setSelectedImage] = useState(imagesDataURL[0]);
