@@ -8,7 +8,7 @@ const VetSearchForm = ({ setSelectedLocation, setSelectedSpecialization }) => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3000/cities")
+      .get("http://10.0.2.2:3000/cities")
       .then(response => {
         const cities = response.data.map(cityObject => cityObject.city);
         setCityList(cities.map(city => ({ label: city, value: city })));
@@ -20,7 +20,7 @@ const VetSearchForm = ({ setSelectedLocation, setSelectedSpecialization }) => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3000/specialization")
+      .get("http://10.0.2.2:3000/specialization")
       .then(response => {
         const specializations = response.data.map(specObject => specObject.specialisation);
         setSpecializationList(specializations.map(spec => ({ label: spec, value: spec })));
