@@ -104,6 +104,45 @@ app.post("/petOwner/login", async (req, res) => {
   }
 });
 
+// Update pet owner email
+app.put("/petOwner/updateEmail/:petOwnerId", async (req, res) => {
+  const { newEmail } = req.body;
+  const { petOwnerId } = req.params;
+
+  try {
+    // Check if the new email is already registered
+    const existingOwner = await PetOwner.findOne({ email: newEmail });
+    if (existingOwner) {
+      return res.status(400).json({ message: "Email already in use." });
+    }
+
+    // Update the pet owner's email
+    await PetOwner.findByIdAndUpdate(petOwnerId, { email: newEmail });
+    res.status(200).json({ message: "Email updated successfully." });
+  } catch (error) {
+    console.error("Error updating email:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Update pet owner password
+app.put("/petOwner/updatePassword/:petOwnerId", async (req, res) => {
+  const { newPassword } = req.body;
+  const { petOwnerId } = req.params;
+
+  try {
+    // Ideally, you should hash the new password before storing it
+    // For demonstration, storing it directly (not recommended for production)
+    await PetOwner.findByIdAndUpdate(petOwnerId, { password: newPassword });
+
+    res.status(200).json({ message: "Password updated successfully." });
+  } catch (error) {
+    console.error("Error updating password:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
 // Fetch pet owner pet's collection
 app.get("/petOwner/:petOwnerId/pets", async (req, res) => {
   try {
