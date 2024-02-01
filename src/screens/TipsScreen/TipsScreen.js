@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, TouchableOpacity, Text, TextInput, Button, ScrollView, FlatList, StyleSheet } from "react-native";
+import { View, TouchableOpacity, Text, TextInput, Button, ScrollView, FlatList, StyleSheet, Image } from "react-native";
 import { COLORS, FONTS, SIZES, images } from "../../constants";
 import { MaterialIcons, AntDesign } from "@expo/vector-icons";
 import axios from "axios";
@@ -83,9 +83,16 @@ export default function TipsScreen({ route, navigation }) {
   const renderItemOtherVet = ({ item }) => {
     if(item.vetId == vetId) return null
     return (
-        <View style={styles.tipContainer}>
-        <Text style={styles.tipContent}>{item.content}</Text>
-        <Text style={styles.vetName}>By: {item.vetName}</Text>
+      <View style={styles.tipContainer}>
+        <Image
+          source={images.Vetprofile} // Make sure to update this to use item-specific images if available
+          resizeMode="cover"
+          style={styles.profileImage}
+        />
+        <View style={styles.tipTextContainer}>
+          <Text style={styles.tipContent}>{item.content}</Text>
+          <Text style={styles.vetName}>By: {item.vetName}</Text>
+        </View>
       </View>
     );
   };
@@ -129,7 +136,7 @@ export default function TipsScreen({ route, navigation }) {
       )}
       {/* <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>My Tips</Text> */}
       <FlatList data={vetTips} renderItem={renderItem} keyExtractor={(item) => item._id} />
-      <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}> Vet Tips:</Text>
+      <Text style={{ fontSize: 30, marginTop: 10, fontWeight: "bold", marginBottom: 10 }}> Vet Tips:</Text>
       <FlatList data={allVetTips} renderItem={renderItemOtherVet} keyExtractor={(item) => item._id} />
     </View>
   );
@@ -148,10 +155,12 @@ const styles = StyleSheet.create({
     marginLeft: 0,
   },
   tipContainer: {
+    flexDirection: 'row', // Set flexDirection to row to align items horizontally
     backgroundColor: "#f0f0f0",
-    borderRadius: 10,
-    padding: 15,
+    borderRadius: 2,
+    padding: 5,
     marginBottom: 10,
+    alignItems: 'center', // Align items vertically in the center
   },
   tipContent: {
     fontSize: 16,
@@ -181,5 +190,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: COLORS.primary,
     borderRadius: 10,
+  },
+  profileImage: {
+    height: 60, // Adjust the size as needed
+    width: 60, // Adjust the size as needed
+    borderRadius: 20, // Make it round
+    marginRight: 15, // Add some spacing between the image and the text
+  },
+  tipTextContainer: {
+    flex: 1, // Take up the remaining space
+  },
+  addButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 10,
   },
 });
