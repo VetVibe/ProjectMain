@@ -10,6 +10,7 @@ import {
   VetHomeScreen,
   ShareTipScreen,
   EditVetProfileScreen,
+  EditPetOwnerProfileScreen,
   TipsScreen,
   TipsScreenPet,
 } from "./src/screens";
@@ -28,6 +29,7 @@ export default function App() {
         <Stack.Screen name="Vet Home Screen" component={VetHomeScreen} />
         <Stack.Screen name="Share Tip Screen" component={ShareTipScreen} />
         <Stack.Screen name="Edit Vet Profile Screen" component={EditVetProfileScreen} />
+        <Stack.Screen name="Edit Pet Owner Profile Screen" component={EditPetOwnerProfileScreen} />
         <Stack.Screen name="Tips Screen" component={TipsScreen} />
         <Stack.Screen name="Tips Screen Pet" component={TipsScreenPet} />
       </Stack.Navigator>

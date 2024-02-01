@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Image,
+  FlatList,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import PetContainer from "./PetContainer";
@@ -22,7 +24,6 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
   const [veterinarians, setVeterinarians] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedSpecialization, setSelectedSpecialization] = useState('');
-  const [isPetModalVisible, setIsPetModalVisible] = useState(false);
 
 
   const petOwnerId = route.params.userId;
@@ -54,7 +55,7 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
   
   const focusListener = navigation.addListener("focus", () => {
       updateUserPetDetails();
-      resetModalState();
+     // resetModalState();
     });
 
    // Clean up the subscription when the component unmounts
@@ -63,7 +64,7 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
       focusListener();
     }
   };
-  }, [petOwnerId, navigation, isPetModalVisible]);
+  }, [petOwnerId, navigation]);
 
   const LogoutClick = () => {
     clearAuthToken();
@@ -95,7 +96,7 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
   };
 
   const handleNavigateToEditPetOwnerProfile = () => {
-    navigation.navigate("Pet Owner Profile Screen Edit", { petOwnerId: petOwnerId });
+    navigation.navigate("Edit Pet Owner Profile Screen", { petOwnerId: petOwnerId });
   };
 
 
@@ -110,22 +111,25 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
       userType: "petOwner", // ID of the pet owner
     });
   };
-  const resetModalState = () => {
-    if (isPetModalVisible) {
-      setIsPetModalVisible(false);
-    }
-  };
+  //const resetModalState = () => {
+  //  if (isPetModalVisible) {
+  //    setIsPetModalVisible(false);
+  //  }
+  //};
   // const EditVetProfileClick = () => {
   //   navigation.navigate("Edit Vet Profile Screen", { vetId: vetId });
   // };
   // const ShowTips = () => {
   //   navigation.navigate("Tips Screen", { vetId: vetId, userType: userType });
   // };
-
-
-  const togglePetModal = () => {
-    setIsPetModalVisible(!isPetModalVisible);
+  const handlePetSelect = (pet) => {
+    // Navigate to Pet Profile Screen with the selected pet's ID
+    navigation.navigate("Pet Profile Screen", { petId: pet._id });
   };
+
+  //const togglePetModal = () => {
+  //  setIsPetModalVisible(!isPetModalVisible);
+  //};
 
   return (
     <ScrollView>
@@ -135,16 +139,31 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity onPress={togglePetModal} style={styles.viewPetsButton}>
+      <TouchableOpacity style={styles.viewPetsButton}>
         <Text>View My Pets</Text>
       </TouchableOpacity>
 
-      <PetModal
-      isPetModalVisible={isPetModalVisible}
-      togglePetModal={togglePetModal}
-      userPets={userPets}
-      navigation={navigation}
-    />
+      {/* Horizontal FlatList for Pets */}
+      <View style={styles.petsContainer}>
+        {userPets.length > 0 ? (
+          <FlatList
+            data={userPets}
+            horizontal={true}
+            keyExtractor={(item) => item._id}
+            renderItem={({ item }) => (
+              <TouchableOpacity 
+                onPress={() => handlePetSelect(item)} 
+                style={styles.petItem}
+              >
+                <Image source={{ uri: item.imgSrc }} style={styles.petImage} />
+                <Text style={styles.petName}>{item.name}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        ) : (
+          <Text>No pets in your collection</Text>
+        )}
+      </View>
 
     <View style={styles.searchSection}>
      <Text style={styles.title}>Find a Vet</Text>
@@ -163,6 +182,11 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
           style={styles.vetItem}
         >
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Image
+        source={vet.specificImage || images.Vetprofile} // Use vet-specific image if available, else default
+        resizeMode="cover"
+        style={styles.profileImage}
+      />
          <View style={[styles.availabilityIndicator, vet.isAvailable ? styles.available : styles.notAvailable]} />
          <Text style={{ marginLeft: 5 }}>
          {vet.name} - {vet.location}
@@ -173,7 +197,7 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
       ))}
       </View>
       <TouchableOpacity
-        style={styles.editProfileButton}onPress={handleNavigateToEditProfile}>
+        style={styles.editProfileButton}onPress={handleNavigateToEditPetOwnerProfile}>
         <MaterialIcons name="edit" size={24} color={COLORS.white} />
       </TouchableOpacity>
       <TouchableOpacity style={styles.tipsButton} onPress={handleNavigateToTipsScreen}>
@@ -293,4 +317,28 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     borderRadius: 10,
   },
+  profileImage: {
+      height: 60, // Adjust the size as needed
+      width: 60, // Adjust the size as needed
+      borderRadius: 20, // Make it round
+      marginRight: 15, // Add some spacing between the image and the text
+    },
+    petsContainer: {
+      height: 150, // Adjust as needed
+      alignItems: 'center',
+      padding: 10,
+    },
+    petItem: {
+      marginHorizontal: 10,
+      alignItems: 'center',
+    },
+    petImage: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+    },
+    petName: {
+      textAlign: 'center',
+      marginTop: 5,
+    },
 });
