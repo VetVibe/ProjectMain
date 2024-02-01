@@ -136,7 +136,7 @@ export default function TipsScreen({ route, navigation }) {
       )}
       {/* <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>My Tips</Text> */}
       <FlatList data={vetTips} renderItem={renderItem} keyExtractor={(item) => item._id} />
-      <Text style={{ fontSize: 30, marginTop: 10, fontWeight: "bold", marginBottom: 10 }}> Vet Tips:</Text>
+      <Text style={{ fontSize: 20, marginTop: 10, fontWeight: "bold", marginBottom: 10 }}> Vet Tips:</Text>
       <FlatList data={allVetTips} renderItem={renderItemOtherVet} keyExtractor={(item) => item._id} />
     </View>
   );
