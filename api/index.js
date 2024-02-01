@@ -122,6 +122,49 @@ app.get("/petOwner/:petOwnerId/pets", async (req, res) => {
   }
 });
 
+// Fetch petOwner information
+app.get("/petOwner/:petOwnerId", async (req, res) => {
+  try {
+    const petOwnerId = req.params.petOwnerId;
+    const petOwner = await PetOwner.findById(petOwnerId);
+    if (!petOwner) {
+      return res.status(404).json({ message: "petOwner not found" });
+    }
+    res.status(200).json(petOwner);
+  } catch (error) {
+    console.error("Error fetching petOwner information", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Updating owner details
+app.put("/petOwner/updateInfo/:petOwnerId", async (req, res) => {
+  try {
+    const petOwnerId = req.params.petOwnerId;
+    const updatedPetOwnerData = req.body.updatedData;
+
+    // Use findOneAndUpdate to find the owner by its _id and update the data
+    const updatedPetOwner = await PetOwner.findOneAndUpdate(
+      { _id: petOwnerId },
+      { $set: updatedPetOwnerData },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedPetOwner) {
+      console.error(`Owner with ID ${petOwnerId} not found.`);
+      return res.status(404).json({ message: "pet Owner not found" });
+    }
+
+    console.log(`pet Owner with ID ${petOwnerId} updated successfully.`);
+    res
+      .status(200)
+      .json({ message: `pet Owner with ID ${petOwnerId} updated successfully.` });
+  } catch (error) {
+    console.error("Error updating pet Owner:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 
 
 
@@ -214,7 +257,7 @@ app.post("/veterinarian/rate", async (req, res) => {
     }
 
     if (veterinarian && petOwner.ratings.includes(email)) {
-      return res.status(400).json({ message: "You have already rated this vert" });
+      return res.status(400).json({ message: "You have already rated this vet" });
     }
     petOwner.ratings.push(email)
     veterinarian.rate += rating

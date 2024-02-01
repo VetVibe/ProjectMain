@@ -94,6 +94,11 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
     navigation.navigate("Pet Profile Screen Edit", { petOwnerId: petOwnerId });
   };
 
+  const handleNavigateToEditPetOwnerProfile = () => {
+    navigation.navigate("Pet Owner Profile Screen Edit", { petOwnerId: petOwnerId });
+  };
+
+
   const handleNavigateToTipsScreen = () => {
     navigation.navigate("Tips Screen Pet");
   };
@@ -110,6 +115,12 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
       setIsPetModalVisible(false);
     }
   };
+  // const EditVetProfileClick = () => {
+  //   navigation.navigate("Edit Vet Profile Screen", { vetId: vetId });
+  // };
+  // const ShowTips = () => {
+  //   navigation.navigate("Tips Screen", { vetId: vetId, userType: userType });
+  // };
 
 
   const togglePetModal = () => {
@@ -161,12 +172,23 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
 
       ))}
       </View>
+      <TouchableOpacity
+        style={styles.editProfileButton}onPress={handleNavigateToEditProfile}>
+        <MaterialIcons name="edit" size={24} color={COLORS.white} />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.tipsButton} onPress={handleNavigateToTipsScreen}>
+        <MaterialIcons
+          name="my-library-books"
+          size={24}
+          color={COLORS.white}
+        />
+      </TouchableOpacity>
       <TouchableOpacity style={styles.logoutButton} onPress={LogoutClick}>
         <MaterialIcons name="logout" size={24} color={COLORS.white} />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.viewTipsButton} onPress={handleNavigateToTipsScreen}>
+      {/* <TouchableOpacity style={styles.viewTipsButton} onPress={handleNavigateToTipsScreen}>
         <Text style={styles.buttonText}>View Tips</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </ScrollView>
   );
 }
@@ -246,5 +268,29 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginTop: 20,
     marginBottom: 20,
+  },
+  editProfileButton: {
+    position: "absolute",
+    right: 20,
+    top: 20,
+    zIndex: 1,
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+  },
+  tipsButton: {
+    position: "absolute",
+    right: 20,
+    top: 60,
+    zIndex: 2,
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
   },
 });

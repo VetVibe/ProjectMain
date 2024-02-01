@@ -67,3 +67,27 @@ export const mapVetDetailsToSchema = (vetDetails) => {
     specialization: vetDetails.specialization,
   };
 };
+
+export const mapPetOwnerDetails = (PetOwnerData) => {
+  return {
+    name: PetOwnerData.name || "",
+    email: PetOwnerData.email || "",
+    password: PetOwnerData.password || "",
+    profilePicture: PetOwnerData?.profilePicture || "https://www.behance.net/gallery/189614555/VetProfile.jpg",
+    location: PetOwnerData?.location || "",
+    pets: PetOwnerData?.pets || [],
+    ratings: PetOwnerData?.ratings || [],
+  };
+};
+
+export const mapPetOwnerDetailsToSchema = (PetOwnerDetails) => {
+  return {
+    name: PetOwnerDetails.name,
+    email: PetOwnerDetails.email,
+    password: PetOwnerDetails.password,
+    profilePicture: PetOwnerDetails.profilePicture,
+    location: PetOwnerDetails.location,
+    pets: PetOwnerDetails.pets,
+    ratings: PetOwnerDetails.ratings,
+  };
+};

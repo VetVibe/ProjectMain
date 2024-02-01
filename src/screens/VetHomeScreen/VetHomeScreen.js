@@ -135,12 +135,15 @@ export default function VetHomeScreen({ route, navigation }) {
               <Text style={styles.description}>{vetDetails.about}</Text>
             </View>
           )}
+          {userType === "vet" ? (
+          <>
           <TouchableOpacity style={styles.logoutButton} onPress={LogoutClick}>
             <MaterialIcons name="logout" size={24} color={COLORS.white} />
           </TouchableOpacity>
+          {/* // )}
 
-          {userType === "vet" ? (
-            <>
+          // {userType === "vet" ? ( */}
+            {/* <> */}
               <View style={styles.availabilityContainer}>
                 <Text
                   style={{ ...FONTS.h4, color: COLORS.black, marginRight: 10 }}
