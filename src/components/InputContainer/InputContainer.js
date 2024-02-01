@@ -4,7 +4,7 @@ import DatePickerContainer from "../DatePickerContainer/DatePickerContainer";
 import { TITELS } from "../../constants";
 
 export default function InputContainer({ details, onChangeText }) {
-  const noDisplay = ["email", "password", "vetId", "profilePicture", "tips", "isAvailable", "rate", "clientsCount"];
+  const noDisplay = ["email", "password", "vetId", "profilePicture", "tips", "isAvailable", "rate", "rateCount", "clientsCount"];
 
   const filteredDetails = Object.fromEntries(Object.entries(details).filter(([key]) => !noDisplay.includes(key)));
 

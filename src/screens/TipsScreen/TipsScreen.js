@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { View, TouchableOpacity, Text, TextInput, Button, FlatList, StyleSheet } from "react-native";
+import { View, TouchableOpacity, Text, TextInput, Button, ScrollView, FlatList, StyleSheet, Image } from "react-native";
 import { COLORS, FONTS, SIZES, images } from "../../constants";
 import { MaterialIcons, AntDesign } from "@expo/vector-icons";
 import axios from "axios";
+import TipsScreenPet, { useAllTips } from "../TipsScreenPet/TipsScreenPet";
+
 
 export default function TipsScreen({ route, navigation }) {
   const [vetTips, setVetTips] = useState([]);
@@ -11,16 +13,19 @@ export default function TipsScreen({ route, navigation }) {
 
   const vetId = route.params.vetId;
   const userType = route.params.userType;
-
+  const   {fetchAllTips, vetTips: allVetTips} = useAllTips()
+  useEffect(() => {
+    fetchAllTips();
+  },[navigation])
   useEffect(() => {
     const updateTips = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/veterinarian/${vetId}/tips`);
+        const response = await axios.get(`http://10.0.2.2:3000/veterinarian/${vetId}/tips`);
         const tipIds = response.data;
 
         if (tipIds) {
           const fetchTipsDetails = tipIds.map((tipId) =>
-            axios.get(`http://localhost:3000/tip/${tipId}`).then((response) => response.data)
+            axios.get(`http://10.0.2.2:3000/tip/${tipId}`).then((response) => response.data)
           );
 
           // Wait for all fetches to complete
@@ -53,7 +58,7 @@ export default function TipsScreen({ route, navigation }) {
     setVetTips((prevTips) => prevTips.map((tip) => (tip._id === tipId ? { ...tip, content: editedTipContent } : tip)));
 
     axios
-      .put(`http://localhost:3000/tip/updateInfo/${tipId}`, {
+      .put(`http://10.0.2.2:3000/tip/updateInfo/${tipId}`, {
         updatedData: { vetId: vetId, content: editedTipContent },
       })
       .catch((error) => {
@@ -73,6 +78,23 @@ export default function TipsScreen({ route, navigation }) {
 
   const ShareTipClick = () => {
     navigation.navigate("Share Tip Screen", { vetId: vetId });
+  };
+
+  const renderItemOtherVet = ({ item }) => {
+    if(item.vetId == vetId) return null
+    return (
+      <View style={styles.tipContainer}>
+        <Image
+          source={images.Vetprofile} // Make sure to update this to use item-specific images if available
+          resizeMode="cover"
+          style={styles.profileImage}
+        />
+        <View style={styles.tipTextContainer}>
+          <Text style={styles.tipContent}>{item.content}</Text>
+          <Text style={styles.vetName}>By: {item.vetName}</Text>
+        </View>
+      </View>
+    );
   };
 
   const renderItem = ({ item }) => {
@@ -105,12 +127,17 @@ export default function TipsScreen({ route, navigation }) {
   return (
     <View>
       {userType === "vet" && (
+        <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}> My Tips:</Text>
+      )}
+      {userType === "vet" && (
         <TouchableOpacity onPress={ShareTipClick}>
           <AntDesign name="pluscircleo" size={24} color="black" />
         </TouchableOpacity>
       )}
-      <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>Vet Tips</Text>
+      {/* <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>My Tips</Text> */}
       <FlatList data={vetTips} renderItem={renderItem} keyExtractor={(item) => item._id} />
+      <Text style={{ fontSize: 20, marginTop: 10, fontWeight: "bold", marginBottom: 10 }}> Vet Tips:</Text>
+      <FlatList data={allVetTips} renderItem={renderItemOtherVet} keyExtractor={(item) => item._id} />
     </View>
   );
 }
@@ -128,10 +155,12 @@ const styles = StyleSheet.create({
     marginLeft: 0,
   },
   tipContainer: {
+    flexDirection: 'row', // Set flexDirection to row to align items horizontally
     backgroundColor: "#f0f0f0",
-    borderRadius: 10,
-    padding: 15,
+    borderRadius: 2,
+    padding: 5,
     marginBottom: 10,
+    alignItems: 'center', // Align items vertically in the center
   },
   tipContent: {
     fontSize: 16,
@@ -146,6 +175,10 @@ const styles = StyleSheet.create({
     borderRadius: 20, // Added to make it round
     backgroundColor: "#FFFFFF", // White
   },
+  vetName: {
+    fontStyle: 'italic',
+    marginTop: 5,
+  },
   editProfileButton: {
     position: "absolute",
     right: 20,
@@ -157,5 +190,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: COLORS.primary,
     borderRadius: 10,
+  },
+  profileImage: {
+    height: 60, // Adjust the size as needed
+    width: 60, // Adjust the size as needed
+    borderRadius: 20, // Make it round
+    marginRight: 15, // Add some spacing between the image and the text
+  },
+  tipTextContainer: {
+    flex: 1, // Take up the remaining space
+  },
+  addButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 10,
   },
 });

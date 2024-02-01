@@ -13,7 +13,7 @@ export default function PetProfileScreen({ route, navigation }) {
   useEffect(() => {
     const updatePetDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/pet/${petId}`);
+        const response = await axios.get(`http://10.0.2.2:3000/pet/${petId}`);
         const mappedPetDetails = mapPetDetails(response.data);
         setPetDetails(mappedPetDetails);
       } catch (error) {
@@ -38,7 +38,7 @@ export default function PetProfileScreen({ route, navigation }) {
 
   const deletePet = async () => {
     try {
-      await axios.delete(`http://localhost:3000/pet/${petId}`);
+      await axios.delete(`http://10.0.2.2:3000/pet/${petId}`);
       // Navigate back or to another screen after successful deletion
       navigation.goBack();
     } catch (error) {
