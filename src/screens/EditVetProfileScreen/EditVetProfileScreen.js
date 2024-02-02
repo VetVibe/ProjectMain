@@ -31,7 +31,7 @@ export default function EditVetProfileScreen({ route, navigation }) {
   useEffect(() => {
     const fetchVetDetails = async () => {
       try {
-        const { data } = await axios.get(`http://10.0.2.2:3000/veterinarian/${vetId}`);
+        const { data } = await axios.get(`http://localhost:3000/veterinarian/${vetId}`);
         const mapedVetDetails = mapVetDetails(data);
         setVetDetails(mapedVetDetails);
         setSelectedImage(mapVetDetails.profilePicture);
@@ -60,7 +60,7 @@ export default function EditVetProfileScreen({ route, navigation }) {
     const vetDetailsSchema = mapVetDetailsToSchema(updatedData);
 
     axios
-      .put(`http://10.0.2.2:3000/veterinarian/updateInfo/${vetId}`, { updatedData: vetDetailsSchema })
+      .put(`http://localhost:3000/veterinarian/updateInfo/${vetId}`, { updatedData: vetDetailsSchema })
       .then((response) => {
         navigation.goBack();
       })

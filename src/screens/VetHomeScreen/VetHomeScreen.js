@@ -26,7 +26,7 @@ export default function VetHomeScreen({ route, navigation }) {
 
   useEffect(() => {
     axios
-      .get(`http://10.0.2.2:3000/veterinarian/${vetId}`)
+      .get(`http://localhost:3000/veterinarian/${vetId}`)
       .then((response) => {
         const mapedVetDetails = mapVetDetails(response.data);
         setVetDetails(mapedVetDetails);
@@ -45,7 +45,7 @@ export default function VetHomeScreen({ route, navigation }) {
 
     // Make a PUT request to update the availability on the server
     axios
-      .put(`http://10.0.2.2:3000/veterinarian/updateInfo/${vetId}`, {
+      .put(`http://localhost:3000/veterinarian/updateInfo/${vetId}`, {
         updatedData: { isAvailable: !vetDetails.isAvailable },
       })
       .then((response) => {

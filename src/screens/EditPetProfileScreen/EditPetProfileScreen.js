@@ -22,7 +22,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
   useEffect(() => {
     if (petId) {
       axios
-        .get(`http://10.0.2.2:3000/pet/${petId}`)
+        .get(`http://localhost:3000/pet/${petId}`)
         .then((response) => {
           const mapedPetDetails = mapPetDetails(response.data);
           setPetBasicInfoInput(mapedPetDetails.basicInfo);
@@ -72,7 +72,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
 
     if (petId) {
       axios
-        .put(`http://10.0.2.2:3000/pet/updateInfo/${petId}`, { updatedData: petDetailsSchema })
+        .put(`http://localhost:3000/pet/updateInfo/${petId}`, { updatedData: petDetailsSchema })
         .then((response) => {
           navigation.goBack();
         })
@@ -81,7 +81,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
         });
     } else if (petOwnerId) {
       axios
-        .post(`http://10.0.2.2:3000/pet/addPet/${petOwnerId}`, petDetailsSchema)
+        .post(`http://localhost:3000/pet/addPet/${petOwnerId}`, petDetailsSchema)
         .then((response) => {
           const petId = response.data.petId;
           navigation.dispatch(StackActions.replace("Pet Profile Screen", { petId: petId }));

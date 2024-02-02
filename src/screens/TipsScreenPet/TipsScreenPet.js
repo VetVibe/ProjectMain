@@ -10,7 +10,7 @@ export const useAllTips = () => {
   const  [vetTips,setVetTips] = useState([])
   const fetchAllTips = async () => {
     try {
-      const response = await axios.get('http://10.0.2.2:3000/tips/all');
+      const response = await axios.get('http://localhost:3000/tips/all');
       if (response.data) {
         setVetTips(response.data);
       }
