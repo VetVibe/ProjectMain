@@ -32,14 +32,14 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
     const updateUserPetDetails = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3000/petOwner/${petOwnerId}/pets`
+          `http://10.0.2.2:3000/petOwner/${petOwnerId}/pets`
         );
         const petIds = response.data.pets;
 
         // Fetch details of each pet concurrently
         const fetchPetDetails = petIds.map((petId) =>
           axios
-            .get(`http://localhost:3000/pet/${petId}`)
+            .get(`http://10.0.2.2:3000/pet/${petId}`)
             .then((response) => response.data)
         );
 
@@ -55,7 +55,6 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
   
   const focusListener = navigation.addListener("focus", () => {
       updateUserPetDetails();
-     // resetModalState();
     });
 
    // Clean up the subscription when the component unmounts
@@ -111,25 +110,11 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
       userType: "petOwner", // ID of the pet owner
     });
   };
-  //const resetModalState = () => {
-  //  if (isPetModalVisible) {
-  //    setIsPetModalVisible(false);
-  //  }
-  //};
-  // const EditVetProfileClick = () => {
-  //   navigation.navigate("Edit Vet Profile Screen", { vetId: vetId });
-  // };
-  // const ShowTips = () => {
-  //   navigation.navigate("Tips Screen", { vetId: vetId, userType: userType });
-  // };
+  
   const handlePetSelect = (pet) => {
     // Navigate to Pet Profile Screen with the selected pet's ID
     navigation.navigate("Pet Profile Screen", { petId: pet._id });
   };
-
-  //const togglePetModal = () => {
-  //  setIsPetModalVisible(!isPetModalVisible);
-  //};
 
   return (
     <ScrollView>
@@ -138,10 +123,6 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
           <Icon name="plus" size={20} color="black" />
         </TouchableOpacity>
       </View>
-
-      <TouchableOpacity style={styles.viewPetsButton}>
-        <Text>View My Pets</Text>
-      </TouchableOpacity>
 
       {/* Horizontal FlatList for Pets */}
       <View style={styles.petsContainer}>
@@ -183,10 +164,10 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
         >
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <Image
-        source={vet.specificImage || images.Vetprofile} // Use vet-specific image if available, else default
-        resizeMode="cover"
-        style={styles.profileImage}
-      />
+          source={{ uri: vet.profilePicture ? vet.profilePicture : "https://www.behance.net/gallery/189614555/VetProfile.jpg" }}
+          resizeMode="cover"
+          style={styles.profileImage}
+        />
          <View style={[styles.availabilityIndicator, vet.isAvailable ? styles.available : styles.notAvailable]} />
          <Text style={{ marginLeft: 5 }}>
          {vet.name} - {vet.location}
@@ -210,9 +191,6 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
       <TouchableOpacity style={styles.logoutButton} onPress={LogoutClick}>
         <MaterialIcons name="logout" size={24} color={COLORS.white} />
       </TouchableOpacity>
-      {/* <TouchableOpacity style={styles.viewTipsButton} onPress={handleNavigateToTipsScreen}>
-        <Text style={styles.buttonText}>View Tips</Text>
-      </TouchableOpacity> */}
     </ScrollView>
   );
 }
