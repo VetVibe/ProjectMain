@@ -9,7 +9,7 @@ import {
   Switch,
   StyleSheet,
 } from "react-native";
-import { COLORS, FONTS, SIZES, images } from "../../constants";
+import { COLORS, FONTS, SIZES } from "../../constants";
 import { StatusBar } from "expo-status-bar";
 import { MaterialIcons } from "@expo/vector-icons";
 import { mapVetDetails } from "../../utils";
@@ -97,20 +97,17 @@ export default function VetHomeScreen({ route, navigation }) {
             </>
           ) : (
             <>
-              <TouchableOpacity onPress={ShowTips}>
-                <MaterialIcons
-                  name="my-library-books"
-                  size={24}
-                  color={COLORS.white}
-                />
-              </TouchableOpacity>
+            <View style={styles.nonVetAvailabilityContainer}>
+            <MaterialIcons
+              name={vetDetails.isAvailable ? "fiber-manual-record" : "cancel"}
+              size={12}
+              color={vetDetails.isAvailable ? "green" : "red"}
+            />
+            <Text style={{ ...FONTS.h3, color: COLORS.black, marginRight: 10 }}>{vetDetails.isAvailable ? " Available" : " Unavailable"}</Text>
+          </View>
             </>
           )}
-          <Image
-            source={images.Vetprofile}
-            resizeMode="contain"
-            style={styles.vetProfileImage}
-          />
+          <Image source={{ uri: vetDetails.profilePicture }} style={styles.vetProfileImage} />
 
           <Text style={styles.name}>{vetDetails.name}</Text>
           <Text style={styles.specialization}>{vetDetails.specialization}</Text>
@@ -140,12 +137,12 @@ export default function VetHomeScreen({ route, navigation }) {
               <Text style={styles.description}>{vetDetails.about}</Text>
             </View>
           )}
-          <TouchableOpacity style={styles.logoutButton} onPress={LogoutClick}>
-            <MaterialIcons name="logout" size={24} color={COLORS.white} />
-          </TouchableOpacity>
 
           {userType === "vet" ? (
             <>
+            <TouchableOpacity style={styles.logoutButton} onPress={LogoutClick}>
+            <MaterialIcons name="logout" size={24} color={COLORS.white} />
+          </TouchableOpacity>
               <View style={styles.availabilityContainer}>
                 <Text
                   style={{ ...FONTS.h4, color: COLORS.black, marginRight: 10 }}
@@ -163,13 +160,6 @@ export default function VetHomeScreen({ route, navigation }) {
             </>
           ) : (
             <>
-              <View style={styles.availabilityContainer}>
-                <Text
-                  style={{ ...FONTS.h3, color: COLORS.black, marginRight: 10 }}
-                >
-                  {vetDetails.isAvailable ? "Available" : "Unavailable"}
-                </Text>
-              </View>
               <View>
                 <Rating vetDetails={vetDetails}  onNewRating={({newRating, newRatingCount}) => setVetDetails({...vetDetails, rating: newRating, ratingCount: newRatingCount})}/>
               </View>
@@ -180,6 +170,7 @@ export default function VetHomeScreen({ route, navigation }) {
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   safeAreaContainer: { flex: 1, backgroundColor: COLORS.white },
@@ -197,6 +188,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     borderRadius: 10,
     marginBottom: 20,
+  },
+  nonVetAvailabilityContainer: {
+    position: 'absolute',
+    left: 20, // Adjust based on your layout
+    top: 20, // Align with the height of the first icon on the right
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   availabilityContainer: {
     ...FONTS.h2,
@@ -253,8 +251,8 @@ const styles = StyleSheet.create({
     width: 155,
     borderRadius: 20,
     borderColor: COLORS.primary,
-    borderWidth: 2,
-    marginTop: 80,
+    borderWidth: 3,
+    marginTop: 50,
   },
   name: {
     ...FONTS.h2,

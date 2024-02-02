@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, TouchableOpacity, Text, FlatList, StyleSheet, Alert, Image } from "react-native";
-import { COLORS , images } from "../../constants";
+import { COLORS  } from "../../constants";
 import { AntDesign } from "@expo/vector-icons";
 import axios from "axios";
 import { UIImagePickerPresentationStyle } from "expo-image-picker";
@@ -43,7 +43,7 @@ export default function TipsScreenPet({ route, navigation }) {
     return (
       <View style={styles.tipContainer}>
         <Image
-          source={images.Vetprofile} // Make sure to update this to use item-specific images if available
+          source={{ uri : item.VetImage}} // Make sure to update this to use item-specific images if available
           resizeMode="cover"
           style={styles.profileImage}
         />

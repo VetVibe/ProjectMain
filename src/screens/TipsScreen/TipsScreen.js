@@ -85,7 +85,7 @@ export default function TipsScreen({ route, navigation }) {
     return (
       <View style={styles.tipContainer}>
         <Image
-          source={images.Vetprofile} // Make sure to update this to use item-specific images if available
+          source={{ uri : item.VetImage}} // Make sure to update this to use item-specific images if available
           resizeMode="cover"
           style={styles.profileImage}
         />
