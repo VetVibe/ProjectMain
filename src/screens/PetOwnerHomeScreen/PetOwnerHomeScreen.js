@@ -14,8 +14,6 @@ import PetContainer from "./PetContainer";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import VetSearchForm from "../../components/VetSearchForm/VetSearchForm";
-import PetModal from "../../components/PetModal/PetModal";
-
 import { MaterialIcons } from "@expo/vector-icons";
 import { COLORS, FONTS, SIZES, images } from "../../constants";
 
@@ -31,14 +29,14 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
     const updateUserPetDetails = async () => {
       try {
         const response = await axios.get(
-          `http://10.0.2.2:3000/petOwner/${petOwnerId}/pets`
+          `http://localhost:3000/petOwner/${petOwnerId}/pets`
         );
         const petIds = response.data.pets;
 
         // Fetch details of each pet concurrently
         const fetchPetDetails = petIds.map((petId) =>
           axios
-            .get(`http://10.0.2.2:3000/pet/${petId}`)
+            .get(`http://localhost:3000/pet/${petId}`)
             .then((response) => response.data)
         );
 
@@ -55,7 +53,6 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
       updateUserPetDetails();
 
       // resetModalState();
-
     });
 
     // Clean up the subscription when the component unmounts
@@ -112,7 +109,7 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
       userType: "petOwner", // ID of the pet owner
     });
   };
-  
+
   const handlePetSelect = (pet) => {
     // Navigate to Pet Profile Screen with the selected pet's ID
     navigation.navigate("Pet Profile Screen", { petId: pet._id });
@@ -158,26 +155,33 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
           <Text style={styles.buttonText}>Search</Text>
         </TouchableOpacity>
 
-      {veterinarians.map((vet, index) => (
-        <TouchableOpacity
-          key={index}
-          onPress={() => handleVetPress(vet)}
-          style={styles.vetItem}
-        >
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Image
-          source={{ uri: vet.profilePicture ? vet.profilePicture : "https://www.behance.net/gallery/189614555/VetProfile.jpg" }}
-          resizeMode="cover"
-          style={styles.profileImage}
-        />
-         <View style={[styles.availabilityIndicator, vet.isAvailable ? styles.available : styles.notAvailable]} />
-         <Text style={{ marginLeft: 5 }}>
-         {vet.name} - {vet.location}
-        </Text>
-       </View>
-      </TouchableOpacity>
-
-     
+        {veterinarians.map((vet, index) => (
+          <TouchableOpacity
+            key={index}
+            onPress={() => handleVetPress(vet)}
+            style={styles.vetItem}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Image
+                source={{
+                  uri: vet.profilePicture
+                    ? vet.profilePicture
+                    : "https://www.behance.net/gallery/189614555/VetProfile.jpg",
+                }}
+                resizeMode="cover"
+                style={styles.profileImage}
+              />
+              <View
+                style={[
+                  styles.availabilityIndicator,
+                  vet.isAvailable ? styles.available : styles.notAvailable,
+                ]}
+              />
+              <Text style={{ marginLeft: 5 }}>
+                {vet.name} - {vet.location}
+              </Text>
+            </View>
+          </TouchableOpacity>
         ))}
       </View>
       <TouchableOpacity
