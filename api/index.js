@@ -104,44 +104,72 @@ app.post("/petOwner/login", async (req, res) => {
   }
 });
 
-// Update pet owner email
-app.put("/petOwner/updateEmail/:petOwnerId", async (req, res) => {
-  const { newEmail } = req.body;
+// // Update pet owner email
+// app.put("/petOwner/updateEmail/:petOwnerId", async (req, res) => {
+//   const { newEmail } = req.body;
+//   const { petOwnerId } = req.params;
+
+//   try {
+//     // Check if the new email is already registered
+//     const existingOwner = await PetOwner.findOne({ email: newEmail });
+//     if (existingOwner) {
+//       return res.status(400).json({ message: "Email already in use." });
+//     }
+
+//     // Update the pet owner's email
+//     await PetOwner.findByIdAndUpdate(petOwnerId, { email: newEmail });
+//     res.status(200).json({ message: "Email updated successfully." });
+//   } catch (error) {
+//     console.error("Error updating email:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+
+// // Update pet owner password
+// app.put("/petOwner/updatePassword/:petOwnerId", async (req, res) => {
+//   const { newPassword } = req.body;
+//   const { petOwnerId } = req.params;
+
+//   try {
+//     await PetOwner.findByIdAndUpdate(petOwnerId, { password: newPassword });
+
+//     res.status(200).json({ message: "Password updated successfully." });
+//   } catch (error) {
+//     console.error("Error updating password:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+
+// Update pet owner details
+app.put("/petOwner/updateInfo/:petOwnerId", async (req, res) => {
   const { petOwnerId } = req.params;
+  const updatedData = req.body.updatedData;
 
   try {
-    // Check if the new email is already registered
-    const existingOwner = await PetOwner.findOne({ email: newEmail });
-    if (existingOwner) {
-      return res.status(400).json({ message: "Email already in use." });
+    // Find the pet owner by ID
+    const petOwner = await PetOwner.findById(petOwnerId);
+
+    if (!petOwner) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Pet owner not found" });
     }
 
-    // Update the pet owner's email
-    await PetOwner.findByIdAndUpdate(petOwnerId, { email: newEmail });
-    res.status(200).json({ message: "Email updated successfully." });
+    // Update the pet owner details
+    Object.assign(petOwner, updatedData);
+
+    // Save the updated pet owner
+    await petOwner.save();
+
+    res.json({
+      success: true,
+      message: "Pet owner details updated successfully",
+    });
   } catch (error) {
-    console.error("Error updating email:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error updating pet owner details:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
-
-// Update pet owner password
-app.put("/petOwner/updatePassword/:petOwnerId", async (req, res) => {
-  const { newPassword } = req.body;
-  const { petOwnerId } = req.params;
-
-  try {
-    // Ideally, you should hash the new password before storing it
-    // For demonstration, storing it directly (not recommended for production)
-    await PetOwner.findByIdAndUpdate(petOwnerId, { password: newPassword });
-
-    res.status(200).json({ message: "Password updated successfully." });
-  } catch (error) {
-    console.error("Error updating password:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
-
 
 // Fetch pet owner pet's collection
 app.get("/petOwner/:petOwnerId/pets", async (req, res) => {
@@ -160,10 +188,48 @@ app.get("/petOwner/:petOwnerId/pets", async (req, res) => {
     res.status(500).json({ error: "Error fetching user's pets" });
   }
 });
+// Update pet owner profile picture
+app.put("/petOwner/updateProfilePicture/:petOwnerId", async (req, res) => {
+  const { newProfilePicture } = req.body;
+  const { petOwnerId } = req.params;
 
+  try {
+    // Update the pet owner's profile picture
+    await PetOwner.findByIdAndUpdate(petOwnerId, {
+      profilePicture: newProfilePicture,
+    });
 
+    res.status(200).json({ message: "Profile picture updated successfully." });
+  } catch (error) {
+    console.error("Error updating profile picture:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+// Fetch pet owner details (updated endpoint)
+// Fetch pet owner details (updated endpoint)
+app.get("/petOwner/:petOwnerId?", async (req, res) => {
+  try {
+    const petOwnerId = req.params.petOwnerId;
 
+    if (petOwnerId) {
+      // If petOwnerId is provided, fetch details of a single pet owner
+      const petOwner = await PetOwner.findById(petOwnerId);
 
+      if (!petOwner) {
+        return res.status(404).json({ message: "Pet Owner not found" });
+      }
+
+      res.status(200).json(petOwner);
+    } else {
+      // If petOwnerId is not provided, fetch details of all pet owners
+      const petOwners = await PetOwner.find();
+      res.status(200).json(petOwners);
+    }
+  } catch (error) {
+    console.error("Error fetching pet owner details:", error);
+    res.status(500).json({ error: "Error fetching pet owner details" });
+  }
+});
 
 // ------------ Veterinarian ------------
 
@@ -178,6 +244,7 @@ app.post("/veterinarian/register", async (req, res) => {
       phoneNumber,
       location,
       specialization,
+      profilePicture,
     } = req.body;
     const existingV = await Veterinarian.findOne({ vetId });
 
@@ -196,6 +263,7 @@ app.post("/veterinarian/register", async (req, res) => {
       phoneNumber,
       location,
       specialization,
+      profilePicture,
     });
 
     // Generate and store the verification token (if needed)
@@ -241,28 +309,33 @@ app.post("/veterinarian/login", async (req, res) => {
 // Endpoint to add rating to a vet
 app.post("/veterinarian/rate", async (req, res) => {
   try {
-    let token = req.headers['authorization'] || req.headers['Authorization']
-    token = token.split("Bearer ")[1] 
-    const {userId} = jwt.decode(token);
-    const { email , rating} = req.body;
+    let token = req.headers["authorization"] || req.headers["Authorization"];
+    token = token.split("Bearer ")[1];
+    const { userId } = jwt.decode(token);
+    const { email, rating } = req.body;
     const veterinarian = await Veterinarian.findOne({ email });
     const petOwner = await PetOwner.findById(userId);
-   
+
     if (!petOwner || !veterinarian) {
       return res.status(404).json({ message: "Vet/Pet owner email not found" });
     }
 
     if (veterinarian && petOwner.ratings.includes(email)) {
-      return res.status(400).json({ message: "You have already rated this vert" });
+      return res
+        .status(400)
+        .json({ message: "You have already rated this vert" });
     }
-    petOwner.ratings.push(email)
-    veterinarian.rate += rating
-    veterinarian.rateCount++
+    petOwner.ratings.push(email);
+    veterinarian.rate += rating;
+    veterinarian.rateCount++;
 
-    await petOwner.save()
-    await veterinarian.save()
+    await petOwner.save();
+    await veterinarian.save();
 
-    res.status(200).json({  newRating: veterinarian.rate, newRatingCount: veterinarian.rateCount  });
+    res.status(200).json({
+      newRating: veterinarian.rate,
+      newRatingCount: veterinarian.rateCount,
+    });
   } catch (error) {
     res.status(500).json({ message: "Login failed" });
   }
@@ -293,8 +366,8 @@ app.get("/veterinarian/:vetId", async (req, res) => {
     if (!veterinarian) {
       return res.status(404).json({ message: "Veterinarian not found" });
     }
-    if(veterinarian.rateCount === undefined) {
-      veterinarian.rateCount = 0
+    if (veterinarian.rateCount === undefined) {
+      veterinarian.rateCount = 0;
     }
     res.status(200).json(veterinarian);
   } catch (error) {
@@ -380,13 +453,16 @@ app.get("/veterinarianId/checkId/:vetId", async (req, res) => {
 app.get("/tips/all", async (req, res) => {
   try {
     // Populate the 'vetId' field in each tip with the 'name' field from the referenced veterinarian document
-    const tips = await Tip.find().populate('vetId', 'name profilePicture'); // Ensure you're also populating the profilePicture
-    const tipsWithVetNames = tips.map(tip => ({
+    const tips = await Tip.find().populate("vetId", "name profilePicture"); // Ensure you're also populating the profilePicture
+    const tipsWithVetNames = tips.map((tip) => ({
       _id: tip._id,
       content: tip.content,
-      vetName: tip.vetId ? tip.vetId.name : 'Unknown',
+      vetName: tip.vetId ? tip.vetId.name : "Unknown",
       // Use the vet's profile picture if available; otherwise, use a default image
-      VetImage: tip.vetId && tip.vetId.profilePicture ? tip.vetId.profilePicture : "https://www.behance.net/gallery/189614555/VetProfile.jpg"
+      VetImage:
+        tip.vetId && tip.vetId.profilePicture
+          ? tip.vetId.profilePicture
+          : "https://www.behance.net/gallery/189614555/VetProfile.jpg",
     }));
     res.status(200).json(tipsWithVetNames);
   } catch (error) {
@@ -573,23 +649,25 @@ app.get("/specialization", async (req, res) => {
 });
 
 // DELETE endpoint to remove a pet and update the pet owner's list of pets
-app.delete('/pet/:petId', async (req, res) => {
+app.delete("/pet/:petId", async (req, res) => {
   try {
     const petId = req.params.petId;
 
     // Find and delete the pet
     const pet = await Pet.findByIdAndDelete(petId);
     if (!pet) {
-      return res.status(404).json({ message: 'Pet not found' });
+      return res.status(404).json({ message: "Pet not found" });
     }
 
     // If the pet has an owner, update the PetOwner's pets array
     if (pet.ownerId) {
-      await PetOwner.findByIdAndUpdate(pet.ownerId, { $pull: { pets: pet._id } });
+      await PetOwner.findByIdAndUpdate(pet.ownerId, {
+        $pull: { pets: pet._id },
+      });
     }
 
-    res.status(200).json({ message: 'Pet deleted successfully' });
+    res.status(200).json({ message: "Pet deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting pet', error });
+    res.status(500).json({ message: "Error deleting pet", error });
   }
 });

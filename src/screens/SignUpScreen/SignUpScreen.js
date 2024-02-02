@@ -91,7 +91,7 @@ export default function SignUpScreen({ navigation }) {
       email,
       password,
       location: selectedCity,
-      profilePicture,
+      profilePicture: profilePicture,
       ...(activeTab === "vet" && {
         vetId: id,
         phoneNumber,
