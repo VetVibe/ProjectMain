@@ -13,8 +13,8 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import PetContainer from "./PetContainer";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import VetSearchForm from "../../components/VetSearchForm/VetSearchForm"; 
-import PetModal from "../../components/PetModal/PetModal"; 
+import VetSearchForm from "../../components/VetSearchForm/VetSearchForm";
+import PetModal from "../../components/PetModal/PetModal";
 
 import { MaterialIcons } from "@expo/vector-icons";
 import { COLORS, FONTS, SIZES, images } from "../../constants";
@@ -22,9 +22,8 @@ import { COLORS, FONTS, SIZES, images } from "../../constants";
 export default function PetOwnerHomeScreen({ route, navigation }) {
   const [userPets, setUserPets] = useState([]);
   const [veterinarians, setVeterinarians] = useState([]);
-  const [selectedLocation, setSelectedLocation] = useState('');
-  const [selectedSpecialization, setSelectedSpecialization] = useState('');
-
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedSpecialization, setSelectedSpecialization] = useState("");
 
   const petOwnerId = route.params.userId;
 
@@ -52,18 +51,17 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
       }
     };
 
-  
-  const focusListener = navigation.addListener("focus", () => {
+    const focusListener = navigation.addListener("focus", () => {
       updateUserPetDetails();
-     // resetModalState();
+      // resetModalState();
     });
 
-   // Clean up the subscription when the component unmounts
-  return () => {
-    if (focusListener) {
-      focusListener();
-    }
-  };
+    // Clean up the subscription when the component unmounts
+    return () => {
+      if (focusListener) {
+        focusListener();
+      }
+    };
   }, [petOwnerId, navigation]);
 
   const LogoutClick = () => {
@@ -77,8 +75,9 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
 
   const handleSearch = () => {
     const queryParams = new URLSearchParams();
-    if (selectedLocation) queryParams.append('location', selectedLocation);
-    if (selectedSpecialization) queryParams.append('specialization', selectedSpecialization);
+    if (selectedLocation) queryParams.append("location", selectedLocation);
+    if (selectedSpecialization)
+      queryParams.append("specialization", selectedSpecialization);
 
     axios
       .get(`http://localhost:3000/veterinarians?${queryParams.toString()}`)
@@ -90,15 +89,15 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
       });
   };
 
-
   const handleNavigateToEditProfile = () => {
     navigation.navigate("Pet Profile Screen Edit", { petOwnerId: petOwnerId });
   };
 
   const handleNavigateToEditPetOwnerProfile = () => {
-    navigation.navigate("Edit Pet Owner Profile Screen", { petOwnerId: petOwnerId });
+    navigation.navigate("Edit Pet Owner Profile Screen", {
+      petOwnerId: petOwnerId,
+    });
   };
-
 
   const handleNavigateToTipsScreen = () => {
     navigation.navigate("Tips Screen Pet");
@@ -127,10 +126,6 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
     navigation.navigate("Pet Profile Screen", { petId: pet._id });
   };
 
-  //const togglePetModal = () => {
-  //  setIsPetModalVisible(!isPetModalVisible);
-  //};
-
   return (
     <ScrollView>
       <View style={styles.addButton}>
@@ -138,10 +133,6 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
           <Icon name="plus" size={20} color="black" />
         </TouchableOpacity>
       </View>
-
-      <TouchableOpacity style={styles.viewPetsButton}>
-        <Text>View My Pets</Text>
-      </TouchableOpacity>
 
       {/* Horizontal FlatList for Pets */}
       <View style={styles.petsContainer}>
@@ -151,8 +142,8 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
             horizontal={true}
             keyExtractor={(item) => item._id}
             renderItem={({ item }) => (
-              <TouchableOpacity 
-                onPress={() => handlePetSelect(item)} 
+              <TouchableOpacity
+                onPress={() => handlePetSelect(item)}
                 style={styles.petItem}
               >
                 <Image source={{ uri: item.imgSrc }} style={styles.petImage} />
@@ -165,54 +156,51 @@ export default function PetOwnerHomeScreen({ route, navigation }) {
         )}
       </View>
 
-    <View style={styles.searchSection}>
-     <Text style={styles.title}>Find a Vet</Text>
-     <VetSearchForm
-        setSelectedLocation={setSelectedLocation}
-        setSelectedSpecialization={setSelectedSpecialization}
-      />
-      <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-        <Text style={styles.buttonText}>Search</Text>
-      </TouchableOpacity>
+      <View style={styles.searchSection}>
+        <Text style={styles.title}>Find a Vet</Text>
+        <VetSearchForm
+          setSelectedLocation={setSelectedLocation}
+          setSelectedSpecialization={setSelectedSpecialization}
+        />
+        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+          <Text style={styles.buttonText}>Search</Text>
+        </TouchableOpacity>
 
-      {veterinarians.map((vet, index) => (
-        <TouchableOpacity
-          key={index}
-          onPress={() => handleVetPress(vet)}
-          style={styles.vetItem}
-        >
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Image
-        source={vet.specificImage || images.Vetprofile} // Use vet-specific image if available, else default
-        resizeMode="cover"
-        style={styles.profileImage}
-      />
-         <View style={[styles.availabilityIndicator, vet.isAvailable ? styles.available : styles.notAvailable]} />
-         <Text style={{ marginLeft: 5 }}>
-         {vet.name} - {vet.location}
-        </Text>
-       </View>
-      </TouchableOpacity>
-
-      ))}
+        {veterinarians.map((vet, index) => (
+          <TouchableOpacity
+            key={index}
+            onPress={() => handleVetPress(vet)}
+            style={styles.vetItem}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <View
+                style={[
+                  styles.availabilityIndicator,
+                  vet.isAvailable ? styles.available : styles.notAvailable,
+                ]}
+              />
+              <Text style={{ marginLeft: 5 }}>
+                {vet.name} - {vet.location}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ))}
       </View>
       <TouchableOpacity
-        style={styles.editProfileButton}onPress={handleNavigateToEditPetOwnerProfile}>
+        style={styles.editProfileButton}
+        onPress={handleNavigateToEditPetOwnerProfile}
+      >
         <MaterialIcons name="edit" size={24} color={COLORS.white} />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.tipsButton} onPress={handleNavigateToTipsScreen}>
-        <MaterialIcons
-          name="my-library-books"
-          size={24}
-          color={COLORS.white}
-        />
+      <TouchableOpacity
+        style={styles.tipsButton}
+        onPress={handleNavigateToTipsScreen}
+      >
+        <MaterialIcons name="my-library-books" size={24} color={COLORS.white} />
       </TouchableOpacity>
       <TouchableOpacity style={styles.logoutButton} onPress={LogoutClick}>
         <MaterialIcons name="logout" size={24} color={COLORS.white} />
       </TouchableOpacity>
-      {/* <TouchableOpacity style={styles.viewTipsButton} onPress={handleNavigateToTipsScreen}>
-        <Text style={styles.buttonText}>View Tips</Text>
-      </TouchableOpacity> */}
     </ScrollView>
   );
 }
@@ -258,9 +246,9 @@ const styles = StyleSheet.create({
     paddingTop: 90, // Added top padding to push the entire section down
   },
   vetItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   availabilityIndicator: {
     width: 10,
@@ -269,10 +257,10 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   available: {
-    backgroundColor: '#00FF00',
+    backgroundColor: "#00FF00",
   },
   notAvailable: {
-    backgroundColor: 'red',
+    backgroundColor: "red",
   },
   logoutButton: {
     position: "absolute",
@@ -318,27 +306,27 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   profileImage: {
-      height: 60, // Adjust the size as needed
-      width: 60, // Adjust the size as needed
-      borderRadius: 20, // Make it round
-      marginRight: 15, // Add some spacing between the image and the text
-    },
-    petsContainer: {
-      height: 150, // Adjust as needed
-      alignItems: 'center',
-      padding: 10,
-    },
-    petItem: {
-      marginHorizontal: 10,
-      alignItems: 'center',
-    },
-    petImage: {
-      width: 100,
-      height: 100,
-      borderRadius: 50,
-    },
-    petName: {
-      textAlign: 'center',
-      marginTop: 5,
-    },
+    height: 60, // Adjust the size as needed
+    width: 60, // Adjust the size as needed
+    borderRadius: 20, // Make it round
+    marginRight: 15, // Add some spacing between the image and the text
+  },
+  petsContainer: {
+    height: 150, // Adjust as needed
+    alignItems: "center",
+    padding: 10,
+  },
+  petItem: {
+    marginHorizontal: 10,
+    alignItems: "center",
+  },
+  petImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  petName: {
+    textAlign: "center",
+    marginTop: 5,
+  },
 });

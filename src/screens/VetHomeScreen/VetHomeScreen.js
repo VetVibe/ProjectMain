@@ -9,6 +9,7 @@ import {
   Switch,
   StyleSheet,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { COLORS, FONTS, SIZES } from "../../constants";
 import { StatusBar } from "expo-status-bar";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -24,7 +25,8 @@ export default function VetHomeScreen({ route, navigation }) {
   const vetId = route.params.userId;
   const userType = route.params.userType;
 
-  useEffect(() => {
+  // Function to fetch vet details
+  const fetchVetDetails = () => {
     axios
       .get(`http://localhost:3000/veterinarian/${vetId}`)
       .then((response) => {
@@ -34,7 +36,19 @@ export default function VetHomeScreen({ route, navigation }) {
       .catch((error) => {
         console.error("Error fetching vet details:", error);
       });
+  };
+
+  // Use useEffect to fetch vet details on component mount
+  useEffect(() => {
+    fetchVetDetails();
   }, [vetId]);
+
+  // Use useFocusEffect to fetch vet details when the screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchVetDetails();
+    }, [])
+  );
 
   const toggleSwitch = () => {
     // Update the local state
@@ -97,17 +111,26 @@ export default function VetHomeScreen({ route, navigation }) {
             </>
           ) : (
             <>
-            <View style={styles.nonVetAvailabilityContainer}>
-            <MaterialIcons
-              name={vetDetails.isAvailable ? "fiber-manual-record" : "cancel"}
-              size={12}
-              color={vetDetails.isAvailable ? "green" : "red"}
-            />
-            <Text style={{ ...FONTS.h3, color: COLORS.black, marginRight: 10 }}>{vetDetails.isAvailable ? " Available" : " Unavailable"}</Text>
-          </View>
+              <View style={styles.nonVetAvailabilityContainer}>
+                <MaterialIcons
+                  name={
+                    vetDetails.isAvailable ? "fiber-manual-record" : "cancel"
+                  }
+                  size={12}
+                  color={vetDetails.isAvailable ? "green" : "red"}
+                />
+                <Text
+                  style={{ ...FONTS.h3, color: COLORS.black, marginRight: 10 }}
+                >
+                  {vetDetails.isAvailable ? " Available" : " Unavailable"}
+                </Text>
+              </View>
             </>
           )}
-          <Image source={{ uri: vetDetails.profilePicture }} style={styles.vetProfileImage} />
+          <Image
+            source={{ uri: vetDetails.profilePicture }}
+            style={styles.vetProfileImage}
+          />
 
           <Text style={styles.name}>{vetDetails.name}</Text>
           <Text style={styles.specialization}>{vetDetails.specialization}</Text>
@@ -125,7 +148,9 @@ export default function VetHomeScreen({ route, navigation }) {
           <View style={{ paddingVertical: 8, flexDirection: "row" }}>
             <View style={styles.infoBox}>
               <Text style={{ ...FONTS.h3, color: "black" }}>
-                {+vetDetails.rateCount > 0 ?  (+vetDetails.rate / +vetDetails.rateCount).toFixed(1) :0}
+                {+vetDetails.rateCount > 0
+                  ? (+vetDetails.rate / +vetDetails.rateCount).toFixed(1)
+                  : 0}
               </Text>
               <Text style={{ ...FONTS.body4, color: "black" }}>Rating</Text>
             </View>
@@ -140,9 +165,12 @@ export default function VetHomeScreen({ route, navigation }) {
 
           {userType === "vet" ? (
             <>
-            <TouchableOpacity style={styles.logoutButton} onPress={LogoutClick}>
-            <MaterialIcons name="logout" size={24} color={COLORS.white} />
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.logoutButton}
+                onPress={LogoutClick}
+              >
+                <MaterialIcons name="logout" size={24} color={COLORS.white} />
+              </TouchableOpacity>
               <View style={styles.availabilityContainer}>
                 <Text
                   style={{ ...FONTS.h4, color: COLORS.black, marginRight: 10 }}
@@ -161,7 +189,16 @@ export default function VetHomeScreen({ route, navigation }) {
           ) : (
             <>
               <View>
-                <Rating vetDetails={vetDetails}  onNewRating={({newRating, newRatingCount}) => setVetDetails({...vetDetails, rating: newRating, ratingCount: newRatingCount})}/>
+                <Rating
+                  vetDetails={vetDetails}
+                  onNewRating={({ newRating, newRatingCount }) =>
+                    setVetDetails({
+                      ...vetDetails,
+                      rating: newRating,
+                      ratingCount: newRatingCount,
+                    })
+                  }
+                />
               </View>
             </>
           )}
@@ -170,7 +207,6 @@ export default function VetHomeScreen({ route, navigation }) {
     </SafeAreaView>
   );
 }
-
 
 const styles = StyleSheet.create({
   safeAreaContainer: { flex: 1, backgroundColor: COLORS.white },
@@ -190,11 +226,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   nonVetAvailabilityContainer: {
-    position: 'absolute',
+    position: "absolute",
     left: 20, // Adjust based on your layout
     top: 20, // Align with the height of the first icon on the right
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   availabilityContainer: {
     ...FONTS.h2,
