@@ -28,27 +28,6 @@ export default function EditVetProfileScreen({ route, navigation }) {
 
   const vetId = route.params.vetId;
 
-  // useEffect(() => {
-  //   if (vetId) {
-  //     axios
-  //       .get(`http://10.0.2.2:3000/veterinarian/${vetId}`)
-  //       .then((response) => {
-  //         const mapedVetDetails = mapVetDetails(response.data);
-  //         setPetBasicInfoInput(mapedPetDetails.basicInfo);
-  //         setMedicalInfoInput(mapedPetDetails.medicalInfo);
-  //         setPetImage(mapedPetDetails.imgSrc);
-  //       })
-  //       .catch((error) => {
-  //         console.error("Error fetching pet details:", error);
-  //       });
-  //   } else {
-  //     const mapedPetDetails = mapPetDetails();
-  //     setPetBasicInfoInput(mapedPetDetails.basicInfo);
-  //     setMedicalInfoInput(mapedPetDetails.medicalInfo);
-  //     setPetImage(mapedPetDetails.imgSrc);
-  //   }
-  // }, [vetId]);
-
   useEffect(() => {
     const fetchVetDetails = async () => {
       try {
@@ -110,18 +89,6 @@ export default function EditVetProfileScreen({ route, navigation }) {
       Alert.alert("Permission denied", "Permission to access the photo library was denied.");
     }
   };
-
-  // const handleImageSelection = async () => {
-  //   let result = await ImagePicker.launchImageLibraryAsync({
-  //     mediaTypes: ImagePicker.MediaTypeOptions.Images,
-  //     allowsEditing: true,
-  //     aspect: [4, 4],
-  //     quality: 1,
-  //   });
-  //   if (!result.canceled) {
-  //     setSelectedImage(result.assets[0].uri);
-  //   }
-  // };
 
   return (
     <SafeAreaView style={styles.safeArea}>
