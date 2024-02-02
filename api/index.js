@@ -341,11 +341,13 @@ app.get("/veterinarianId/checkId/:vetId", async (req, res) => {
 app.get("/tips/all", async (req, res) => {
   try {
     // Populate the 'vetId' field in each tip with the 'name' field from the referenced veterinarian document
-    const tips = await Tip.find().populate('vetId', 'name');
+    const tips = await Tip.find().populate('vetId', 'name profilePicture'); // Ensure you're also populating the profilePicture
     const tipsWithVetNames = tips.map(tip => ({
       _id: tip._id,
       content: tip.content,
-      vetName: tip.vetId ? tip.vetId.name : 'Unknown'
+      vetName: tip.vetId ? tip.vetId.name : 'Unknown',
+      // Use the vet's profile picture if available; otherwise, use a default image
+      VetImage: tip.vetId && tip.vetId.profilePicture ? tip.vetId.profilePicture : "https://www.behance.net/gallery/189614555/VetProfile.jpg"
     }));
     res.status(200).json(tipsWithVetNames);
   } catch (error) {

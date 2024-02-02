@@ -9,7 +9,7 @@ import {
   Switch,
   StyleSheet,
 } from "react-native";
-import { COLORS, FONTS, SIZES, images } from "../../constants";
+import { COLORS, FONTS, SIZES } from "../../constants";
 import { StatusBar } from "expo-status-bar";
 import { MaterialIcons } from "@expo/vector-icons";
 import { mapVetDetails } from "../../utils";
@@ -26,7 +26,7 @@ export default function VetHomeScreen({ route, navigation }) {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3000/veterinarian/${vetId}`)
+      .get(`http://10.0.2.2:3000/veterinarian/${vetId}`)
       .then((response) => {
         const mapedVetDetails = mapVetDetails(response.data);
         setVetDetails(mapedVetDetails);
@@ -45,7 +45,7 @@ export default function VetHomeScreen({ route, navigation }) {
 
     // Make a PUT request to update the availability on the server
     axios
-      .put(`http://localhost:3000/veterinarian/updateInfo/${vetId}`, {
+      .put(`http://10.0.2.2:3000/veterinarian/updateInfo/${vetId}`, {
         updatedData: { isAvailable: !vetDetails.isAvailable },
       })
       .then((response) => {
@@ -106,11 +106,12 @@ export default function VetHomeScreen({ route, navigation }) {
               </TouchableOpacity>
             </>
           )}
-          <Image
+          {/* <Image
             source={images.Vetprofile}
             resizeMode="contain"
             style={styles.vetProfileImage}
-          />
+          /> */}
+          <Image source={{ uri: vetDetails.profilePicture }} style={styles.vetProfileImage} />
 
           <Text style={styles.name}>{vetDetails.name}</Text>
           <Text style={styles.specialization}>{vetDetails.specialization}</Text>

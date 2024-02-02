@@ -38,7 +38,7 @@ export const mapVetDetails = (vetData) => {
     vetId: vetData.vetId,
     password: vetData.password || "",
     phoneNumber: vetData?.phoneNumber || "",
-    profilePicture: vetData?.profilePicture || "https://www.behance.net/gallery/189614555/VetProfile.jpg",
+    profilePicture: vetData?.profilePicture || "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/65761296352685.5eac4787a4720.jpg",
     rate: vetData?.rate || 0,
     rateCount: vetData.rateCount || 0,
     clientsCount: vetData?.clientsCount || 0,

@@ -14,26 +14,45 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import { COLORS, FONTS } from "../../constants";
 import { MaterialIcons } from "@expo/vector-icons";
-import { imagesDataURL } from "../../constants/data";
+// import { imagesDataURL } from "../../constants/data";
 import InputContainer from "../../components/InputContainer/InputContainer";
 import { mapVetDetailsToSchema, mapVetDetails } from "../../utils";
 import { useEffect } from "react";
 import axios from "axios";
 
-const VetEditUrls = {
-  info: (id) => `http://localhost:3000/veterinarian/${id}`,
-};
-
 export default function EditVetProfileScreen({ route, navigation }) {
-  const [selectedImage, setSelectedImage] = useState(imagesDataURL[0]);
   const [vetDetails, setVetDetails] = useState({});
+  const [selectedImage, setSelectedImage] = useState(
+    "https://mir-s3-cdn-cf.behance.net/projects/max_808_webp/3c6f95189614555.Y3JvcCwxMDI0LDgwMCwwLDExMQ.jpg"
+  );
 
   const vetId = route.params.vetId;
+
+  // useEffect(() => {
+  //   if (vetId) {
+  //     axios
+  //       .get(`http://10.0.2.2:3000/veterinarian/${vetId}`)
+  //       .then((response) => {
+  //         const mapedVetDetails = mapVetDetails(response.data);
+  //         setPetBasicInfoInput(mapedPetDetails.basicInfo);
+  //         setMedicalInfoInput(mapedPetDetails.medicalInfo);
+  //         setPetImage(mapedPetDetails.imgSrc);
+  //       })
+  //       .catch((error) => {
+  //         console.error("Error fetching pet details:", error);
+  //       });
+  //   } else {
+  //     const mapedPetDetails = mapPetDetails();
+  //     setPetBasicInfoInput(mapedPetDetails.basicInfo);
+  //     setMedicalInfoInput(mapedPetDetails.medicalInfo);
+  //     setPetImage(mapedPetDetails.imgSrc);
+  //   }
+  // }, [vetId]);
 
   useEffect(() => {
     const fetchVetDetails = async () => {
       try {
-        const { data } = await axios.get(VetEditUrls.info(vetId));
+        const { data } = await axios.get(`http://10.0.2.2:3000/veterinarian/${vetId}`);
         const mapedVetDetails = mapVetDetails(data);
         setVetDetails(mapedVetDetails);
         setSelectedImage(mapVetDetails.profilePicture);
@@ -44,19 +63,6 @@ export default function EditVetProfileScreen({ route, navigation }) {
     fetchVetDetails();
   }, [vetId]);
 
-  const handleImageSelection = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 4],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setSelectedImage(result.assets[0].uri);
-    }
-  };
-
   const handleChange = (inputIdentifier, newValue) => {
     setVetDetails((prevUserInput) => {
       return {
@@ -66,6 +72,7 @@ export default function EditVetProfileScreen({ route, navigation }) {
     });
   };
 
+
   const saveChanges = () => {
     const updatedData = {
       ...vetDetails,
@@ -74,7 +81,7 @@ export default function EditVetProfileScreen({ route, navigation }) {
     const vetDetailsSchema = mapVetDetailsToSchema(updatedData);
 
     axios
-      .put(`http://localhost:3000/veterinarian/updateInfo/${vetId}`, { updatedData: vetDetailsSchema })
+      .put(`http://10.0.2.2:3000/veterinarian/updateInfo/${vetId}`, { updatedData: vetDetailsSchema })
       .then((response) => {
         navigation.goBack();
       })
@@ -83,12 +90,45 @@ export default function EditVetProfileScreen({ route, navigation }) {
       });
   };
 
+  const handleImagePicker = async () => {
+    // Request permission to access the device's photo library
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status === "granted") {
+      // Launch the image picker
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 4],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    } else {
+      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
+    }
+  };
+
+  // const handleImageSelection = async () => {
+  //   let result = await ImagePicker.launchImageLibraryAsync({
+  //     mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  //     allowsEditing: true,
+  //     aspect: [4, 4],
+  //     quality: 1,
+  //   });
+  //   if (!result.canceled) {
+  //     setSelectedImage(result.assets[0].uri);
+  //   }
+  // };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
         <ScrollView>
           <View style={styles.imageContainer}>
-            <TouchableOpacity onPress={handleImageSelection}>
+            <TouchableOpacity onPress={handleImagePicker}>
               <Image source={{ uri: selectedImage }} style={styles.profileImage} />
               <View style={styles.cameraIcon}>
                 <MaterialIcons name="photo-camera" size={32} color={COLORS.primary} />
