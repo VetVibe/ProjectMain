@@ -39,9 +39,11 @@ export default function EditPetOwnerProfileScreen({ route, navigation }) {
   }, [petOwnerId]);
 
   const handleChange = (inputIdentifier, newValue) => {
-    // Allow changing only email, name, password, and profilePicture
+    // Allow changes only for name, email, and profilePicture
     if (
-      ["email", "name", "password", "profilePicture"].includes(inputIdentifier)
+      inputIdentifier === "name" ||
+      inputIdentifier === "email" ||
+      inputIdentifier === "profilePicture"
     ) {
       setPetOwnerDetails((prevUserInput) => {
         return {
@@ -58,7 +60,6 @@ export default function EditPetOwnerProfileScreen({ route, navigation }) {
       const updatedData = {
         email: petOwnerDetails.email,
         name: petOwnerDetails.name,
-        password: petOwnerDetails.password,
         profilePicture: selectedImage,
       };
 
@@ -131,7 +132,11 @@ export default function EditPetOwnerProfileScreen({ route, navigation }) {
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Email:</Text>
-            <Text style={styles.value}>{petOwnerDetails.email}</Text>
+            <TextInput
+              style={styles.textInput}
+              value={petOwnerDetails.email}
+              onChangeText={(text) => handleChange("email", text)}
+            />
           </View>
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Name:</Text>
@@ -139,14 +144,6 @@ export default function EditPetOwnerProfileScreen({ route, navigation }) {
               style={styles.textInput}
               value={petOwnerDetails.name}
               onChangeText={(text) => handleChange("name", text)}
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password:</Text>
-            <TextInput
-              style={styles.textInput}
-              value={petOwnerDetails.password}
-              onChangeText={(text) => handleChange("password", text)}
             />
           </View>
           <TouchableOpacity style={styles.saveButton} onPress={saveChanges}>
@@ -187,7 +184,7 @@ const styles = StyleSheet.create({
   },
   label: {
     ...FONTS.body4,
-    color: COLORS.gray,
+    color: "#CCCCCC",
     marginBottom: 4,
   },
   value: {

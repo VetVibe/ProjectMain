@@ -18,6 +18,7 @@ import InputContainer from "../../components/InputContainer/InputContainer";
 import { mapVetDetailsToSchema, mapVetDetails } from "../../utils";
 import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
+import { TextInput } from "react-native";
 
 export default function EditVetProfileScreen({ route, navigation }) {
   const [vetDetails, setVetDetails] = useState({});
@@ -174,6 +175,7 @@ export default function EditVetProfileScreen({ route, navigation }) {
               </View>
             </TouchableOpacity>
           </View>
+
           <InputContainer
             details={vetDetails}
             onChangeText={(key, text) => handleChange(key, text)}
