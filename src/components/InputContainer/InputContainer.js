@@ -4,9 +4,20 @@ import DatePickerContainer from "../DatePickerContainer/DatePickerContainer";
 import { TITELS } from "../../constants";
 
 export default function InputContainer({ details, onChangeText }) {
-  const noDisplay = ["email", "password", "vetId", "profilePicture", "tips", "isAvailable", "rate", "rateCount", "clientsCount"];
+  const noDisplay = [
+    "password",
+    "vetId",
+    "profilePicture",
+    "tips",
+    "isAvailable",
+    "rate",
+    "rateCount",
+    "clientsCount",
+  ];
 
-  const filteredDetails = Object.fromEntries(Object.entries(details).filter(([key]) => !noDisplay.includes(key)));
+  const filteredDetails = Object.fromEntries(
+    Object.entries(details).filter(([key]) => !noDisplay.includes(key))
+  );
 
   return (
     <View>
@@ -14,7 +25,11 @@ export default function InputContainer({ details, onChangeText }) {
         <View key={key}>
           <Text style={styles.label}>{TITELS[key]}:</Text>
           {key === "lastVaccinationDate" || key === "lastVetVisit" ? (
-            <DatePickerContainer title={key} value={value} onDateChanged={(key, text) => onChangeText(key, text)} />
+            <DatePickerContainer
+              title={key}
+              value={value}
+              onDateChanged={(key, text) => onChangeText(key, text)}
+            />
           ) : (
             <TextInput
               style={styles.input}

@@ -8,6 +8,7 @@ export const TITELS = {
   medications: "Medications",
   allergies: "Allergies",
   name: "Name",
+  email: "Email",
   phoneNumber: "Phone Number",
   about: "About",
   location: "Location",
