@@ -1,121 +1,93 @@
-// Imports necessary libraries and components from React, React Native, and other packages.
-import React, { useState, useEffect } from "react"; // React library for building user interfaces, with hooks for state and effects.
-import { View, TouchableOpacity, Text, TextInput, Button, ScrollView, FlatList, StyleSheet, Image } from "react-native"; // Components from React Native for UI design.
-import { COLORS, FONTS, SIZES, images } from "../../constants"; // Imports custom constants for colors, fonts, sizes, and images.
-import { MaterialIcons, AntDesign } from "@expo/vector-icons"; // Icon libraries for use in the app.
-import axios from "axios"; // Axios library for making HTTP requests.
-import TipsScreenPet, { useAllTips } from "../TipsScreenPet/TipsScreenPet"; // Importing another screen and a custom hook from the project structure.
+import React, { useState, useEffect } from "react";
+import { View, TouchableOpacity, Text, TextInput, Button, ScrollView, FlatList, StyleSheet, Image } from "react-native";
+import { COLORS, FONTS, SIZES, images } from "../../constants";
+import { MaterialIcons, AntDesign } from "@expo/vector-icons";
+import axios from "axios";
+import TipsScreenPet, { useAllTips } from "../TipsScreenPet/TipsScreenPet";
 
-// Defines the main functional component for the TipsScreen.
+
 export default function TipsScreen({ route, navigation }) {
-  // State hooks to manage the tips data and editing state.
-  const [vetTips, setVetTips] = useState([]); // Holds an array of veterinary tips.
-  const [editingTipId, setEditingTipId] = useState(null); // Tracks the ID of the tip being edited.
-  const [editedTipContent, setEditedTipContent] = useState(""); // Tracks the content of the tip being edited.
+  const [vetTips, setVetTips] = useState([]);
+  const [editingTipId, setEditingTipId] = useState(null);
+  const [editedTipContent, setEditedTipContent] = useState("");
 
-  // Extracts parameters passed through the navigation route.
-  const vetId = route.params.vetId; // Veterinary ID from the navigation parameters.
-  const userType = route.params.userType; // User type from the navigation parameters.
-  
-  // Uses a custom hook to fetch all tips and store them in state.
-  const {fetchAllTips, vetTips: allVetTips} = useAllTips();
-
-  // useEffect hook to fetch all tips when the screen is focused or navigated to.
+  const vetId = route.params.vetId;
+  const userType = route.params.userType;
+  const   {fetchAllTips, vetTips: allVetTips} = useAllTips()
   useEffect(() => {
     fetchAllTips();
-  },[navigation]);
-
-  // useEffect hook to fetch tips related to a specific veterinarian.
+  },[navigation])
   useEffect(() => {
     const updateTips = async () => {
       try {
-        // Makes an HTTP GET request to fetch tip IDs for the specified vet.
         const response = await axios.get(`http://localhost:3000/veterinarian/${vetId}/tips`);
-        const tipIds = response.data; // Stores the fetched tip IDs.
+        const tipIds = response.data;
 
         if (tipIds) {
-          // Maps each tip ID to a fetch request to get its details and stores the promises.
           const fetchTipsDetails = tipIds.map((tipId) =>
             axios.get(`http://localhost:3000/tip/${tipId}`).then((response) => response.data)
           );
 
-          // Waits for all fetch requests to complete and then updates the vetTips state.
+          // Wait for all fetches to complete
           Promise.all(fetchTipsDetails).then((tipsDetailsArray) => {
             setVetTips(tipsDetailsArray);
           });
         }
       } catch (error) {
-        console.error("Error fetching vet tips:", error); // Logs any errors to the console.
+        console.error("Error fetching vet tips:", error);
       }
     };
 
-    // Adds an event listener that updates tips when the screen is focused.
+    // Listen for changes and update petDetails
     const subscription = navigation.addListener("focus", updateTips);
 
-    // Cleanup function to remove the event listener when the component unmounts.
+    // Clean up the subscription when the component unmounts
     return () => {
       if (subscription) {
-        subscription.remove();
+        subscription();
       }
     };
-  }, [vetId, navigation]); // Dependence on vetId and navigation to trigger updates.
+  }, [vetId, navigation]);
 
-  // Function to handle the press event on the edit button for a tip.
   const handleEditPress = (tipId, currentContent) => {
-    setEditingTipId(tipId); // Sets the currently editing tip ID.
-    setEditedTipContent(currentContent); // Sets the content of the tip being edited.
+    setEditingTipId(tipId);
+    setEditedTipContent(currentContent);
   };
 
-  // Defines a function to handle the save operation for an edited tip.
   const handleSavePress = (tipId) => {
-    // Updates the state of vetTips by mapping through existing tips.
-    // If the current tip's ID matches the edited tip's ID, it updates that tip's content.
-    // Otherwise, it returns the tip as is.
     setVetTips((prevTips) => prevTips.map((tip) => (tip._id === tipId ? { ...tip, content: editedTipContent } : tip)));
 
-    // Sends a PUT request to update the tip information in the backend using axios.
-    // The URL includes the tipId for the tip being updated.
-    // The request body includes the updated vetId and content.
     axios
       .put(`http://localhost:3000/tip/updateInfo/${tipId}`, {
         updatedData: { vetId: vetId, content: editedTipContent },
       })
       .catch((error) => {
-        // Logs an error to the console if the axios request fails.
         console.error(`Error during updating tip ${tipId} details:`, error);
       });
 
-    // Resets the editing state to null and clears the edited content,
-    // indicating that editing is complete and no tip is currently being edited.
+    // Clear editing state
     setEditingTipId(null);
     setEditedTipContent("");
   };
 
-  // Defines a function to handle the cancel operation when editing a tip.
   const handleCancelPress = () => {
-    // Clears the editing state by resetting both the editingTipId and editedTipContent,
-    // effectively cancelling the edit operation.
+    // Clear editing state
     setEditingTipId(null);
     setEditedTipContent("");
   };
 
-  // Defines a function to navigate to the "Share Tip Screen" with the current vetId.
   const ShareTipClick = () => {
     navigation.navigate("Share Tip Screen", { vetId: vetId });
   };
 
-  // Defines a function to conditionally render tips that are not associated with the current vetId.
   const renderItemOtherVet = ({ item }) => {
-    // Checks if the item's vetId matches the current vetId. If it does, it returns null, skipping rendering.
-    if(item.vetId == vetId) return null;
+    if(item.vetId == vetId) return null
     return (
-      // Renders a view for each tip item, structured with an image and text container.
       <View style={styles.tipContainer}>
         <Image
-          // Uses the vet's image URL for the source of the image.
-          source={{ uri : item.VetImage}} // Ensures dynamic image sourcing based on the item's data.
-          resizeMode="cover" // Sets the resizeMode of the image to cover.
-          style={styles.profileImage} // Applies styling to the image.
+          source={{ uri : item.VetImage}} // Make sure to update this to use item-specific images if available
+          resizeMode="cover"
+          style={styles.profileImage}
         />
         <View style={styles.tipTextContainer}>
           <Text style={styles.tipContent}>{item.content}</Text>
@@ -125,10 +97,9 @@ export default function TipsScreen({ route, navigation }) {
     );
   };
 
-  // Defines a function to render items with a check to see if the item is being edited.
   const renderItem = ({ item }) => {
-    // Determines if the current item is being edited by comparing its ID to the editingTipId.
     const isEditing = item._id === editingTipId;
+
     return (
       <View style={{ marginBottom: 10 }}>
         {isEditing ? (
@@ -171,77 +142,66 @@ export default function TipsScreen({ route, navigation }) {
   );
 }
 
-// Defines the styles for the components in a React Native application.
 const styles = StyleSheet.create({
-  // Style for the main container view.
   container: {
-    flex: 1, // Makes the container use all available space in its parent container.
-    padding: 20, // Adds padding inside the container on all sides.
+    flex: 1,
+    padding: 20,
   },
-  // Style for the title text.
   title: {
-    fontSize: 30, // Sets the size of the font for the title.
-    fontWeight: "bold", // Makes the title text bold.
-    marginTop: 60, // Adds space above the title.
-    marginBottom: 40, // Adds space below the title.
-    marginLeft: 0, // Ensures there is no extra space to the left of the title.
+    fontSize: 30,
+    fontWeight: "bold",
+    marginTop: 60,
+    marginBottom: 40,
+    marginLeft: 0,
   },
-  // Style for the container that holds each tip.
   tipContainer: {
-    flexDirection: 'row', // Arranges items in a row instead of a column.
-    backgroundColor: "#f0f0f0", // Sets the background color of the tip container.
-    borderRadius: 2, // Rounds the corners of the container slightly.
-    padding: 5, // Adds padding inside the tip container on all sides.
-    marginBottom: 10, // Adds space below the tip container.
-    alignItems: 'center', // Centers items vertically within the container.
+    flexDirection: 'row', // Set flexDirection to row to align items horizontally
+    backgroundColor: "#f0f0f0",
+    borderRadius: 2,
+    padding: 5,
+    marginBottom: 10,
+    alignItems: 'center', // Align items vertically in the center
   },
-  // Style for the text content of a tip.
   tipContent: {
-    fontSize: 16, // Sets the size of the font for the tip content.
+    fontSize: 16,
   },
-  // Style for input fields.
   input: {
-    height: 40, // Sets the height of the input field.
-    width: "100%", // Makes the input field span the entire width of its parent container.
-    borderColor: "#FFA500", // Sets the color of the border around the input field.
-    borderWidth: 1, // Sets the thickness of the border.
-    marginBottom: 20, // Adds space below the input field.
-    paddingLeft: 10, // Adds padding inside the input field on the left side.
-    borderRadius: 20, // Rounds the corners of the input field to make it oval.
-    backgroundColor: "#FFFFFF", // Sets the background color of the input field to white.
+    height: 40,
+    width: "100%", // Updated to span the entire width
+    borderColor: "#FFA500",
+    borderWidth: 1,
+    marginBottom: 20,
+    paddingLeft: 10,
+    borderRadius: 20, // Added to make it round
+    backgroundColor: "#FFFFFF", // White
   },
-  // Style for the veterinarian's name text.
   vetName: {
-    fontStyle: 'italic', // Makes the text italic.
-    marginTop: 5, // Adds space above the veterinarian's name.
+    fontStyle: 'italic',
+    marginTop: 5,
   },
-  // Style for the button used to edit the profile.
   editProfileButton: {
-    position: "absolute", // Positions the button absolutely within its parent container.
-    right: 20, // Positions the button 20 units from the right.
-    top: 20, // Positions the button 20 units from the top.
-    zIndex: 1, // Ensures the button lays on top of other elements.
-    width: 36, // Sets the width of the button.
-    height: 36, // Sets the height of the button.
-    alignItems: "center", // Centers items horizontally within the button.
-    justifyContent: "center", // Centers items vertically within the button.
-    backgroundColor: COLORS.primary, // Sets the background color of the button (COLORS.primary should be defined elsewhere).
-    borderRadius: 10, // Rounds the corners of the button.
+    position: "absolute",
+    right: 20,
+    top: 20,
+    zIndex: 1,
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
   },
-  // Style for the profile image.
   profileImage: {
-    height: 60, // Sets the height of the image.
-    width: 60, // Sets the width of the image.
-    borderRadius: 20, // Rounds the corners of the image to make it circular.
-    marginRight: 15, // Adds space to the right of the image.
+    height: 60, // Adjust the size as needed
+    width: 60, // Adjust the size as needed
+    borderRadius: 20, // Make it round
+    marginRight: 15, // Add some spacing between the image and the text
   },
-  // Style for the container that holds the text content of a tip.
   tipTextContainer: {
-    flex: 1, // Allows the container to expand and fill the available space beside the image.
+    flex: 1, // Take up the remaining space
   },
-  // Style for the button used to add a new item.
   addButton: {
-    alignSelf: 'flex-end', // Aligns the button to the end of its container (right side).
-    marginBottom: 10, // Adds space below the button.
+    alignSelf: 'flex-end',
+    marginBottom: 10,
   },
 });
