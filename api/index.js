@@ -1,78 +1,63 @@
-// Import the express module to create an HTTP server
 const express = require("express");
-// Import the body-parser middleware to parse request bodies
 const bodyParser = require("body-parser");
-// Import the mongoose library to interact with MongoDB
 const mongoose = require("mongoose");
-// Import the crypto module to generate secure random values, like secret keys
 const crypto = require("crypto");
-// Import the nodemailer module to send emails from Node.js
 const nodemailer = require("nodemailer");
 
-// Create an Express application
 const app = express();
-// Define the port number on which the server will listen
 const port = 3000;
-// Import the cors middleware to enable Cross-Origin Resource Sharing
 const cors = require("cors");
-// Use the cors middleware to allow cross-origin requests
 app.use(cors());
 
-// Use body-parser middleware to parse URL-encoded bodies (as sent by HTML forms)
 app.use(bodyParser.urlencoded({ extended: false }));
-// Use body-parser middleware to parse JSON bodies (as sent by API clients)
 app.use(bodyParser.json());
-// Import the jsonwebtoken module to create, sign, and verify tokens
 const jwt = require("jsonwebtoken");
 
-// Import Mongoose models for the application
-const Veterinarian = require("./models/veterinarian"); // Model for veterinarians
-const PetOwner = require("./models/pet_owner"); // Model for pet owners
-const Pet = require("./models/pet"); // Model for pets
-const Tip = require("./models/tip"); // Model for tips or advice
+// Import models
+const Veterinarian = require("./models/veterinarian");
+const PetOwner = require("./models/pet_owner");
+const Pet = require("./models/pet");
+const Tip = require("./models/tip");
 
-// Connect to MongoDB using a connection string (Note: sensitive information like passwords should be securely stored and not hardcoded)
+// Connect to MongoDB
 mongoose
   .connect(
-    "mongodb+srv://your_connection_string_here", // Connection string to MongoDB
-    {} // Options object, currently empty but can be used for configuration
+    "mongodb+srv://vivianu2014:vivi123m@cluster1.6ieglfk.mongodb.net/",
+    {}
   )
-  .then(() => { // Promise resolved handler
-    console.log("Connected to MongoDB"); // Log success message if connection is successful
+  .then(() => {
+    console.log("Connected to MongoDB");
   })
-  .catch((err) => { // Promise rejected handler
-    console.log("Error connecting to MongoDB"); // Log error message if connection fails
+  .catch((err) => {
+    console.log("Error connecting to MongoDB");
   });
 
-// Start the Express server and listen on the specified port
+// Start the server
 app.listen(port, () => {
-  console.log("Server is running on port 3000"); // Log message indicating the server is running
+  console.log("Server is running on port 3000");
 });
 
-// Define a function to generate a secret key using the crypto module
+// Function to generate a secret key
 const generateSecretKey = () => {
-  const secretKey = crypto.randomBytes(32).toString("hex"); // Generate a 32-byte random value and convert it to a hexadecimal string
-  return secretKey; // Return the generated secret key
+  const secretKey = crypto.randomBytes(32).toString("hex");
+  return secretKey;
 };
 
-// Generate a secret key by calling the generateSecretKey function
+// Generate a secret key
 const secretKey = generateSecretKey();
 
 // ------------ Pet Owner ------------
 // Register a pet owner
 app.post("/petOwner/register", async (req, res) => {
   try {
-    // Destructure and extract necessary fields from the request body
     const { name, email, password, location, profilePicture } = req.body;
-    // Check if a pet owner with the provided email already exists in the database
     const existingOwner = await PetOwner.findOne({ email });
 
-    // If an owner with the given email already exists, return an error message
     if (existingOwner) {
       return res.status(404).json({ message: "Email already registered" });
     }
 
-    // If no existing owner is found, create a new pet owner record
+    // Create a new user
     const newOwner = new PetOwner({
       name,
       email,
@@ -81,18 +66,16 @@ app.post("/petOwner/register", async (req, res) => {
       profilePicture,
     });
 
-    // Generate a random verification token for the new owner
+    // Generate and store the verification token
     newOwner.verificationToken = crypto.randomBytes(20).toString("hex");
 
-    // Save the new pet owner record to the database
+    // Save the new user to the database
     await newOwner.save();
 
-    // Respond with a success status and the ID of the new owner
     res
       .status(201)
       .json({ message: "Registration successful", userId: newOwner._id });
   } catch (error) {
-    // If an error occurs, log it and respond with an error message
     console.log("Error registering user", error);
     res.status(500).json({ message: "Error registering user" });
   }
@@ -101,61 +84,88 @@ app.post("/petOwner/register", async (req, res) => {
 // Pet owner login
 app.post("/petOwner/login", async (req, res) => {
   try {
-    // Extract email and password from the request body
     const { email, password } = req.body;
-    // Find a pet owner by the given email
     const owner = await PetOwner.findOne({ email });
 
-    // If no owner is found with the given email, return an error message
     if (!owner) {
       return res.status(404).json({ message: "Email doesnt register" });
     }
 
-    // Check if the provided password matches the owner's password
     if (owner.password !== password) {
       return res.status(401).json({ message: "Invalid password" });
     }
 
-    // If password matches, sign a JWT token with the owner's ID and a secret key
+    // Sign a JWT token with the user's ID and the secret key
     const token = jwt.sign({ userId: owner._id }, secretKey);
 
-    // Respond with the token and the owner's ID
     res.status(200).json({ token, userId: owner._id });
   } catch (error) {
-    // If an error occurs during login, respond with an error message
     res.status(500).json({ message: "Login failed" });
   }
 });
 
+// // Update pet owner email
+// app.put("/petOwner/updateEmail/:petOwnerId", async (req, res) => {
+//   const { newEmail } = req.body;
+//   const { petOwnerId } = req.params;
+
+//   try {
+//     // Check if the new email is already registered
+//     const existingOwner = await PetOwner.findOne({ email: newEmail });
+//     if (existingOwner) {
+//       return res.status(400).json({ message: "Email already in use." });
+//     }
+
+//     // Update the pet owner's email
+//     await PetOwner.findByIdAndUpdate(petOwnerId, { email: newEmail });
+//     res.status(200).json({ message: "Email updated successfully." });
+//   } catch (error) {
+//     console.error("Error updating email:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+
+// // Update pet owner password
+// app.put("/petOwner/updatePassword/:petOwnerId", async (req, res) => {
+//   const { newPassword } = req.body;
+//   const { petOwnerId } = req.params;
+
+//   try {
+//     await PetOwner.findByIdAndUpdate(petOwnerId, { password: newPassword });
+
+//     res.status(200).json({ message: "Password updated successfully." });
+//   } catch (error) {
+//     console.error("Error updating password:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+
 // Update pet owner details
 app.put("/petOwner/updateInfo/:petOwnerId", async (req, res) => {
-  const { petOwnerId } = req.params; // Extract the pet owner's ID from the URL parameters
-  const updatedData = req.body.updatedData; // Extract the data to be updated from the request body
+  const { petOwnerId } = req.params;
+  const updatedData = req.body.updatedData;
 
   try {
     // Find the pet owner by ID
     const petOwner = await PetOwner.findById(petOwnerId);
 
-    // If the pet owner is not found, return an error message
     if (!petOwner) {
       return res
         .status(404)
         .json({ success: false, message: "Pet owner not found" });
     }
 
-    // Update the pet owner's details with the provided data
+    // Update the pet owner details
     Object.assign(petOwner, updatedData);
 
-    // Save the updated pet owner details to the database
+    // Save the updated pet owner
     await petOwner.save();
 
-    // Respond with a success message
     res.json({
       success: true,
       message: "Pet owner details updated successfully",
     });
   } catch (error) {
-    // If an error occurs during the update, log it and respond with an error message
     console.error("Error updating pet owner details:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
@@ -164,70 +174,58 @@ app.put("/petOwner/updateInfo/:petOwnerId", async (req, res) => {
 // Fetch pet owner pet's collection
 app.get("/petOwner/:petOwnerId/pets", async (req, res) => {
   try {
-    // Extract the pet owner's ID from the URL parameters
     const petOwnerId = req.params.petOwnerId;
-    // Find the pet owner by ID
     const petOwner = await PetOwner.findById(petOwnerId);
 
-    // If the pet owner is not found, return an error message
     if (!petOwner) {
       return res.status(404).json({ message: "Pet Owner not found" });
     }
 
-    // Respond with the pet owner's collection of pets
     res.status(201).json({ pets: petOwner.pets });
   } catch (error) {
-    // If an error occurs while fetching the pets, log it and respond with an error message
     console.error("Error fetching user's pets:", error);
 
     res.status(500).json({ error: "Error fetching user's pets" });
   }
 });
-
 // Update pet owner profile picture
 app.put("/petOwner/updateProfilePicture/:petOwnerId", async (req, res) => {
-  const { newProfilePicture } = req.body; // Extract the new profile picture from the request body
-  const { petOwnerId } = req.params; // Extract the pet owner's ID from the URL parameters
+  const { newProfilePicture } = req.body;
+  const { petOwnerId } = req.params;
 
   try {
-    // Update the pet owner's profile picture in the database
+    // Update the pet owner's profile picture
     await PetOwner.findByIdAndUpdate(petOwnerId, {
       profilePicture: newProfilePicture,
     });
 
-    // Respond with a success message
     res.status(200).json({ message: "Profile picture updated successfully." });
   } catch (error) {
-    // If an error occurs during the update, log it and respond with an error message
     console.error("Error updating profile picture:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
-// Fetch pet owner details (single or all)
+// Fetch pet owner details (updated endpoint)
+// Fetch pet owner details (updated endpoint)
 app.get("/petOwner/:petOwnerId?", async (req, res) => {
   try {
-    // Extract the pet owner's ID from the URL parameters, if provided
     const petOwnerId = req.params.petOwnerId;
 
-    // If an ID is provided, fetch details of a single pet owner
     if (petOwnerId) {
+      // If petOwnerId is provided, fetch details of a single pet owner
       const petOwner = await PetOwner.findById(petOwnerId);
 
-      // If the pet owner is not found, return an error message
       if (!petOwner) {
         return res.status(404).json({ message: "Pet Owner not found" });
       }
 
-      // Respond with the details of the found pet owner
       res.status(200).json(petOwner);
     } else {
-      // If no ID is provided, fetch and respond with details of all pet owners
+      // If petOwnerId is not provided, fetch details of all pet owners
       const petOwners = await PetOwner.find();
       res.status(200).json(petOwners);
     }
   } catch (error) {
-    // If an error occurs while fetching the details, log it and respond with an error message
     console.error("Error fetching pet owner details:", error);
     res.status(500).json({ error: "Error fetching pet owner details" });
   }
@@ -235,12 +233,9 @@ app.get("/petOwner/:petOwnerId?", async (req, res) => {
 
 // ------------ Veterinarian ------------
 
-// Section to handle registration of veterinarians
-
-// Defines a route to register a veterinarian with a POST request.
+// Register a veterinarian
 app.post("/veterinarian/register", async (req, res) => {
   try {
-    // Destructures and extracts data from the request body.
     const {
       name,
       email,
@@ -251,18 +246,15 @@ app.post("/veterinarian/register", async (req, res) => {
       specialization,
       profilePicture,
     } = req.body;
-
-    // Checks if a veterinarian with the same vetId already exists in the database.
     const existingV = await Veterinarian.findOne({ vetId });
 
-    // If a veterinarian already exists, sends a 404 status code and message to the client.
     if (existingV) {
       return res
         .status(404)
         .json({ message: "Veterinarian already registered" });
     }
 
-    // Creates a new veterinarian instance with the provided data.
+    // Create a new veterinarian user
     const newVeterinarian = new Veterinarian({
       name,
       email,
@@ -274,237 +266,183 @@ app.post("/veterinarian/register", async (req, res) => {
       profilePicture,
     });
 
-    // Generates a verification token for the new veterinarian.
+    // Generate and store the verification token (if needed)
     newVeterinarian.verificationToken = crypto.randomBytes(20).toString("hex");
 
-    // Saves the new veterinarian instance to the database.
+    // Save the new veterinarian to the database
     await newVeterinarian.save();
 
-    // Sends a 201 status code and registration success message to the client.
+    // Send a response indicating successful registration
     res.status(201).json({
       message: "Registration successful for veterinarian",
       userId: newVeterinarian._id,
     });
   } catch (error) {
-    // Logs the error and sends a 500 status code and message to the client if an error occurs.
     console.log("Error registering veterinarian", error);
     res.status(500).json({ message: "Error registering veterinarian" });
   }
 });
 
-// Defines a route for veterinarian login with a POST request.
+// Veterinarian login
 app.post("/veterinarian/login", async (req, res) => {
   try {
-    // Extracts email and password from the request body.
     const { email, password } = req.body;
-
-    // Attempts to find a veterinarian by their email.
     const veterinarian = await Veterinarian.findOne({ email });
 
-    // If no veterinarian is found, sends a 404 status code and message to the client.
     if (!veterinarian) {
       return res.status(404).json({ message: "Invalid id" });
     }
 
-    // Checks if the provided password matches the veterinarian's password.
     if (veterinarian.password !== password) {
       return res.status(401).json({ message: "Invalid password" });
     }
 
-    // Signs a JWT token with the veterinarian's ID and secret key.
+    // Sign a JWT token with the user's ID and the secret key
     const token = jwt.sign({ userId: veterinarian._id }, secretKey);
 
-    // Sends a 200 status code and the JWT token to the client.
     res.status(200).json({ token, userId: veterinarian._id });
   } catch (error) {
-    // Sends a 500 status code and message to the client if an error occurs.
     res.status(500).json({ message: "Login failed" });
   }
 });
 
-// Defines a route to add a rating to a veterinarian with a POST request.
+// Endpoint to add rating to a vet
 app.post("/veterinarian/rate", async (req, res) => {
   try {
-    // Extracts the authorization token from the request headers.
     let token = req.headers["authorization"] || req.headers["Authorization"];
     token = token.split("Bearer ")[1];
-
-    // Decodes the JWT token to extract the user ID.
     const { userId } = jwt.decode(token);
-
-    // Extracts the email and rating from the request body.
     const { email, rating } = req.body;
-
-    // Attempts to find the veterinarian by email and the pet owner by user ID.
     const veterinarian = await Veterinarian.findOne({ email });
     const petOwner = await PetOwner.findById(userId);
 
-    // If either the pet owner or veterinarian is not found, sends a 404 status code and message to the client.
     if (!petOwner || !veterinarian) {
       return res.status(404).json({ message: "Vet/Pet owner email not found" });
     }
 
-    // Prevents the pet owner from rating the same veterinarian multiple times.
     if (veterinarian && petOwner.ratings.includes(email)) {
       return res
         .status(400)
-        .json({ message: "You have already rated this vet" });
+        .json({ message: "You have already rated this vert" });
     }
-
-    // Adds the veterinarian's email to the pet owner's ratings and updates the veterinarian's rating.
     petOwner.ratings.push(email);
     veterinarian.rate += rating;
     veterinarian.rateCount++;
 
-    // Saves the updated pet owner and veterinarian to the database.
     await petOwner.save();
     await veterinarian.save();
 
-    // Sends the new rating and rating count to the client.
     res.status(200).json({
       newRating: veterinarian.rate,
       newRatingCount: veterinarian.rateCount,
     });
   } catch (error) {
-    // Sends a 500 status code and message to the client if an error occurs.
-    res.status(500).json({ message: "Rating failed" });
+    res.status(500).json({ message: "Login failed" });
   }
 });
 
-// Defines a route to fetch veterinarians based on specialization and location with a GET request.
+// Endpoint to fetch veterinarians based on specialization and location
 app.get("/veterinarians", async (req, res) => {
-  // Extracts location and specialization from the query parameters.
   const { location, specialization } = req.query;
 
   try {
-    // Creates a query object based on the provided location and specialization.
     let query = {};
     if (location) query.location = location;
     if (specialization) query.specialization = specialization;
 
-    // Finds veterinarians matching the query.
     const veterinarians = await Veterinarian.find(query);
-
-    // Sends the found veterinarians to the client.
     res.status(200).json(veterinarians);
   } catch (error) {
-    // Logs the error and sends a 500 status code and message to the client if an error occurs.
     console.error("Error fetching veterinarians", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
-// Defines a route to fetch information for a specific veterinarian using their vetId with a GET request.
+// Fetch vet information
 app.get("/veterinarian/:vetId", async (req, res) => {
   try {
-    // Extracts the vetId from the route parameters.
     const vetId = req.params.vetId;
-
-    // Attempts to find the veterinarian by their vetId.
     const veterinarian = await Veterinarian.findById(vetId);
-
-    // If no veterinarian is found, sends a 404 status code and message to the client.
     if (!veterinarian) {
       return res.status(404).json({ message: "Veterinarian not found" });
     }
-
-    // Ensures the veterinarian's rateCount is defined, defaulting to 0 if undefined.
     if (veterinarian.rateCount === undefined) {
       veterinarian.rateCount = 0;
     }
-
-    // Sends the veterinarian's information to the client.
     res.status(200).json(veterinarian);
   } catch (error) {
-    // Logs the error and sends a 500 status code and message to the client if an error occurs.
     console.error("Error fetching vet information", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
-// Defines a route for updating veterinarian details with a PUT request.
+// Updating vet details
 app.put("/veterinarian/updateInfo/:vetId", async (req, res) => {
   try {
-    // Extracts the vetId from the route parameters.
     const vetId = req.params.vetId;
-
-    // Extracts the updated data from the request body.
     const updatedVetData = req.body.updatedData;
 
-    // Finds the veterinarian by their ID and updates their information.
+    // Use findOneAndUpdate to find the vet by its _id and update the data
     const updatedVet = await Veterinarian.findOneAndUpdate(
       { _id: vetId },
       { $set: updatedVetData },
-      { new: true } // Option to return the updated document.
+      { new: true } // Return the updated document
     );
 
-    // If no veterinarian is found, logs an error and sends a 404 status code and message to the client.
     if (!updatedVet) {
       console.error(`Vet with ID ${vetId} not found.`);
       return res.status(404).json({ message: "Veterinarian not found" });
     }
 
-    // Logs success and sends a success message to the client.
     console.log(`Vet with ID ${vetId} updated successfully.`);
     res
       .status(200)
       .json({ message: `Vet with ID ${vetId} updated successfully.` });
   } catch (error) {
-    // Logs the error and sends a 500 status code and message to the client if an error occurs.
     console.error("Error updating vet:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
-// Defines a route to fetch a veterinarian's tips collection using their vetId with a GET request.
+// Fetch vet tips collection
 app.get("/veterinarian/:vetId/tips", async (req, res) => {
   try {
-    // Extracts the vetId from the route parameters.
     const vetId = req.params.vetId;
-
-    // Attempts to find the veterinarian by their vetId.
     const vet = await Veterinarian.findById(vetId);
 
-    // If no veterinarian is found, sends a 404 status code and message to the client.
     if (!vet) {
       return res.status(404).json({ message: "Vet not found" });
     }
-
-    // Sends the veterinarian's tips collection to the client.
     res.status(201).json(vet.tips);
   } catch (error) {
-    // Logs the error and sends a 500 status code and message to the client if an error occurs.
-    console.error("Error fetching vet's tips:", error);
-    res.status(500).json({ error: "Error fetching vet's tips" });
+    console.error("Error fetching user's pets:", error);
+
+    res.status(500).json({ error: "Error fetching user's pets" });
   }
 });
 
 // ------------ Veterinarian ID------------
 
-// Defines a route to check if a veterinarian ID is valid.
+// Check if a vet ID is valid
 app.get("/veterinarianId/checkId/:vetId", async (req, res) => {
   try {
-    // Extracts the veterinarian ID from the URL parameter.
     const enteredVetId = req.params.vetId;
 
-    // Accesses the VeterinarianIDs collection from the database.
+    // Check if the vet ID exists in the VetId collection
     const vetIdCollection =
       mongoose.connection.db.collection("VeterinarianIDs");
 
-    // Attempts to find an entry in the collection that matches the provided veterinarian ID.
+    // Check if the vet ID exists in the collection
     const existingVetId = await vetIdCollection.findOne({
       vetId: enteredVetId,
     });
 
-    // If an entry is found, it means the ID is valid, and a positive response is sent back.
     if (existingVetId) {
       res.json({ isValid: true });
     } else {
-      // If no entry is found, the ID is invalid, and a negative response is sent back.
       res.json({ isValid: false });
     }
   } catch (error) {
-    // Logs any errors that occur during the process and sends an error response.
     console.error("Error checking vet ID:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -512,114 +450,90 @@ app.get("/veterinarianId/checkId/:vetId", async (req, res) => {
 
 // ------------ Tip------------
 
-// Defines a route to fetch all tips and their associated veterinarian names and profile pictures.
 app.get("/tips/all", async (req, res) => {
   try {
-    // Fetches all tips from the database and populates the 'vetId' field with the veterinarian's name and profile picture.
-    const tips = await Tip.find().populate("vetId", "name profilePicture");
-    // Maps through each tip to create a new structure that includes the veterinarian's name and profile picture or a default image if not available.
+    // Populate the 'vetId' field in each tip with the 'name' field from the referenced veterinarian document
+    const tips = await Tip.find().populate("vetId", "name profilePicture"); // Ensure you're also populating the profilePicture
     const tipsWithVetNames = tips.map((tip) => ({
       _id: tip._id,
       content: tip.content,
       vetName: tip.vetId ? tip.vetId.name : "Unknown",
+      // Use the vet's profile picture if available; otherwise, use a default image
       VetImage:
         tip.vetId && tip.vetId.profilePicture
           ? tip.vetId.profilePicture
           : "https://www.behance.net/gallery/189614555/VetProfile.jpg",
     }));
-    // Sends the modified list of tips back to the client.
     res.status(200).json(tipsWithVetNames);
   } catch (error) {
-    // Logs any errors that occur during the process and sends an error response.
     console.error("Error fetching all tips", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
-// Defines a route to add a new tip associated with a specific veterinarian.
+// Add tip
 app.post("/tip/addTip/:vetId", async (req, res) => {
   try {
-    // Extracts the veterinarian ID from the URL parameter and the tip content from the request body.
     const vetId = req.params.vetId;
     const { content } = req.body;
 
-    // Creates a new tip instance with the veterinarian ID and content.
     const newTip = new Tip({ vetId: vetId, content: content });
-    // Generates a verification token for the new tip (if needed for further validation or features).
     newTip.verificationToken = crypto.randomBytes(20).toString("hex");
-    // Saves the new tip to the database.
     await newTip.save();
 
-    // Attempts to find the veterinarian by ID to associate the tip with.
     const vet = await Veterinarian.findById(vetId);
 
-    // If the veterinarian is not found, sends a 404 response.
     if (!vet) {
       return res.status(404).json({ message: "Veterinarian not found" });
     }
 
-    // Adds the tip ID to the veterinarian's list of tips and saves the updated veterinarian document.
     vet.tips.push(newTip._id);
     await vet.save();
 
-    // Sends a success response indicating the tip was added.
     res.status(201).json({ message: "Tip added successfully" });
   } catch (error) {
-    // Logs any errors that occur during the process and sends an error response.
     console.error("Error adding tips", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
-// Defines a route to fetch a specific tip by its ID.
+// Fetch tip
 app.get("/tip/:tipId", async (req, res) => {
   try {
-    // Extracts the tip ID from the URL parameter.
     const tipId = req.params.tipId;
-    // Attempts to find the tip by its ID in the database.
     const tip = await Tip.findById(tipId);
-
-    // If the tip is not found, sends a 404 response.
     if (!tip) {
       return res.status(404).json({ message: "Tip not found" });
     }
-
-    // Sends the found tip back to the client.
     res.status(200).json(tip);
   } catch (error) {
-    // Logs any errors that occur during the process and sends an error response.
     console.error("Error fetching pet information", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
-// Defines a route for updating the details of a specific tip.
+// Updating tip details
 app.put("/tip/updateInfo/:tipId", async (req, res) => {
   try {
-    // Extracts the tip ID from the URL parameter and the updated data from the request body.
     const tipId = req.params.tipId;
     const updatedTipData = req.body.updatedData;
 
-    // Attempts to find the tip by ID and update it with the new data, returning the updated document.
     const updatedTip = await Tip.findOneAndUpdate(
       { _id: tipId },
       { $set: updatedTipData },
-      { new: true } // Ensures the updated document is returned.
+      { new: true } // Return the updated document
     );
 
-    // If the tip is not found, sends a 404 response.
     if (!updatedTip) {
       console.error(`Tip with ID ${tipId} not found.`);
       return res.status(404).json({ message: "Tip not found" });
     }
 
-    // Logs success and sends a success response to the client.
     console.log(`Tip with ID ${tipId} updated successfully.`);
     res
       .status(200)
       .json({ message: `Tip with ID ${tipId} updated successfully.` });
   } catch (error) {
-    // Logs any errors that occur during the process and sends an error response.
     console.error("Error updating tip:", error);
     res.status(500).json({ message: "Internal server error" });
   }
@@ -627,161 +541,133 @@ app.put("/tip/updateInfo/:tipId", async (req, res) => {
 
 // ------------ Pet ------------
 
-// Define a route to add a new pet associated with a pet owner.
+// Add a pet
 app.post("/pet/addPet/:petOwnerId", async (req, res) => {
   try {
-    // Extract the pet owner's ID from the URL parameters.
     const petOwnerId = req.params.petOwnerId;
-    // Create a new Pet instance with the pet owner's ID and other pet details from the request body.
     const newPet = new Pet({ ownerId: petOwnerId, ...req.body });
 
-    // Generate a unique verification token for the new pet for future verification purposes.
+    // Generate and store the verification token
     newPet.verificationToken = crypto.randomBytes(20).toString("hex");
 
-    // Save the new pet document to the database.
+    // Save the new pet to the database
     await newPet.save();
 
-    // Find the pet owner in the database using their ID.
+    // Find the corresponding PetOwner document by ownerId
     const petOwner = await PetOwner.findById(petOwnerId);
 
-    // If the pet owner does not exist, return a 404 Not Found response.
     if (!petOwner) {
       return res.status(404).json({ message: "Pet Owner not found" });
     }
 
-    // Add the new pet's ID to the pet owner's list of pets.
+    // Add the new pet's ObjectId to the pets array of the PetOwner
     petOwner.pets.push(newPet._id);
 
-    // Save the updated pet owner document to the database.
+    // Save the updated PetOwner document
     await petOwner.save();
 
-    // Respond with a 201 Created status and a success message including the new pet's ID.
     res
       .status(201)
       .json({ message: "Pet added successfully", petId: newPet._id });
   } catch (error) {
-    // Log the error and respond with a 500 Internal Server Error status and an error message.
     console.log("Error adding a pet:", error);
     res.status(500).json({ message: "Error adding a pet" });
   }
 });
 
-// Define a route to fetch information about a specific pet.
+// Fetch pet information
 app.get("/pet/:petId", async (req, res) => {
   try {
-    // Extract the pet's ID from the URL parameters.
     const petId = req.params.petId;
-    // Find the pet in the database using its ID.
     const pet = await Pet.findById(petId);
-
-    // If the pet does not exist, return a 404 Not Found response.
     if (!pet) {
       return res.status(404).json({ message: "Pet not found" });
     }
-
-    // Respond with a 200 OK status and the pet's information.
     res.status(200).json(pet);
   } catch (error) {
-    // Log the error and respond with a 500 Internal Server Error status and an error message.
     console.error("Error fetching pet information", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
-// Define a route to update information about a specific pet.
+// Updating pet details
 app.put("/pet/updateInfo/:petId", async (req, res) => {
   try {
-    // Extract the pet's ID from the URL parameters.
     const petId = req.params.petId;
-    // Extract the updated pet data from the request body.
     const updatedPetData = req.body.updatedData;
 
-    // Find the pet by its ID and update it with the new data, returning the updated document.
+    // Use findOneAndUpdate to find the pet by its _id and update the data
     const updatedPet = await Pet.findOneAndUpdate(
       { _id: petId },
       { $set: updatedPetData },
-      { new: true } // Ensure the updated document is returned, not the original.
+      { new: true } // Return the updated document
     );
 
-    // If the pet does not exist, return a 404 Not Found response.
     if (!updatedPet) {
       console.error(`Pet with ID ${petId} not found.`);
       return res.status(404).json({ message: "Pet not found" });
     }
 
-    // Log the successful update and respond with a 200 OK status and a success message.
     console.log(`Pet with ID ${petId} updated successfully.`);
     res
       .status(200)
       .json({ message: `Pet with ID ${petId} updated successfully.` });
   } catch (error) {
-    // Log the error and respond with a 500 Internal Server Error status and an error message.
     console.error("Error updating pet:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
-// Define a route to fetch all cities from the "city" collection in the database.
 app.get("/cities", async (req, res) => {
   try {
-    // Fetch all documents from the "city" collection and convert them to an array.
+    // Fetch all cities from the "City" collection
     const cities = await mongoose.connection.db
       .collection("city")
       .find()
       .toArray();
 
-    // Respond with a 200 OK status and the list of cities.
+    // Respond with the fetched cities
     res.status(200).json(cities);
   } catch (error) {
-    // Log the error and respond with a 500 Internal Server Error status and an error message.
     console.error("Error fetching cities:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
-// Define a route to fetch all specializations from the "Specialisation" collection in the database.
 app.get("/specialization", async (req, res) => {
   try {
-    // Fetch all documents from the "Specialisation" collection and convert them to an array.
     const specialization = await mongoose.connection.db
       .collection("Specialisation")
       .find()
       .toArray();
 
-    // Respond with a 200 OK status and the list of specializations.
+    // Respond with the fetched cities
     res.status(200).json(specialization);
   } catch (error) {
-    // Log the error and respond with a 500 Internal Server Error status and an error message.
     console.error("Error fetching cities:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
-// Define a route to delete a specific pet and update the pet owner's list of pets.
+// DELETE endpoint to remove a pet and update the pet owner's list of pets
 app.delete("/pet/:petId", async (req, res) => {
   try {
-    // Extract the pet's ID from the URL parameters.
     const petId = req.params.petId;
 
-    // Find the pet by its ID and delete it from the database.
+    // Find and delete the pet
     const pet = await Pet.findByIdAndDelete(petId);
-
-    // If the pet does not exist, return a 404 Not Found response.
     if (!pet) {
       return res.status(404).json({ message: "Pet not found" });
     }
 
-    // If the pet has an associated owner, update the pet owner's document to remove the pet's ID from their list of pets.
+    // If the pet has an owner, update the PetOwner's pets array
     if (pet.ownerId) {
       await PetOwner.findByIdAndUpdate(pet.ownerId, {
-        $pull: { pets: pet._id }, // Remove the pet's ID from the pets array.
+        $pull: { pets: pet._id },
       });
     }
 
-    // Respond with a 200 OK status and a success message.
     res.status(200).json({ message: "Pet deleted successfully" });
   } catch (error) {
-    // Log the error and respond with a 500 Internal Server Error status and an error message.
     res.status(500).json({ message: "Error deleting pet", error });
   }
 });
