@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { View, TouchableOpacity, Text, TextInput, Button, ScrollView, FlatList, StyleSheet, Image } from "react-native";
+import {
+  View,
+  TouchableOpacity,
+  Text,
+  TextInput,
+  Button,
+  ScrollView,
+  FlatList,
+  StyleSheet,
+  Image,
+} from "react-native";
 import { COLORS, FONTS, SIZES, images } from "../../constants";
 import { MaterialIcons, AntDesign } from "@expo/vector-icons";
 import axios from "axios";
 import TipsScreenPet, { useAllTips } from "../TipsScreenPet/TipsScreenPet";
-
 
 export default function TipsScreen({ route, navigation }) {
   const [vetTips, setVetTips] = useState([]);
@@ -13,19 +22,23 @@ export default function TipsScreen({ route, navigation }) {
 
   const vetId = route.params.vetId;
   const userType = route.params.userType;
-  const   {fetchAllTips, vetTips: allVetTips} = useAllTips()
+  const { fetchAllTips, vetTips: allVetTips } = useAllTips();
   useEffect(() => {
     fetchAllTips();
-  },[navigation])
+  }, [navigation]);
   useEffect(() => {
     const updateTips = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/veterinarian/${vetId}/tips`);
+        const response = await axios.get(
+          `http://localhost:3000/veterinarian/${vetId}/tips`
+        );
         const tipIds = response.data;
 
         if (tipIds) {
           const fetchTipsDetails = tipIds.map((tipId) =>
-            axios.get(`http://localhost:3000/tip/${tipId}`).then((response) => response.data)
+            axios
+              .get(`http://localhost:3000/tip/${tipId}`)
+              .then((response) => response.data)
           );
 
           // Wait for all fetches to complete
@@ -37,16 +50,6 @@ export default function TipsScreen({ route, navigation }) {
         console.error("Error fetching vet tips:", error);
       }
     };
-
-    // Listen for changes and update petDetails
-    const subscription = navigation.addListener("focus", updateTips);
-
-    // Clean up the subscription when the component unmounts
-    return () => {
-      if (subscription) {
-        subscription();
-      }
-    };
   }, [vetId, navigation]);
 
   const handleEditPress = (tipId, currentContent) => {
@@ -55,7 +58,11 @@ export default function TipsScreen({ route, navigation }) {
   };
 
   const handleSavePress = (tipId) => {
-    setVetTips((prevTips) => prevTips.map((tip) => (tip._id === tipId ? { ...tip, content: editedTipContent } : tip)));
+    setVetTips((prevTips) =>
+      prevTips.map((tip) =>
+        tip._id === tipId ? { ...tip, content: editedTipContent } : tip
+      )
+    );
 
     axios
       .put(`http://localhost:3000/tip/updateInfo/${tipId}`, {
@@ -81,11 +88,11 @@ export default function TipsScreen({ route, navigation }) {
   };
 
   const renderItemOtherVet = ({ item }) => {
-    if(item.vetId == vetId) return null
+    if (item.vetId == vetId) return null;
     return (
       <View style={styles.tipContainer}>
         <Image
-          source={{ uri : item.VetImage}} // Make sure to update this to use item-specific images if available
+          source={{ uri: item.VetImage }} // Make sure to update this to use item-specific images if available
           resizeMode="cover"
           style={styles.profileImage}
         />
@@ -104,7 +111,10 @@ export default function TipsScreen({ route, navigation }) {
       <View style={{ marginBottom: 10 }}>
         {isEditing ? (
           <View>
-            <TextInput value={editedTipContent} onChangeText={(text) => setEditedTipContent(text)} />
+            <TextInput
+              value={editedTipContent}
+              onChangeText={(text) => setEditedTipContent(text)}
+            />
             <View style={{ flexDirection: "row", marginTop: 5 }}>
               <Button title="Save" onPress={() => handleSavePress(item._id)} />
               <Button title="Cancel" onPress={handleCancelPress} />
@@ -114,7 +124,9 @@ export default function TipsScreen({ route, navigation }) {
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <Text>{item.content}</Text>
             {userType == "vet" && (
-              <TouchableOpacity onPress={() => handleEditPress(item._id, item.content)}>
+              <TouchableOpacity
+                onPress={() => handleEditPress(item._id, item.content)}
+              >
                 <MaterialIcons name="edit" size={24} color={COLORS.black} />
               </TouchableOpacity>
             )}
@@ -127,7 +139,10 @@ export default function TipsScreen({ route, navigation }) {
   return (
     <View>
       {userType === "vet" && (
-        <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}> My Tips:</Text>
+        <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>
+          {" "}
+          My Tips:
+        </Text>
       )}
       {userType === "vet" && (
         <TouchableOpacity onPress={ShareTipClick}>
@@ -135,9 +150,27 @@ export default function TipsScreen({ route, navigation }) {
         </TouchableOpacity>
       )}
       {/* <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>My Tips</Text> */}
-      <FlatList data={vetTips} renderItem={renderItem} keyExtractor={(item) => item._id} />
-      <Text style={{ fontSize: 20, marginTop: 10, fontWeight: "bold", marginBottom: 10 }}> Vet Tips:</Text>
-      <FlatList data={allVetTips} renderItem={renderItemOtherVet} keyExtractor={(item) => item._id} />
+      <FlatList
+        data={vetTips}
+        renderItem={renderItem}
+        keyExtractor={(item) => item._id}
+      />
+      <Text
+        style={{
+          fontSize: 20,
+          marginTop: 10,
+          fontWeight: "bold",
+          marginBottom: 10,
+        }}
+      >
+        {" "}
+        Vet Tips:
+      </Text>
+      <FlatList
+        data={allVetTips}
+        renderItem={renderItemOtherVet}
+        keyExtractor={(item) => item._id}
+      />
     </View>
   );
 }
@@ -155,12 +188,12 @@ const styles = StyleSheet.create({
     marginLeft: 0,
   },
   tipContainer: {
-    flexDirection: 'row', // Set flexDirection to row to align items horizontally
+    flexDirection: "row", // Set flexDirection to row to align items horizontally
     backgroundColor: "#f0f0f0",
     borderRadius: 2,
     padding: 5,
     marginBottom: 10,
-    alignItems: 'center', // Align items vertically in the center
+    alignItems: "center", // Align items vertically in the center
   },
   tipContent: {
     fontSize: 16,
@@ -176,7 +209,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF", // White
   },
   vetName: {
-    fontStyle: 'italic',
+    fontStyle: "italic",
     marginTop: 5,
   },
   editProfileButton: {
@@ -201,7 +234,7 @@ const styles = StyleSheet.create({
     flex: 1, // Take up the remaining space
   },
   addButton: {
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     marginBottom: 10,
   },
 });

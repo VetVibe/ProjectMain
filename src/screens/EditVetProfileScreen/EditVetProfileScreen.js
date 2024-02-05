@@ -23,67 +23,8 @@ import { TextInput } from "react-native";
 export default function EditVetProfileScreen({ route, navigation }) {
   const [vetDetails, setVetDetails] = useState({});
   const [selectedImage, setSelectedImage] = useState();
-  const [cityList, setCityList] = useState([]);
-  const [selectedCity, setSelectedCity] = useState("");
-  const [specializationList, setSpecializationList] = useState([]);
-  const [selectedSpecialization, setSelectedSpecialization] = useState("");
-  const [isCityPickerVisible, setCityPickerVisible] = useState(false);
-  const [isSpecializationPickerVisible, setSpecializationPickerVisible] =
-    useState(false);
 
   const vetId = route.params.vetId;
-  useEffect(() => {
-    // Fetch the list of cities from your MongoDB database
-    axios
-      .get("http://localhost:3000/cities")
-      .then((response) => {
-        // Extract only the "city" field from each object in the response data
-        const cities = response.data.map((cityObject) => cityObject.city);
-
-        console.log("Cities response:", cities);
-        setCityList(cities);
-      })
-      .catch((error) => {
-        console.error("Error fetching cities:", error);
-      });
-  }, []);
-
-  useEffect(() => {
-    // Fetch the list of spec from your MongoDB database
-    axios
-      .get("http://localhost:3000/specialization")
-      .then((response) => {
-        // Extract only the "city" field from each object in the response data
-        const specializations = response.data.map(
-          (specObject) => specObject.specialisation
-        );
-
-        console.log("specializations response:", specializations);
-        setSpecializationList(specializations);
-      })
-      .catch((error) => {
-        console.error("Error fetching specializations:", error);
-      });
-  }, []);
-
-  const handleTabPress = (tab) => {
-    setActiveTab(tab);
-  };
-  const toggleCityPicker = () => {
-    setCityPickerVisible(!isCityPickerVisible);
-  };
-  const toggleSpecializationPicker = () => {
-    setSpecializationPickerVisible(!isSpecializationPickerVisible);
-  };
-
-  const handleCitySelect = (itemValue) => {
-    setSelectedCity(itemValue);
-    toggleCityPicker();
-  };
-  const handleSpecializationSelect = (itemValue) => {
-    setSelectedSpecialization(itemValue);
-    toggleSpecializationPicker();
-  };
 
   useEffect(() => {
     const fetchVetDetails = async () => {
