@@ -33,6 +33,7 @@
     "react-native-safe-area-context": "4.6.3",
     "react-native-screens": "~3.22.0",
     "react-native-vector-icons": "^10.0.3",
+    "react-navigation": "^5.0.0",
     "start": "^5.1.0",
     "twrnc": "^3.6.7",
     "typescript": "^5.1.3"

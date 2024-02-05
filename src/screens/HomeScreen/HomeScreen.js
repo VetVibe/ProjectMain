@@ -1,6 +1,14 @@
 import React, { useState, useRef } from "react";
 import TabsContainer from "../../components/TabsContainer/TabsContainer";
-import { StyleSheet, View, TextInput, Text, Button, Keyboard, Alert } from "react-native";
+import {
+  StyleSheet,
+  View,
+  TextInput,
+  Text,
+  Button,
+  Keyboard,
+  Alert,
+} from "react-native";
 import { ROLES_TABS } from "../../constants";
 import Header from "../../components/Header/Header";
 import { isEmailValid, isPasswordValid } from "../../utils";
@@ -62,9 +70,16 @@ const HomeScreen = ({ navigation }) => {
         const userId = data.userId;
         AsyncStorage.setItem("authToken", token);
         if (activeTab == "vet") {
-          navigation.dispatch(StackActions.replace(selectors.navigationScreen, { userId: userId, userType: "vet" }));
+          navigation.dispatch(
+            StackActions.replace(selectors.navigationScreen, {
+              userId: userId,
+              userType: "vet",
+            })
+          );
         } else {
-          navigation.dispatch(StackActions.replace(selectors.navigationScreen, { userId: userId }));
+          navigation.dispatch(
+            StackActions.replace(selectors.navigationScreen, { userId: userId })
+          );
         }
       })
       .catch((error) => {
@@ -94,7 +109,11 @@ const HomeScreen = ({ navigation }) => {
         <Header headerText={"Vet Vibe"} imgSrc={PawImage} />
       </View>
 
-      <TabsContainer tabs={ROLES_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
+      <TabsContainer
+        tabs={ROLES_TABS}
+        activeTab={activeTab}
+        handleTabPress={handleTabPress}
+      />
 
       <>
         <Text style={styles.label}>Email</Text>
@@ -115,9 +134,19 @@ const HomeScreen = ({ navigation }) => {
             assignRef={(component) => {
               emailInputRef.current = component;
             }}
-            onBlur={() => checkField(form.email, incorrectInput.incorrectEmail, isEmailValid)}
+            onBlur={() =>
+              checkField(
+                form.email,
+                incorrectInput.incorrectEmail,
+                isEmailValid
+              )
+            }
           />
-          {incorrectInput.incorrectEmail && <Text style={styles.error}>{"Please enter a valid email address"}</Text>}
+          {incorrectInput.incorrectEmail && (
+            <Text style={styles.error}>
+              {"Please enter a valid email address"}
+            </Text>
+          )}
         </View>
       </>
       <>
