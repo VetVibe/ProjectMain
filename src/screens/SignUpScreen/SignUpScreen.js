@@ -86,6 +86,13 @@ export default function SignUpScreen({ navigation }) {
   };
 
   const handleRegistration = () => {
+    if (!name || !email || !password) {
+      Alert.alert(
+        "Incomplete Information",
+        "Please fill in all required fields"
+      );
+      return;
+    }
     const newUser = {
       name,
       email,
