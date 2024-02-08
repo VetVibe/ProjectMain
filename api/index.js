@@ -9,8 +9,9 @@ const port = 3000;
 const cors = require("cors");
 app.use(cors());
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+// Set the maximum payload size to 10MB
+app.use(bodyParser.json({ limit: "20mb" }));
+app.use(bodyParser.urlencoded({ limit: "20mb", extended: true }));
 const jwt = require("jsonwebtoken");
 
 // Import models

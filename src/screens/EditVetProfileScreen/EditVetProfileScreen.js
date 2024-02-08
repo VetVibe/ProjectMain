@@ -17,8 +17,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import InputContainer from "../../components/InputContainer/InputContainer";
 import { mapVetDetailsToSchema, mapVetDetails } from "../../utils";
 import axios from "axios";
-import { Picker } from "@react-native-picker/picker";
-import { TextInput } from "react-native";
+import { encodeImageAsBase64 } from "../../../imageUtils";
 
 export default function EditVetProfileScreen({ route, navigation }) {
   const [vetDetails, setVetDetails] = useState({});
@@ -142,8 +141,14 @@ export default function EditVetProfileScreen({ route, navigation }) {
         quality: 1,
       });
 
-      if (!result.canceled) {
-        setSelectedImage(result.assets[0].uri);
+      if (!result.canceled && result.assets.length > 0) {
+        const selectedAsset = result.assets[0];
+        try {
+          const base64Image = await encodeImageAsBase64(selectedAsset.uri);
+          setSelectedImage(`data:image/jpeg;base64,${base64Image}`);
+        } catch (error) {
+          Alert.alert("Error", "Failed to encode image as Base64");
+        }
       }
     } else {
       Alert.alert(

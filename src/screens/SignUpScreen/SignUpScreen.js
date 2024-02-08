@@ -15,6 +15,7 @@ import { ROLES_TABS } from "../../constants";
 import * as ImagePicker from "expo-image-picker";
 import { Picker } from "@react-native-picker/picker";
 import { Modal } from "react-native";
+import { encodeImageAsBase64 } from "../../../imageUtils";
 
 export default function SignUpScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState("petOwner");
@@ -197,10 +198,17 @@ export default function SignUpScreen({ navigation }) {
       });
 
       if (!result.canceled) {
-        // Set the selected image URI to the profile picture state
+        // Encode the selected image as Base64
         if (result.assets && result.assets.length > 0) {
           const selectedAsset = result.assets[0];
-          setProfilePicture(selectedAsset.uri);
+          try {
+            const base64Image = await encodeImageAsBase64(selectedAsset.uri);
+
+            // Set the Base64 encoded image to the profile picture state
+            setProfilePicture(`data:image/jpeg;base64,${base64Image}`);
+          } catch (error) {
+            Alert.alert("Error", "Failed to encode image as Base64");
+          }
         }
       }
     } else {

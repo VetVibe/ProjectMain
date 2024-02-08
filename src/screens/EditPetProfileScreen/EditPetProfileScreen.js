@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { View, Button, Image, StyleSheet, TouchableOpacity, ScrollView, Alert } from "react-native";
+import {
+  View,
+  Button,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+} from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { StackActions } from "@react-navigation/native";
 import TabsContainer from "../../components/TabsContainer/TabsContainer";
@@ -7,6 +15,7 @@ import InputContainer from "../../components/InputContainer/InputContainer";
 import { mapPetDetails, mapPetDetailsToSchema } from "../../utils";
 import { PET_PROFILE_TABS } from "../../constants";
 import axios from "axios";
+import { encodeImageAsBase64 } from "../../../imageUtils";
 
 const EditPetProfileScreen = ({ route, navigation }) => {
   const [activeTab, setActiveTab] = useState("petInfo"); // petInfo or medicalHistory
@@ -72,7 +81,9 @@ const EditPetProfileScreen = ({ route, navigation }) => {
 
     if (petId) {
       axios
-        .put(`http://localhost:3000/pet/updateInfo/${petId}`, { updatedData: petDetailsSchema })
+        .put(`http://localhost:3000/pet/updateInfo/${petId}`, {
+          updatedData: petDetailsSchema,
+        })
         .then((response) => {
           navigation.goBack();
         })
@@ -81,10 +92,15 @@ const EditPetProfileScreen = ({ route, navigation }) => {
         });
     } else if (petOwnerId) {
       axios
-        .post(`http://localhost:3000/pet/addPet/${petOwnerId}`, petDetailsSchema)
+        .post(
+          `http://localhost:3000/pet/addPet/${petOwnerId}`,
+          petDetailsSchema
+        )
         .then((response) => {
           const petId = response.data.petId;
-          navigation.dispatch(StackActions.replace("Pet Profile Screen", { petId: petId }));
+          navigation.dispatch(
+            StackActions.replace("Pet Profile Screen", { petId: petId })
+          );
         })
         .catch((error) => {
           console.log("Error during adding pet", error);
@@ -109,18 +125,26 @@ const EditPetProfileScreen = ({ route, navigation }) => {
         // Set the selected image URI to the profile picture state
         if (result.assets && result.assets.length > 0) {
           const selectedAsset = result.assets[0];
+          const base64Image = await encodeImageAsBase64(selectedAsset.uri);
 
-          setPetImage(selectedAsset.uri);
+          setPetImage(`data:image/jpeg;base64,${base64Image}`);
         }
       }
     } else {
-      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
+      Alert.alert(
+        "Permission denied",
+        "Permission to access the photo library was denied."
+      );
     }
   };
 
   return (
     <View style={styles.container}>
-      <TabsContainer tabs={PET_PROFILE_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
+      <TabsContainer
+        tabs={PET_PROFILE_TABS}
+        activeTab={activeTab}
+        handleTabPress={handleTabPress}
+      />
 
       <ScrollView style={{ flexGrow: 1 }}>
         {activeTab === "petInfo" && (
