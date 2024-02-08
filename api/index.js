@@ -22,7 +22,7 @@ const Tip = require("./models/tip");
 // Connect to MongoDB
 mongoose
   .connect(
-    "mongodb+srv://vivianu2014:vivi123m@cluster1.6ieglfk.mongodb.net/",
+    "mongodb+srv://vivianu2014:vvvas123@cluster1.6ieglfk.mongodb.net/",
     {}
   )
   .then(() => {
