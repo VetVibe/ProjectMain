@@ -16,6 +16,7 @@ import { COLORS, FONTS } from "../../constants";
 import { MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
 import { TextInput } from "react-native";
+import { encodeImageAsBase64 } from "../../../imageUtils";
 
 export default function EditPetOwnerProfileScreen({ route, navigation }) {
   const [petOwnerDetails, setPetOwnerDetails] = useState({});
@@ -86,12 +87,18 @@ export default function EditPetOwnerProfileScreen({ route, navigation }) {
       let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [4, 4],
+        aspect: [4, 3],
         quality: 1,
       });
 
-      if (!result.canceled) {
-        setSelectedImage(result.assets[0].uri);
+      if (!result.canceled && result.assets.length > 0) {
+        const selectedAsset = result.assets[0];
+        try {
+          const base64Image = await encodeImageAsBase64(selectedAsset.uri);
+          setSelectedImage(`data:image/jpeg;base64,${base64Image}`);
+        } catch (error) {
+          Alert.alert("Error", "Failed to encode image as Base64");
+        }
       }
     } else {
       Alert.alert(
