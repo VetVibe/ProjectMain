@@ -1,36 +1,13 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import TabsContainer from "../../components/TabsContainer/TabsContainer";
-import {
-  StyleSheet,
-  View,
-  TextInput,
-  Text,
-  Button,
-  Keyboard,
-  Alert,
-} from "react-native";
-import { ROLES_TABS } from "../../constants";
+import { StyleSheet, View, TextInput, Text, Button } from "react-native";
+import { ROLES_TABS, TITELS } from "../../constants";
 import Header from "../../components/Header/Header";
-import { isEmailValid, isPasswordValid } from "../../utils";
 import PawImage from "../../assets/paw.jpg";
-import axios from "axios";
+import { clientServer } from "../../server";
 import { StackActions } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const roleSelectors = {
-  petOwner: {
-    postUrl: "http://localhost:3000/petOwner/login",
-    navigationScreen: "Pet Owner Home Screen",
-    emailPlaceholder: "email",
-  },
-  vet: {
-    postUrl: "http://localhost:3000/veterinarian/login",
-    navigationScreen: "Vet Home Screen",
-    emailPlaceholder: "Veterinarian ID",
-  },
-};
-
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = ({ navigation, onLogin }) => {
   const [form, setValues] = useState({
     email: "",
     password: "",
@@ -40,67 +17,48 @@ const HomeScreen = ({ navigation }) => {
     incorrectPassword: false,
   });
   const [activeTab, setActiveTab] = useState("petOwner");
-  const emailInputRef = useRef();
-  const passwordInputRef = useRef();
-  const selectors = roleSelectors[activeTab];
 
   const handleTabPress = (tab) => {
     setActiveTab(tab);
   };
 
-  const checkField = (fieldKey, fieldErrorKey, fieldValidator) => {
-    if (!fieldValidator(fieldKey)) {
-      setIncorrectInput((prevState) => ({
-        ...prevState,
-        [fieldErrorKey]: true,
-      }));
-      return false;
-    }
-    return true;
+  const handleChangeText = (inputIdentifier, newValue) => {
+    setValues((prevUserInput) => {
+      return {
+        ...prevUserInput,
+        [inputIdentifier]: newValue,
+      };
+    });
+    setIncorrectInput((prevState) => ({ ...prevState, incorrectEmail: false, incorrectPassword: false }));
   };
 
-  const onSignInPress = () => {
-    Keyboard.dismiss();
-
-    axios
-      .post(selectors.postUrl, form)
-      .then((response) => {
-        const data = response.data;
-        const token = data.token;
-        const userId = data.userId;
-        AsyncStorage.setItem("authToken", token);
-        if (activeTab == "vet") {
-          navigation.dispatch(
-            StackActions.replace(selectors.navigationScreen, {
-              userId: userId,
-              userType: "vet",
-            })
-          );
-        } else {
-          navigation.dispatch(
-            StackActions.replace(selectors.navigationScreen, { userId: userId })
-          );
-        }
-      })
-      .catch((error) => {
-        if (error.response) {
-          // The request was made and the server responded with a status code
-          const status = error.response.status;
-
-          if (status === 404) {
-            Alert.alert("User not found");
-          } else if (status === 401) {
-            Alert.alert("Invalid password", "The password is incorrect.");
-          } else {
-            Alert.alert("Login error", "An error occurred during login.");
-          }
-        } else {
-          // The request was made but no response was received
-          Alert.alert("Network error", "Unable to connect to the server.");
-        }
-
-        console.log("Error during login", error);
-      });
+  const onSignInPress = async () => {
+    try {
+      if (activeTab === "vet") {
+        const userId = await clientServer.loginVet(form);
+        onLogin({ tyep: "vet", id: userId });
+        // navigation.dispatch(
+        //   StackActions.replace("Vet Home Screen", {
+        //     userId: userId,
+        //     userType: "vet",
+        //   })
+        // );
+      } else {
+        const userId = await clientServer.loginPetOwner(form);
+        //navigation.dispatch(StackActions.replace("Pet Owner Home Screen", { userId: userId }));
+        onLogin({ type: "petOwner", userId: userId });
+      }
+    } catch (error) {
+      if (error.response.status === 404) {
+        setIncorrectInput((prevState) => ({ ...prevState, incorrectEmail: true }));
+        return;
+      } else if (error.response.status === 401) {
+        setIncorrectInput((prevState) => ({ ...prevState, incorrectPassword: true }));
+        return;
+      } else {
+        console.error("Error logging in:", error);
+      }
+    }
   };
 
   return (
@@ -109,75 +67,32 @@ const HomeScreen = ({ navigation }) => {
         <Header headerText={"Vet Vibe"} imgSrc={PawImage} />
       </View>
 
-      <TabsContainer
-        tabs={ROLES_TABS}
-        activeTab={activeTab}
-        handleTabPress={handleTabPress}
-      />
-
+      <TabsContainer tabs={ROLES_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
       <>
-        <Text style={styles.label}>Email</Text>
-        <View style={styles.inputContainer}>
-          <TextInput
-            placeholder={"Email"}
-            keyboardType="email-address"
-            autoCorrect={false}
-            autoCapitalize="none"
-            onChangeText={(value) =>
-              setValues((prevState) => ({
-                ...prevState,
-                email: value.trim(),
-                incorrectEmail: false,
-              }))
-            }
-            onSubmitEditing={() => passwordInputRef.current.focus()}
-            assignRef={(component) => {
-              emailInputRef.current = component;
-            }}
-            onBlur={() =>
-              checkField(
-                form.email,
-                incorrectInput.incorrectEmail,
-                isEmailValid
-              )
-            }
-          />
-          {incorrectInput.incorrectEmail && (
-            <Text style={styles.error}>
-              {"Please enter a valid email address"}
-            </Text>
-          )}
-        </View>
+        <Text style={styles.label}>{TITELS["email"]}</Text>
+        <TextInput
+          placeholder={"Email"}
+          keyboardType="email-address"
+          autoCorrect={false}
+          autoCapitalize="none"
+          onChangeText={(value) => handleChangeText("email", value)}
+        />
+        {incorrectInput.incorrectEmail && (
+          <Text style={styles.error}>{`User with email: ${form.email} wasn't found.`}</Text>
+        )}
       </>
       <>
-        <Text style={styles.label}>Password</Text>
-        <View style={styles.inputContainer}>
-          <TextInput
-            autoCapitalize="none"
-            textContentType="password"
-            placeholder={"Password"}
-            autoCorrect={false}
-            containerStyle={styles.defaultMargin}
-            onChangeText={(value) =>
-              setValues((prevState) => ({
-                ...prevState,
-                password: value.trim(),
-                incorrectPassword: false,
-              }))
-            }
-            assignRef={(component) => {
-              passwordInputRef.current = component;
-            }}
-            onSubmitEditing={onSignInPress}
-          />
-          {incorrectInput.incorrectPassword && (
-            <Text style={styles.error}>
-              {
-                "Please enter a valid password, miniumum 8 characters & with atleast one small, one capital, one digit & one special character"
-              }
-            </Text>
-          )}
-        </View>
+        <Text style={styles.label}>{TITELS["password"]}</Text>
+        <TextInput
+          autoCapitalize="none"
+          textContentType="password"
+          placeholder={"Password"}
+          autoCorrect={false}
+          containerStyle={styles.defaultMargin}
+          onChangeText={(value) => handleChangeText("password", value)}
+          secureTextEntry
+        />
+        {incorrectInput.incorrectPassword && <Text style={styles.error}>{"The password is incorrect."}</Text>}
       </>
       <Button
         title={"Login"}

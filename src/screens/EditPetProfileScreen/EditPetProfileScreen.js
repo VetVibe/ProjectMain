@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Button,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-} from "react-native";
+import { View, Button, Image, StyleSheet, TouchableOpacity, ScrollView, Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { StackActions } from "@react-navigation/native";
 import TabsContainer from "../../components/TabsContainer/TabsContainer";
-import InputContainer from "../../components/InputContainer/InputContainer";
 import { mapPetDetails, mapPetDetailsToSchema } from "../../utils";
 import { PET_PROFILE_TABS } from "../../constants";
-import axios from "axios";
+import BasicInfoView from "./BasicInfoView";
+import MedicalInfoView from "./MedicalInfoView";
+import { clientServer } from "../../server";
 import { encodeImageAsBase64 } from "../../../imageUtils";
 
 const EditPetProfileScreen = ({ route, navigation }) => {
@@ -29,23 +22,22 @@ const EditPetProfileScreen = ({ route, navigation }) => {
   const petOwnerId = route.params.petOwnerId;
 
   useEffect(() => {
-    if (petId) {
-      axios
-        .get(`http://localhost:3000/pet/${petId}`)
-        .then((response) => {
-          const mapedPetDetails = mapPetDetails(response.data);
+    try {
+      (async () => {
+        if (petId) {
+          const mapedPetDetails = mapPetDetails(await clientServer.getPetDetails(petId));
           setPetBasicInfoInput(mapedPetDetails.basicInfo);
           setMedicalInfoInput(mapedPetDetails.medicalInfo);
           setPetImage(mapedPetDetails.imgSrc);
-        })
-        .catch((error) => {
-          console.error("Error fetching pet details:", error);
-        });
-    } else {
-      const mapedPetDetails = mapPetDetails();
-      setPetBasicInfoInput(mapedPetDetails.basicInfo);
-      setMedicalInfoInput(mapedPetDetails.medicalInfo);
-      setPetImage(mapedPetDetails.imgSrc);
+        } else {
+          const mapedPetDetails = mapPetDetails();
+          setPetBasicInfoInput(mapedPetDetails?.basicInfo);
+          setMedicalInfoInput(mapedPetDetails?.medicalInfo);
+          setPetImage(mapedPetDetails?.imgSrc);
+        }
+      })();
+    } catch (error) {
+      console.error("Error fetching data:", error);
     }
   }, [petId]);
 
@@ -71,40 +63,24 @@ const EditPetProfileScreen = ({ route, navigation }) => {
     }
   }
 
-  const saveChanges = () => {
+  const saveChanges = async () => {
     const updatedData = {
       basicInfo: { ...petBasicInfoInput },
       medicalInfo: { ...petMedicalInfoInput },
       imgSrc: petImage,
     };
     const petDetailsSchema = mapPetDetailsToSchema(updatedData);
-
-    if (petId) {
-      axios
-        .put(`http://localhost:3000/pet/updateInfo/${petId}`, {
-          updatedData: petDetailsSchema,
-        })
-        .then((response) => {
-          navigation.goBack();
-        })
-        .catch((error) => {
-          console.error(`Error during updating pet ${petId} details:`, error);
-        });
-    } else if (petOwnerId) {
-      axios
-        .post(
-          `http://localhost:3000/pet/addPet/${petOwnerId}`,
-          petDetailsSchema
-        )
-        .then((response) => {
-          const petId = response.data.petId;
-          navigation.dispatch(
-            StackActions.replace("Pet Profile Screen", { petId: petId })
-          );
-        })
-        .catch((error) => {
-          console.log("Error during adding pet", error);
-        });
+    console.log("petDetailsSchema", petDetailsSchema);
+    try {
+      if (petId) {
+        await clientServer.updatePetInfo(petId, petDetailsSchema);
+        navigation.goBack();
+      } else if (petOwnerId) {
+        const petId = await clientServer.registerPet(petOwnerId, petDetailsSchema);
+        navigation.dispatch(StackActions.replace("Pet Profile Screen", { petId: petId }));
+      }
+    } catch (error) {
+      console.error("Error updating pet info:", error);
     }
   };
 
@@ -131,20 +107,13 @@ const EditPetProfileScreen = ({ route, navigation }) => {
         }
       }
     } else {
-      Alert.alert(
-        "Permission denied",
-        "Permission to access the photo library was denied."
-      );
+      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
     }
   };
 
   return (
     <View style={styles.container}>
-      <TabsContainer
-        tabs={PET_PROFILE_TABS}
-        activeTab={activeTab}
-        handleTabPress={handleTabPress}
-      />
+      <TabsContainer tabs={PET_PROFILE_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
 
       <ScrollView style={{ flexGrow: 1 }}>
         {activeTab === "petInfo" && (
@@ -152,7 +121,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
             <TouchableOpacity onPress={handleImagePicker}>
               <Image source={{ uri: petImage }} style={styles.petImage} />
             </TouchableOpacity>
-            <InputContainer
+            <BasicInfoView
               details={petBasicInfoInput}
               onChangeText={(key, text) => handleChange(key, text, activeTab)}
             />
@@ -160,7 +129,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
         )}
 
         {activeTab === "medicalHistory" && (
-          <InputContainer
+          <MedicalInfoView
             details={petMedicalInfoInput}
             onChangeText={(key, text) => handleChange(key, text, activeTab)}
           />

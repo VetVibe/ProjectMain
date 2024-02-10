@@ -1,23 +1,13 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  SafeAreaView,
-  ScrollView,
-  Switch,
-  StyleSheet,
-} from "react-native";
+import { View, Text, Image, TouchableOpacity, SafeAreaView, ScrollView, Switch, StyleSheet } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { COLORS, FONTS, SIZES } from "../../constants";
 import { StatusBar } from "expo-status-bar";
 import { MaterialIcons } from "@expo/vector-icons";
 import { mapVetDetails } from "../../utils";
-import axios from "axios";
-import { style } from "twrnc";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Rating from "../../components/Rating/Rating";
+import { clientServer } from "../../server";
 
 export default function VetHomeScreen({ route, navigation }) {
   const [vetDetails, setVetDetails] = useState({});
@@ -26,16 +16,10 @@ export default function VetHomeScreen({ route, navigation }) {
   const userType = route.params.userType;
 
   // Function to fetch vet details
-  const fetchVetDetails = () => {
-    axios
-      .get(`http://localhost:3000/veterinarian/${vetId}`)
-      .then((response) => {
-        const mapedVetDetails = mapVetDetails(response.data);
-        setVetDetails(mapedVetDetails);
-      })
-      .catch((error) => {
-        console.error("Error fetching vet details:", error);
-      });
+  const fetchVetDetails = async () => {
+    const vetDetails = await clientServer.getVetInfo(vetId);
+    const mapedVetDetails = mapVetDetails(vetDetails);
+    setVetDetails(mapedVetDetails);
   };
 
   // Use useEffect to fetch vet details on component mount
@@ -50,39 +34,15 @@ export default function VetHomeScreen({ route, navigation }) {
     }, [])
   );
 
-  const toggleSwitch = () => {
-    // Update the local state
-    setVetDetails((prevUserInput) => ({
-      ...prevUserInput,
-      isAvailable: !vetDetails.isAvailable,
-    }));
-
-    // Make a PUT request to update the availability on the server
-    axios
-      .put(`http://localhost:3000/veterinarian/updateInfo/${vetId}`, {
-        updatedData: { isAvailable: !vetDetails.isAvailable },
-      })
-      .then((response) => {
-        // Handle success if needed
-        console.log("Availability updated successfully");
-      })
-      .catch((error) => {
-        // Handle error if needed
-        console.error("Error updating availability:", error);
-      });
-  };
-
   const EditVetProfileClick = () => {
     navigation.navigate("Edit Vet Profile Screen", { vetId: vetId });
   };
-  const LogoutClick = () => {
-    clearAuthToken();
-  };
-  const clearAuthToken = async () => {
+  const LogoutClick = async () => {
     await AsyncStorage.removeItem("authToken");
-    console.log("Cleared auth token");
+    console.log("User logged out: cleared auth token.");
     navigation.replace("Home");
   };
+
   const ShowTips = () => {
     navigation.navigate("Tips Screen", { vetId: vetId, userType: userType });
   };
@@ -92,45 +52,12 @@ export default function VetHomeScreen({ route, navigation }) {
       <StatusBar backgroundColor={COLORS.gray} />
       <ScrollView style={{ flex: 1 }}>
         <View style={{ alignItems: "center" }}>
-          {userType === "vet" ? (
-            <>
-              <TouchableOpacity
-                style={styles.editProfileButton}
-                onPress={EditVetProfileClick}
-              >
-                <MaterialIcons name="edit" size={24} color={COLORS.white} />
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.tipsButton} onPress={ShowTips}>
-                <MaterialIcons
-                  name="my-library-books"
-                  size={24}
-                  color={COLORS.white}
-                />
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <View style={styles.nonVetAvailabilityContainer}>
-                <MaterialIcons
-                  name={
-                    vetDetails.isAvailable ? "fiber-manual-record" : "cancel"
-                  }
-                  size={12}
-                  color={vetDetails.isAvailable ? "green" : "red"}
-                />
-                <Text
-                  style={{ ...FONTS.h3, color: COLORS.black, marginRight: 10 }}
-                >
-                  {vetDetails.isAvailable ? " Available" : " Unavailable"}
-                </Text>
-              </View>
-            </>
+          {userType === "petOwner" && (
+            <TouchableOpacity style={styles.tipsButton} onPress={ShowTips}>
+              <MaterialIcons name="my-library-books" size={24} color={COLORS.white} />
+            </TouchableOpacity>
           )}
-          <Image
-            source={{ uri: vetDetails.profilePicture }}
-            style={styles.vetProfileImage}
-          />
+          <Image source={{ uri: vetDetails.profilePicture }} style={styles.vetProfileImage} />
 
           <Text style={styles.name}>{vetDetails.name}</Text>
           <Text style={styles.specialization}>{vetDetails.specialization}</Text>
@@ -148,9 +75,7 @@ export default function VetHomeScreen({ route, navigation }) {
           <View style={{ paddingVertical: 8, flexDirection: "row" }}>
             <View style={styles.infoBox}>
               <Text style={{ ...FONTS.h3, color: "black" }}>
-                {+vetDetails.rateCount > 0
-                  ? (+vetDetails.rate / +vetDetails.rateCount).toFixed(1)
-                  : 0}
+                {+vetDetails.clientsCount > 0 ? (+vetDetails.rate / +vetDetails.clientsCount).toFixed(1) : 0}
               </Text>
               <Text style={{ ...FONTS.body4, color: "black" }}>Rating</Text>
             </View>
@@ -163,43 +88,18 @@ export default function VetHomeScreen({ route, navigation }) {
             </View>
           )}
 
-          {userType === "vet" ? (
+          {userType === "petOwner" && (
             <>
-              <TouchableOpacity
-                style={styles.logoutButton}
-                onPress={LogoutClick}
-              >
-                <MaterialIcons name="logout" size={24} color={COLORS.white} />
-              </TouchableOpacity>
-              <View style={styles.availabilityContainer}>
-                <Text
-                  style={{ ...FONTS.h4, color: COLORS.black, marginRight: 10 }}
-                >
-                  {vetDetails.isAvailable ? "Available" : "Unavailable"}
-                </Text>
-                <Switch
-                  trackColor={{ false: "#767577", true: "#FFA500" }}
-                  thumbColor={vetDetails.isAvailable ? "#FFFFFF" : "#FFFFFF"}
-                  ios_backgroundColor="#3e3e3e"
-                  onValueChange={toggleSwitch}
-                  value={vetDetails.isAvailable}
-                />
-              </View>
-            </>
-          ) : (
-            <>
-              <View>
-                <Rating
-                  vetDetails={vetDetails}
-                  onNewRating={({ newRating, newRatingCount }) =>
-                    setVetDetails({
-                      ...vetDetails,
-                      rating: newRating,
-                      ratingCount: newRatingCount,
-                    })
-                  }
-                />
-              </View>
+              <Rating
+                vetDetails={vetDetails}
+                onNewRating={({ newRating, newRatingCount }) =>
+                  setVetDetails({
+                    ...vetDetails,
+                    rating: newRating,
+                    ratingCount: newRatingCount,
+                  })
+                }
+              />
             </>
           )}
         </View>
@@ -224,19 +124,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     borderRadius: 10,
     marginBottom: 20,
-  },
-  nonVetAvailabilityContainer: {
-    position: "absolute",
-    left: 20, // Adjust based on your layout
-    top: 20, // Align with the height of the first icon on the right
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  availabilityContainer: {
-    ...FONTS.h2,
-    color: COLORS.black,
-    textAlign: "left",
-    marginTop: 15,
   },
   infoBox: {
     flexDirection: "column",

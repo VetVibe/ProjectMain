@@ -16,86 +16,21 @@ import { COLORS, FONTS } from "../../constants";
 import { MaterialIcons } from "@expo/vector-icons";
 import InputContainer from "../../components/InputContainer/InputContainer";
 import { mapVetDetailsToSchema, mapVetDetails } from "../../utils";
-import axios from "axios";
+import { clientServer } from "../../server";
 import { encodeImageAsBase64 } from "../../../imageUtils";
 
 export default function EditVetProfileScreen({ route, navigation }) {
   const [vetDetails, setVetDetails] = useState({});
   const [selectedImage, setSelectedImage] = useState();
-  const [cityList, setCityList] = useState([]);
-  const [selectedCity, setSelectedCity] = useState("");
-  const [specializationList, setSpecializationList] = useState([]);
-  const [selectedSpecialization, setSelectedSpecialization] = useState("");
-  const [isCityPickerVisible, setCityPickerVisible] = useState(false);
-  const [isSpecializationPickerVisible, setSpecializationPickerVisible] =
-    useState(false);
 
   const vetId = route.params.vetId;
-  useEffect(() => {
-    // Fetch the list of cities from your MongoDB database
-    axios
-      .get("http://localhost:3000/cities")
-      .then((response) => {
-        // Extract only the "city" field from each object in the response data
-        const cities = response.data.map((cityObject) => cityObject.city);
-
-        console.log("Cities response:", cities);
-        setCityList(cities);
-      })
-      .catch((error) => {
-        console.error("Error fetching cities:", error);
-      });
-  }, []);
-
-  useEffect(() => {
-    // Fetch the list of spec from your MongoDB database
-    axios
-      .get("http://localhost:3000/specialization")
-      .then((response) => {
-        // Extract only the "city" field from each object in the response data
-        const specializations = response.data.map(
-          (specObject) => specObject.specialisation
-        );
-
-        console.log("specializations response:", specializations);
-        setSpecializationList(specializations);
-      })
-      .catch((error) => {
-        console.error("Error fetching specializations:", error);
-      });
-  }, []);
-
-  const handleTabPress = (tab) => {
-    setActiveTab(tab);
-  };
-  const toggleCityPicker = () => {
-    setCityPickerVisible(!isCityPickerVisible);
-  };
-  const toggleSpecializationPicker = () => {
-    setSpecializationPickerVisible(!isSpecializationPickerVisible);
-  };
-
-  const handleCitySelect = (itemValue) => {
-    setSelectedCity(itemValue);
-    toggleCityPicker();
-  };
-  const handleSpecializationSelect = (itemValue) => {
-    setSelectedSpecialization(itemValue);
-    toggleSpecializationPicker();
-  };
 
   useEffect(() => {
     const fetchVetDetails = async () => {
-      try {
-        const { data } = await axios.get(
-          `http://localhost:3000/veterinarian/${vetId}`
-        );
-        const mapedVetDetails = mapVetDetails(data);
-        setVetDetails(mapedVetDetails);
-        setSelectedImage(mapedVetDetails.profilePicture);
-      } catch (e) {
-        Alert.alert(e.message);
-      }
+      const data = await clientServer.getVetInfo(vetId);
+      const mapedVetDetails = mapVetDetails(data);
+      setVetDetails(mapedVetDetails);
+      setSelectedImage(mapedVetDetails.profilePicture);
     };
     fetchVetDetails();
   }, [vetId]);
@@ -109,23 +44,14 @@ export default function EditVetProfileScreen({ route, navigation }) {
     });
   };
 
-  const saveChanges = () => {
+  const saveChanges = async () => {
     const updatedData = {
       ...vetDetails,
       profilePicture: selectedImage,
     };
     const vetDetailsSchema = mapVetDetailsToSchema(updatedData);
 
-    axios
-      .put(`http://localhost:3000/veterinarian/updateInfo/${vetId}`, {
-        updatedData: vetDetailsSchema,
-      })
-      .then((response) => {
-        navigation.goBack();
-      })
-      .catch((error) => {
-        console.error(`Error during updating vet ${vetId} details:`, error);
-      });
+    await clientServer.updateVetInfo(vetId, vetDetailsSchema);
   };
 
   const handleImagePicker = async () => {
@@ -151,40 +77,24 @@ export default function EditVetProfileScreen({ route, navigation }) {
         }
       }
     } else {
-      Alert.alert(
-        "Permission denied",
-        "Permission to access the photo library was denied."
-      );
+      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
-      >
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
         <ScrollView>
           <View style={styles.imageContainer}>
             <TouchableOpacity onPress={handleImagePicker}>
-              <Image
-                source={{ uri: selectedImage }}
-                style={styles.profileImage}
-              />
+              <Image source={{ uri: selectedImage }} style={styles.profileImage} />
               <View style={styles.cameraIcon}>
-                <MaterialIcons
-                  name="photo-camera"
-                  size={32}
-                  color={COLORS.primary}
-                />
+                <MaterialIcons name="photo-camera" size={32} color={COLORS.primary} />
               </View>
             </TouchableOpacity>
           </View>
 
-          <InputContainer
-            details={vetDetails}
-            onChangeText={(key, text) => handleChange(key, text)}
-          />
+          <InputContainer details={vetDetails} onChangeText={(key, text) => handleChange(key, text)} />
           <TouchableOpacity style={styles.saveButton} onPress={saveChanges}>
             <Text style={styles.saveButtonText}>Save Changes</Text>
           </TouchableOpacity>

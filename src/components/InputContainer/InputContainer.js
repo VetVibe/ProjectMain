@@ -1,45 +1,57 @@
 import React from "react";
 import { View, Text, TextInput, StyleSheet } from "react-native";
 import DatePickerContainer from "../DatePickerContainer/DatePickerContainer";
-import { TITELS } from "../../constants";
+import RNPickerSelect from "react-native-picker-select";
+import { TITELS, OPTIONS } from "../../constants";
 
 export default function InputContainer({ details, onChangeText }) {
-  const noDisplay = [
-    "password",
-    "vetId",
-    "profilePicture",
-    "tips",
-    "isAvailable",
-    "rate",
-    "rateCount",
-    "clientsCount",
-  ];
+  const noDisplay = ["email", "vetId", "profilePicture", "tips", "rate", "clientsCount", "appointments"];
 
-  const filteredDetails = Object.fromEntries(
-    Object.entries(details).filter(([key]) => !noDisplay.includes(key))
-  );
+  const filteredDetails = Object.fromEntries(Object.entries(details).filter(([key]) => !noDisplay.includes(key)));
+
+  const renderInput = (key, value) => {
+    if (key === "lastVaccinationDate" || key === "lastVetVisit") {
+      return <DatePickerContainer title={key} value={value} onDateChanged={(key, text) => onChangeText(key, text)} />;
+    } else if (key == "location" || key == "specialization") {
+      return (
+        <View style={styles.input}>
+          <RNPickerSelect
+            onValueChange={(value) => onChangeText(key, value)}
+            items={OPTIONS[key]}
+            placeholder={{ label: value, value: value }}
+          />
+        </View>
+      );
+    } else if (key == "password") {
+      return (
+        <TextInput
+          style={styles.input}
+          placeholder={TITELS[key]}
+          value={value !== undefined ? value.toString() : ""}
+          onChangeText={(text) => onChangeText(key, text)}
+          editable={true}
+          secureTextEntry={key === "password"}
+        />
+      );
+    } else {
+      return (
+        <TextInput
+          style={styles.input}
+          placeholder={TITELS[key]}
+          value={value !== undefined ? value.toString() : ""}
+          onChangeText={(text) => onChangeText(key, text)}
+          editable={true}
+        />
+      );
+    }
+  };
 
   return (
     <View>
       {Object.entries(filteredDetails).map(([key, value]) => (
         <View key={key}>
           <Text style={styles.label}>{TITELS[key]}:</Text>
-          {key === "lastVaccinationDate" || key === "lastVetVisit" ? (
-            <DatePickerContainer
-              title={key}
-              value={value}
-              onDateChanged={(key, text) => onChangeText(key, text)}
-            />
-          ) : (
-            <TextInput
-              style={styles.input}
-              placeholder={TITELS[key]}
-              value={value !== undefined ? value.toString() : ""}
-              onChangeText={(text) => onChangeText(key, text)}
-              editable={true}
-              secureTextEntry={key === "password"}
-            />
-          )}
+          {renderInput(key, value)}
         </View>
       ))}
     </View>

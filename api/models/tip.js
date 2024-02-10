@@ -1,17 +1,16 @@
-// Import the mongoose library
-const mongoose = require("mongoose");
+import { Schema, Types, model } from "mongoose";
 
-const tipSchema = new mongoose.Schema({
+const tipSchema = new Schema({
   content: {
     type: String,
     required: true,
   },
   vetId: {
-    type: mongoose.Types.ObjectId,
-    ref: 'Veterinarian',
+    type: Types.ObjectId,
+    ref: "Veterinarian",
     required: true,
   },
 });
 
-const Tip = mongoose.model("Tip", tipSchema);
-module.exports = Tip;
+const Tip = model("Tip", tipSchema);
+export default Tip;

@@ -1,69 +1,68 @@
 import React, { useState, useEffect } from "react";
-import { View, TouchableOpacity, Text, TextInput, Button, ScrollView, FlatList, StyleSheet, Image } from "react-native";
-import { COLORS, FONTS, SIZES, images } from "../../constants";
+import { View, TouchableOpacity, Text, TextInput, Button, FlatList, StyleSheet, Image } from "react-native";
+import { COLORS } from "../../constants";
 import { MaterialIcons, AntDesign } from "@expo/vector-icons";
-import axios from "axios";
-import TipsScreenPet, { useAllTips } from "../TipsScreenPet/TipsScreenPet";
+import { clientServer } from "../../server";
 
-
-export default function TipsScreen({ route, navigation }) {
+export default function TipsScreen({ route }) {
   const [vetTips, setVetTips] = useState([]);
+  const [allTips, setAllTips] = useState([]);
   const [editingTipId, setEditingTipId] = useState(null);
   const [editedTipContent, setEditedTipContent] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const [tip, setTip] = useState("");
 
   const vetId = route.params.vetId;
   const userType = route.params.userType;
-  const   {fetchAllTips, vetTips: allVetTips} = useAllTips()
+
+  const fetchAllTips = async () => {
+    try {
+      const tips = await clientServer.getTips();
+      setAllTips(tips);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchTipsById = async () => {
+    try {
+      const tipIds = await clientServer.getVetTips(vetId);
+      const tipsDetailsArray = await clientServer.getTipsByIds(tipIds);
+      setVetTips(tipsDetailsArray);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
-    fetchAllTips();
-  },[navigation])
-  useEffect(() => {
-    const updateTips = async () => {
-      try {
-        const response = await axios.get(`http://localhost:3000/veterinarian/${vetId}/tips`);
-        const tipIds = response.data;
-
-        if (tipIds) {
-          const fetchTipsDetails = tipIds.map((tipId) =>
-            axios.get(`http://localhost:3000/tip/${tipId}`).then((response) => response.data)
-          );
-
-          // Wait for all fetches to complete
-          Promise.all(fetchTipsDetails).then((tipsDetailsArray) => {
-            setVetTips(tipsDetailsArray);
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching vet tips:", error);
+    if (userType === "petOwner") {
+      if (vetId) {
+        fetchTipsById();
+      } else {
+        fetchAllTips();
       }
-    };
-
-    // Listen for changes and update petDetails
-    const subscription = navigation.addListener("focus", updateTips);
-
-    // Clean up the subscription when the component unmounts
-    return () => {
-      if (subscription) {
-        subscription();
-      }
-    };
-  }, [vetId, navigation]);
+    } else if (userType === "vet") {
+      fetchTipsById();
+      fetchAllTips();
+    }
+  }, []);
 
   const handleEditPress = (tipId, currentContent) => {
     setEditingTipId(tipId);
     setEditedTipContent(currentContent);
   };
+  const handleDeletePress = async (tipId) => {
+    try {
+      await clientServer.deleteTip(tipId);
+      await fetchTipsById();
+    } catch (error) {
+      console.error("Error deleting tip:", error);
+    }
+  };
 
-  const handleSavePress = (tipId) => {
+  const handleSavePress = async (tipId) => {
     setVetTips((prevTips) => prevTips.map((tip) => (tip._id === tipId ? { ...tip, content: editedTipContent } : tip)));
-
-    axios
-      .put(`http://localhost:3000/tip/updateInfo/${tipId}`, {
-        updatedData: { vetId: vetId, content: editedTipContent },
-      })
-      .catch((error) => {
-        console.error(`Error during updating tip ${tipId} details:`, error);
-      });
+    await clientServer.updateTip(tipId, { vetId: vetId, content: editedTipContent });
 
     // Clear editing state
     setEditingTipId(null);
@@ -76,16 +75,22 @@ export default function TipsScreen({ route, navigation }) {
     setEditedTipContent("");
   };
 
-  const ShareTipClick = () => {
-    navigation.navigate("Share Tip Screen", { vetId: vetId });
+  const handleSave = async () => {
+    await clientServer.addTip(vetId, tip);
+    await fetchTipsById();
+    setIsAdding(false);
+  };
+  const handleCancel = () => {
+    setIsAdding(false);
+    setTip("");
   };
 
   const renderItemOtherVet = ({ item }) => {
-    if(item.vetId == vetId) return null
+    if (vetId && item.vetId == vetId) return null;
     return (
       <View style={styles.tipContainer}>
         <Image
-          source={{ uri : item.VetImage}} // Make sure to update this to use item-specific images if available
+          source={{ uri: item.VetImage }} // Make sure to update this to use item-specific images if available
           resizeMode="cover"
           style={styles.profileImage}
         />
@@ -101,7 +106,7 @@ export default function TipsScreen({ route, navigation }) {
     const isEditing = item._id === editingTipId;
 
     return (
-      <View style={{ marginBottom: 10 }}>
+      <View style={styles.tipContainer}>
         {isEditing ? (
           <View>
             <TextInput value={editedTipContent} onChangeText={(text) => setEditedTipContent(text)} />
@@ -111,12 +116,18 @@ export default function TipsScreen({ route, navigation }) {
             </View>
           </View>
         ) : (
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text>{item.content}</Text>
+          <View style={styles.tipTextContainer}>
+            <Text style={styles.tipContent}>{item.content}</Text>
             {userType == "vet" && (
-              <TouchableOpacity onPress={() => handleEditPress(item._id, item.content)}>
-                <MaterialIcons name="edit" size={24} color={COLORS.black} />
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity onPress={() => handleEditPress(item._id, item.content)}>
+                  <MaterialIcons name="edit" size={24} color={COLORS.black} />
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => handleDeletePress(item._id)}>
+                  <MaterialIcons name="delete" size={24} color="black" />
+                </TouchableOpacity>
+              </>
             )}
           </View>
         )}
@@ -124,22 +135,57 @@ export default function TipsScreen({ route, navigation }) {
     );
   };
 
-  return (
-    <View>
-      {userType === "vet" && (
-        <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}> My Tips:</Text>
-      )}
-      {userType === "vet" && (
-        <TouchableOpacity onPress={ShareTipClick}>
-          <AntDesign name="pluscircleo" size={24} color="black" />
-        </TouchableOpacity>
-      )}
-      {/* <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>My Tips</Text> */}
-      <FlatList data={vetTips} renderItem={renderItem} keyExtractor={(item) => item._id} />
-      <Text style={{ fontSize: 20, marginTop: 10, fontWeight: "bold", marginBottom: 10 }}> Vet Tips:</Text>
-      <FlatList data={allVetTips} renderItem={renderItemOtherVet} keyExtractor={(item) => item._id} />
-    </View>
-  );
+  const renderItems = () => {
+    if (userType === "petOwner") {
+      if (vetId) {
+        return (
+          <>
+            <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}> Vet Tips:</Text>
+            <FlatList data={vetTips} renderItem={renderItem} keyExtractor={(item) => item._id} />
+          </>
+        );
+      } else {
+        return (
+          <>
+            <Text style={{ fontSize: 20, marginTop: 10, fontWeight: "bold", marginBottom: 10 }}> Vet Tips:</Text>
+            <FlatList data={allTips} renderItem={renderItemOtherVet} keyExtractor={(item) => item._id} />
+          </>
+        );
+      }
+    } else if (userType === "vet") {
+      return (
+        <View>
+          <>
+            <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}> My Tips:</Text>
+            {isAdding ? (
+              <>
+                <TextInput
+                  multiline={true}
+                  numberOfLines={10}
+                  placeholder="Write your tip here..."
+                  value={tip}
+                  onChangeText={setTip}
+                />
+                <View style={{ flexDirection: "row", marginTop: 5 }}>
+                  <Button title="Save" onPress={handleSave} />
+                  <Button title="Cancel" onPress={handleCancel} />
+                </View>
+              </>
+            ) : (
+              <TouchableOpacity onPress={() => setIsAdding(true)}>
+                <AntDesign name="pluscircleo" size={24} color="black" />
+              </TouchableOpacity>
+            )}
+            <FlatList data={vetTips} renderItem={renderItem} keyExtractor={(item) => item._id} />
+          </>
+          <Text style={{ fontSize: 20, marginTop: 10, fontWeight: "bold", marginBottom: 10 }}> Vet Tips:</Text>
+          <FlatList data={allTips} renderItem={renderItemOtherVet} keyExtractor={(item) => item._id} />
+        </View>
+      );
+    }
+  };
+
+  return <View>{renderItems()}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -155,12 +201,12 @@ const styles = StyleSheet.create({
     marginLeft: 0,
   },
   tipContainer: {
-    flexDirection: 'row', // Set flexDirection to row to align items horizontally
+    flexDirection: "row", // Set flexDirection to row to align items horizontally
     backgroundColor: "#f0f0f0",
     borderRadius: 2,
     padding: 5,
     marginBottom: 10,
-    alignItems: 'center', // Align items vertically in the center
+    alignItems: "center", // Align items vertically in the center
   },
   tipContent: {
     fontSize: 16,
@@ -176,7 +222,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF", // White
   },
   vetName: {
-    fontStyle: 'italic',
+    fontStyle: "italic",
     marginTop: 5,
   },
   editProfileButton: {
@@ -201,7 +247,7 @@ const styles = StyleSheet.create({
     flex: 1, // Take up the remaining space
   },
   addButton: {
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     marginBottom: 10,
   },
 });

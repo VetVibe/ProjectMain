@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import DetailsContainer from "../../components/DetailsContainer/DetailsContainer";
+import { MaterialIcons } from "@expo/vector-icons";
+import { COLORS } from "../../constants";
 import { mapPetDetails } from "../../utils";
 import { TITELS } from "../../constants";
-import axios from "axios";
+import { clientServer } from "../../server";
 import tw from "twrnc";
 
 export default function PetProfileScreen({ route, navigation }) {
@@ -12,13 +14,8 @@ export default function PetProfileScreen({ route, navigation }) {
 
   useEffect(() => {
     const updatePetDetails = async () => {
-      try {
-        const response = await axios.get(`http://localhost:3000/pet/${petId}`);
-        const mappedPetDetails = mapPetDetails(response.data);
-        setPetDetails(mappedPetDetails);
-      } catch (error) {
-        console.error("Error updating pet details:", error);
-      }
+      const mappedPetDetails = mapPetDetails(await clientServer.getPetDetails(petId));
+      setPetDetails(mappedPetDetails);
     };
 
     // Listen for changes and update petDetails
@@ -37,28 +34,22 @@ export default function PetProfileScreen({ route, navigation }) {
   };
 
   const deletePet = async () => {
-    try {
-      await axios.delete(`http://localhost:3000/pet/${petId}`);
-      // Navigate back or to another screen after successful deletion
-      navigation.goBack();
-    } catch (error) {
-      console.error("Error deleting pet:", error);
-    }
+    await clientServer.deletePet(petId);
+    navigation.goBack();
   };
 
   return (
     <View>
       <TouchableOpacity onPress={navigateToEditScreen} style={styles.editButton}>
-        <Text style={tw`text-2xl font-semibold pr-2 tracking-wide`}>Edit Profile</Text>
+        <MaterialIcons name="edit" size={24} color={COLORS.white} />
       </TouchableOpacity>
 
       <TouchableOpacity onPress={deletePet} style={styles.deleteButton}>
-      <Text style={tw`text-2xl font-semibold pr-2 tracking-wide text-red-500`}>Delete Pet</Text>
-    </TouchableOpacity>
+        <MaterialIcons name="delete" size={24} color="black" />
+      </TouchableOpacity>
 
+      <Image source={{ uri: petDetails.imgSrc }} style={styles.petImage} />
       <ScrollView style={{ flexGrow: 1 }}>
-        <Image source={{ uri: petDetails.imgSrc }} style={styles.petImage} />
-
         <View style={tw`bg-white rounded-lg mt-3 px-4`}>
           {Object.entries(petDetails).map(([section, sectionDetails]) => {
             // Skip imgSrc section

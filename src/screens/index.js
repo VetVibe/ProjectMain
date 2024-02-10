@@ -3,12 +3,12 @@ import SignUpScreen from "./SignUpScreen/SignUpScreen";
 import PetOwnerHomeScreen from "./PetOwnerHomeScreen/PetOwnerHomeScreen";
 import PetProfileScreen from "./PetProfileScreen/PetProfileScreen";
 import EditPetProfileScreen from "./EditPetProfileScreen/EditPetProfileScreen";
-import EditPetOwnerProfileScreen from "./EditPetOwnerProfileScreen/EditPetOwnerProfileScreen";
+import PetOwnerProfileScreen from "./PetOwnerProfileScreen/PetOwnerProfileScreen";
 import VetHomeScreen from "./VetHomeScreen/VetHomeScreen";
-import ShareTipScreen from "./ShareTipScreen/ShareTipScreen";
 import EditVetProfileScreen from "./EditVetProfileScreen/EditVetProfileScreen";
 import TipsScreen from "./TipsScreen/TipsScreen";
-import TipsScreenPet from "./TipsScreenPet/TipsScreenPet";
+import VetSearchScreen from "./VetSearchScreen/VetSearchScreen";
+import VetAppointmentsScreen from "./VetAppointmentsScreen/VetAppointmentsScreen";
 
 export {
   HomeScreen,
@@ -16,10 +16,10 @@ export {
   PetOwnerHomeScreen,
   PetProfileScreen,
   EditPetProfileScreen,
-  EditPetOwnerProfileScreen,
+  PetOwnerProfileScreen,
   VetHomeScreen,
-  ShareTipScreen,
   EditVetProfileScreen,
   TipsScreen,
-  TipsScreenPet,
+  VetSearchScreen,
+  VetAppointmentsScreen,
 };

@@ -1,7 +1,23 @@
 // Import the mongoose library
-const mongoose = require("mongoose");
+import { Schema, Types, model } from "mongoose";
 
-const veterinarianSchema = new mongoose.Schema({
+const appointmentSchema = new Schema({
+  vetId: {
+    type: Types.ObjectId,
+    ref: "Veterinarian", // Reference to the Veterinarian model
+    required: true,
+  },
+  petOwnerId: {
+    type: Types.ObjectId,
+    required: true,
+  },
+  date: {
+    type: Date,
+    required: true,
+  },
+});
+
+const veterinarianSchema = new Schema({
   name: {
     type: String,
     required: true,
@@ -31,10 +47,6 @@ const veterinarianSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  rateCount: {
-    type: Number,
-    default: 0,
-  },
   clientsCount: {
     type: Number,
     default: 0,
@@ -43,11 +55,7 @@ const veterinarianSchema = new mongoose.Schema({
     type: String,
   },
   tips: {
-    type: [mongoose.Types.ObjectId],
-  },
-  isAvailable: {
-    type: Boolean,
-    default: false,
+    type: [Types.ObjectId],
   },
   location: {
     type: String,
@@ -58,7 +66,8 @@ const veterinarianSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  appointmens: [appointmentSchema],
 });
 
-const Veterinarian = mongoose.model("Veterinarian", veterinarianSchema);
-module.exports = Veterinarian;
+const Veterinarian = model("Veterinarian", veterinarianSchema);
+export default Veterinarian;
