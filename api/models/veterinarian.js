@@ -1,21 +1,6 @@
 // Import the mongoose library
 import { Schema, Types, model } from "mongoose";
 
-const appointmentSchema = new Schema({
-  vetId: {
-    type: Types.ObjectId,
-    ref: "Veterinarian", // Reference to the Veterinarian model
-    required: true,
-  },
-  petOwnerId: {
-    type: Types.ObjectId,
-    required: true,
-  },
-  date: {
-    type: Date,
-    required: true,
-  },
-});
 
 const veterinarianSchema = new Schema({
   name: {
@@ -61,12 +46,21 @@ const veterinarianSchema = new Schema({
     type: String,
     required: true,
   },
-
   specialization: {
     type: String,
     required: true,
   },
-  appointmens: [appointmentSchema],
+  workingHours: {
+    type: {
+      start: { type: Number, min: 0, max: 23},
+      end: {  type: Number ,min: 0, max: 23}
+    },
+    default: {start: 8, end: 20}
+  },
+  appointments: [{
+    type:Schema.Types.ObjectId,
+    ref: "Appointment"
+  }],
 });
 
 const Veterinarian = model("Veterinarian", veterinarianSchema);

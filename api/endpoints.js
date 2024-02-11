@@ -4,6 +4,9 @@ export const PET_OWNER_ENDPOINTS = {
   UPDATE_INFO: `/pet-owner/update-info/:petOwnerId`,
   PETS: `/pet-owner/:petOwnerId/pets`,
   DETAILS: `/pet-owner/:petOwnerId`,
+  
+  MAKE_APPOINTMENT: "/pet-owner/make-appointment",
+  CANCEL_APPOINTMENT: "/pet-owner/make-appointment",
 };
 
 export const VETERINARIAN_ENDPOINTS = {
@@ -14,8 +17,8 @@ export const VETERINARIAN_ENDPOINTS = {
   DETAILS: `/veterinarian/:vetId`,
   UPDATE_INFO: `/veterinarian/update-info/:vetId`,
   TIPS: `/veterinarian/:vetId/tips`,
-  APPOINTMENTS: `/veterinarian/:vetId/appointments`,
-  ADD_APPOINTMENT: `/veterinarian/:vetId/add-appointment`,
+  
+  CANCEL_APPOINTMENT: "/pet-owner/make-appointment",
 };
 
 export const TIP_ENDPOINTS = {

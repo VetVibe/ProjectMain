@@ -8,6 +8,7 @@ import { mapVetDetails } from "../../utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Rating from "../../components/Rating/Rating";
 import { clientServer } from "../../server";
+import { Button } from "react-native-elements";
 
 export default function VetHomeScreen({ route, navigation }) {
   const [vetId, setVetId] = useState(null);
@@ -46,9 +47,12 @@ export default function VetHomeScreen({ route, navigation }) {
       <ScrollView style={{ flex: 1 }}>
         <View style={{ alignItems: "center" }}>
           {userType === "petOwner" ? (
+            <>
             <TouchableOpacity style={styles.tipsButton} onPress={ShowTips}>
               <MaterialIcons name="my-library-books" size={24} color={COLORS.white} />
             </TouchableOpacity>
+            <TouchableOpacity style={styles.makeAppointmentButton}  onPress={() => navigation.navigate("Make An Appointment", vetDetails)}></TouchableOpacity>
+            </>
           ) : null}
           <Image source={{ uri: vetDetails.profilePicture }} style={styles.vetProfileImage} />
 
@@ -152,6 +156,18 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 20,
     top: 60,
+    zIndex: 2,
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+  },
+  makeAppointmentButton: {
+    position: "absolute",
+    right: 20,
+    top: 100,
     zIndex: 2,
     width: 36,
     height: 36,

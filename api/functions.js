@@ -3,6 +3,8 @@ import PetOwner from "./models/pet_owner.js";
 import Pet from "./models/pet.js";
 import Tip from "./models/tip.js";
 import { randomBytes } from "crypto";
+import { isSameDayDates, toDateString } from "./utils.js";
+import Appointment from "./models/appointment.js";
 
 // Pet Owner Functions
 const registerPetOwner = async (req, res) => {
@@ -105,7 +107,14 @@ const getPetOwnerDetails = async (req, res) => {
   try {
     const petOwnerId = req.params.petOwnerId;
     console.log(`User ID: ${petOwnerId}`);
-    const petOwner = await PetOwner.findById(petOwnerId);
+    const petOwner = await PetOwner.findById(petOwnerId)
+          .populate({
+            path: "appointments",
+            populate: {
+              path:"vet",
+              model: "Veterinarian"
+            }
+          });
 
     if (!petOwner) {
       return res.status(404).json({ message: "Pet Owner not found" });
@@ -118,6 +127,81 @@ const getPetOwnerDetails = async (req, res) => {
   }
 };
 
+
+const cancelAppointment = async (req,res) => {
+  try {
+    const  appointmentId = req.params.appointmentId;
+
+    const appointment = await Appointment.findById(appointmentId)
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+    
+    const petOwner = await PetOwner.findById(appointment.petOwner)
+    const veterinarian = await Veterinarian.findById(appointment.vet)
+
+    petOwner.appointments = petOwner.appointments.filter(appointmentOther => appointmentOther !== appointmentId)
+    veterinarian.appointments = veterinarian.appointments.filter(appointmentOther => appointmentOther !== appointmentId)
+
+    await petOwner.save()
+    await veterinarian.save()
+
+    return res.status(200).json(appointment)
+  } catch(e) {
+    return res.status(500).json({error: e.message})
+  }
+
+}
+
+const makeAppointment = async (req, res) => {
+  try {
+    const { petOwnerId, vetId, date, hour } = req.body;
+    console.log(`User ID: ${petOwnerId}`);
+    const petOwner = await PetOwner.findById(petOwnerId).populate('appointments');
+    const veterinarian = await Veterinarian.findById(vetId).populate('appointments');
+
+    if (!petOwner) {
+      return res.status(404).json({ message: "Pet Owner not found" });
+    }
+    else if (!veterinarian) {
+      return res.status(404).json({ message: "Veterinarian not found" });
+    }
+
+    // the requested hour is not within veterinarian working hours
+    if(hour < veterinarian.workingHours.start || hour > veterinarian.workingHours.end) {
+      throw new Error(`This veterinarian does not accept customers at this hour (${hour})`)
+    }
+    const appintmentDate = new Date(date)
+    const appointmentsForTheDate_petOwner = petOwner.appointments.find(appointment => isSameDayDates(appointment.date, appintmentDate) && hour === appointment.hour)
+    const appointmentsForTheDate_vet = veterinarian.appointments.find(appointment => isSameDayDates(appointment.date, appintmentDate)  && hour === appointment.hour)
+
+
+    if(appointmentsForTheDate_petOwner) { // petowner already has an appointment here
+      throw new Error(`You already have an appointment on ${toDateString(date, hour)}` )
+    }
+    else if(appointmentsForTheDate_vet) {  // veterinarian already has an appointment here
+      throw new Error(`This veterinarian alreay has an appointment on ${toDateString(date, hour)}, please try another date` )
+    }
+
+   
+    const newAppointment = await Appointment.create({
+      petOwner: petOwnerId,
+      vet: vetId,
+      date,
+      hour
+    })
+    petOwner.appointments.push(newAppointment)
+    veterinarian.appointments.push(newAppointment)
+    await petOwner.save()
+    await veterinarian.save()
+
+    res.status(200).json(newAppointment);
+    console.log(`Pet owner ${petOwnerId} successfuly made an appointment with veterinarian ${vetId} on ${toDateString(date, hour)}`);
+  } catch (error) {
+    console.error("Error making an appointment:", error);
+    res.status(500).json({ error: error.message});
+  }
+};
 // Veterinarian Functions
 const registerVeterinarian = async (req, res) => {
   try {
@@ -214,7 +298,14 @@ const getVeterinarians = async (req, res) => {
 const getVeterinarianInfo = async (req, res) => {
   try {
     const vetId = req.params.vetId;
-    const veterinarian = await Veterinarian.findById(vetId);
+    const veterinarian = await Veterinarian.findById(vetId)
+      .populate({
+        path: "appointments",
+        populate: {
+          path:"petOwner",
+          model: "Pet Owner"
+        }
+    });;
     if (!veterinarian) {
       return res.status(404).json({ message: "Veterinarian not found" });
     }
@@ -479,6 +570,8 @@ export {
   updatePetOwnerInfo,
   getPetOwnerPets,
   getPetOwnerDetails,
+  makeAppointment,
+  cancelAppointment,
   registerVeterinarian,
   loginVeterinarian,
   rateVeterinarian,

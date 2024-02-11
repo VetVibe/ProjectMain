@@ -22,6 +22,8 @@ import {
   getPetInfo,
   updatePetInfo,
   deletePet,
+  makeAppointment,
+  cancelAppointment,
 } from "./functions.js";
 import { PET_OWNER_ENDPOINTS, VETERINARIAN_ENDPOINTS, TIP_ENDPOINTS, PET_ENDPOINTS } from "./endpoints.js";
 
@@ -31,6 +33,9 @@ router.post(PET_OWNER_ENDPOINTS.LOGIN, loginPetOwner);
 router.put(PET_OWNER_ENDPOINTS.UPDATE_INFO, updatePetOwnerInfo);
 router.get(PET_OWNER_ENDPOINTS.PETS, getPetOwnerPets);
 router.get(PET_OWNER_ENDPOINTS.DETAILS, getPetOwnerDetails);
+router.get(PET_OWNER_ENDPOINTS.MAKE_APPOINTMENT, makeAppointment);
+router.get(PET_OWNER_ENDPOINTS.CANCEL_APPOINTMENT, cancelAppointment);
+
 
 // Veterinarian routes
 router.post(VETERINARIAN_ENDPOINTS.REGISTER, registerVeterinarian);
@@ -40,6 +45,7 @@ router.get(VETERINARIAN_ENDPOINTS.ALL, getVeterinarians);
 router.get(VETERINARIAN_ENDPOINTS.DETAILS, getVeterinarianInfo);
 router.put(VETERINARIAN_ENDPOINTS.UPDATE_INFO, updateVeterinarianInfo);
 router.get(VETERINARIAN_ENDPOINTS.TIPS, getVeterinarianTips);
+router.get(VETERINARIAN_ENDPOINTS.CANCEL_APPOINTMENT, cancelAppointment);
 
 // Tip routes
 router.get(TIP_ENDPOINTS.ALL, getAllTips);

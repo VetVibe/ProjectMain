@@ -24,6 +24,10 @@ const PetOwnerSchema = new Schema({
     type: [Types.ObjectId],
   },
   ratings: { type: [String], default: [] },
+  appointments: [{
+    type:Schema.Types.ObjectId,
+    ref: "Appointment"
+  }],
 });
 
 const PetOwner = model("Pet Owner", PetOwnerSchema);

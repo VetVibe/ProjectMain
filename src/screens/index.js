@@ -9,6 +9,7 @@ import EditVetProfileScreen from "./EditVetProfileScreen/EditVetProfileScreen";
 import TipsScreen from "./TipsScreen/TipsScreen";
 import VetSearchScreen from "./VetSearchScreen/VetSearchScreen";
 import VetAppointmentsScreen from "./VetAppointmentsScreen/VetAppointmentsScreen";
+import MakeAnAppointmentScreen from "./VetAppointmentsScreen/MakeAnAppointmentScreen";
 
 export {
   HomeScreen,
@@ -22,4 +23,5 @@ export {
   TipsScreen,
   VetSearchScreen,
   VetAppointmentsScreen,
+  MakeAnAppointmentScreen,
 };

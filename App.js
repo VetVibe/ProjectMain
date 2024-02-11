@@ -15,6 +15,7 @@ import {
   TipsScreen,
   VetSearchScreen,
   VetAppointmentsScreen,
+  MakeAnAppointmentScreen,
 } from "./src/screens";
 import CustomPetOwnerTabBar from "./src/components/CustomTabBar/CustomPetOwnerTabBar";
 import CustomVetTabBar from "./src/components/CustomTabBar/CustomVetTabBar";
@@ -56,6 +57,7 @@ export default function App() {
         <Stack.Screen name="Sign up" component={SignUpScreen} />
         <Stack.Screen name="Pet Owner Tabs" component={PetOwnerTabs} />
         <Stack.Screen name="Vet Tabs" component={VetTabs} />
+        <Stack.Screen name="Make An Appointment" component={MakeAnAppointmentScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
