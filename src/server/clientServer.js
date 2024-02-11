@@ -247,7 +247,21 @@ export const clientServer = {
       console.error(`Error during deleting tip ${tipId} details:`, error.response);
     }
   },
+
+//  -------------------- Appointments --------------------
+getPetOwnerAppointments: async () => {
+  try {
+
+  } catch (error) {
+
+  }
+},
+
+getVetAppointments: async () => {
+  try {
+
+  } catch (error) {
+
+  }
+},
 };
-
-
-

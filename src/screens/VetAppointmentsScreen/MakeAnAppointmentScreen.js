@@ -20,23 +20,9 @@ export default function MakeAnAppointmentScreen({ route }) {
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
     const [selectedDate, setSelectedDate] = useState()
     const [selectedHour, setSelectedHour] = useState()
-    const [vetInfo, setVetInfo] = useState(null);
-
-    const fetchVetInfo = async (vetId) => {
-    try {
-        // Assuming clientServer is your API client
-        const vetId = (await AsyncStorage.getItem("vetId")) || route.params?.vetId;
-        setVetId(vetId);
-        const vetData = await clientServer.getVetInfo(vetId);
-        setVetInfo(vetData);
-    } catch (error) {
-        console.log(error);
-    }
-    };
+    const [VetDetails, setVetDetails] = useState(null);
 
 
-
-  
     useEffect(() => {
       const fetchData = async () => {
         try {
@@ -65,9 +51,6 @@ export default function MakeAnAppointmentScreen({ route }) {
     }, [vetId]);
 
 
-
-
-
     useEffect(() => {
         const fetchVetDetails = async () => {
           try {
@@ -76,7 +59,6 @@ export default function MakeAnAppointmentScreen({ route }) {
             const data = await clientServer.getVetInfo(id);
             const mapedVetDetails = mapVetDetails(data);
             setVetDetails(mapedVetDetails);
-            setSelectedImage(mapedVetDetails.profilePicture);
           } catch (error) {
             console.log(error);
           }
