@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import TabsContainer from "../../components/TabsContainer/TabsContainer";
 import { StyleSheet, View, TextInput, Text, Button } from "react-native";
 import { ROLES_TABS, TITELS } from "../../constants";
@@ -7,7 +8,7 @@ import PawImage from "../../assets/paw.jpg";
 import { clientServer } from "../../server";
 import { StackActions } from "@react-navigation/native";
 
-const HomeScreen = ({ navigation, onLogin }) => {
+const HomeScreen = ({ navigation }) => {
   const [form, setValues] = useState({
     email: "",
     password: "",
@@ -35,24 +36,17 @@ const HomeScreen = ({ navigation, onLogin }) => {
   const onSignInPress = async () => {
     try {
       if (activeTab === "vet") {
-        const userId = await clientServer.loginVet(form);
-        onLogin({ tyep: "vet", id: userId });
-        // navigation.dispatch(
-        //   StackActions.replace("Vet Home Screen", {
-        //     userId: userId,
-        //     userType: "vet",
-        //   })
-        // );
+        await clientServer.loginVet(form);
+        navigation.dispatch(StackActions.replace("Vet Tabs"));
       } else {
-        const userId = await clientServer.loginPetOwner(form);
-        //navigation.dispatch(StackActions.replace("Pet Owner Home Screen", { userId: userId }));
-        onLogin({ type: "petOwner", userId: userId });
+        await clientServer.loginPetOwner(form);
+        navigation.dispatch(StackActions.replace("Pet Owner Tabs"));
       }
     } catch (error) {
-      if (error.response.status === 404) {
+      if (error.response && error.response.status === 404) {
         setIncorrectInput((prevState) => ({ ...prevState, incorrectEmail: true }));
         return;
-      } else if (error.response.status === 401) {
+      } else if (error.response && error.response.status === 401) {
         setIncorrectInput((prevState) => ({ ...prevState, incorrectPassword: true }));
         return;
       } else {
@@ -68,32 +62,29 @@ const HomeScreen = ({ navigation, onLogin }) => {
       </View>
 
       <TabsContainer tabs={ROLES_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
-      <>
-        <Text style={styles.label}>{TITELS["email"]}</Text>
-        <TextInput
-          placeholder={"Email"}
-          keyboardType="email-address"
-          autoCorrect={false}
-          autoCapitalize="none"
-          onChangeText={(value) => handleChangeText("email", value)}
-        />
-        {incorrectInput.incorrectEmail && (
-          <Text style={styles.error}>{`User with email: ${form.email} wasn't found.`}</Text>
-        )}
-      </>
-      <>
-        <Text style={styles.label}>{TITELS["password"]}</Text>
-        <TextInput
-          autoCapitalize="none"
-          textContentType="password"
-          placeholder={"Password"}
-          autoCorrect={false}
-          containerStyle={styles.defaultMargin}
-          onChangeText={(value) => handleChangeText("password", value)}
-          secureTextEntry
-        />
-        {incorrectInput.incorrectPassword && <Text style={styles.error}>{"The password is incorrect."}</Text>}
-      </>
+      <Text style={styles.label}>{TITELS["email"]}</Text>
+      <TextInput
+        placeholder={"Email"}
+        keyboardType="email-address"
+        autoCorrect={false}
+        autoCapitalize="none"
+        onChangeText={(value) => handleChangeText("email", value)}
+      />
+      {incorrectInput.incorrectEmail ? (
+        <Text style={styles.error}>{`User with email: ${form.email} wasn't found.`}</Text>
+      ) : null}
+
+      <Text style={styles.label}>{TITELS["password"]}</Text>
+      <TextInput
+        autoCapitalize="none"
+        textContentType="password"
+        placeholder={"Password"}
+        autoCorrect={false}
+        containerStyle={styles.defaultMargin}
+        onChangeText={(value) => handleChangeText("password", value)}
+        secureTextEntry
+      />
+      {incorrectInput.incorrectPassword ? <Text style={styles.error}>{"The password is incorrect."}</Text> : null}
       <Button
         title={"Login"}
         titleStyle={styles.loginButtonText}

@@ -10,14 +10,16 @@ import Rating from "../../components/Rating/Rating";
 import { clientServer } from "../../server";
 
 export default function VetHomeScreen({ route, navigation }) {
+  const [vetId, setVetId] = useState(null);
   const [vetDetails, setVetDetails] = useState({});
 
-  const vetId = route.params.userId;
-  const userType = route.params.userType;
+  const userType = route.params?.userType || "vet";
 
-  // Function to fetch vet details
   const fetchVetDetails = async () => {
-    const vetDetails = await clientServer.getVetInfo(vetId);
+    const id = (await AsyncStorage.getItem("vetId")) || route.params?.userId;
+    setVetId(id);
+
+    const vetDetails = await clientServer.getVetInfo(id);
     const mapedVetDetails = mapVetDetails(vetDetails);
     setVetDetails(mapedVetDetails);
   };
@@ -34,17 +36,8 @@ export default function VetHomeScreen({ route, navigation }) {
     }, [])
   );
 
-  const EditVetProfileClick = () => {
-    navigation.navigate("Edit Vet Profile Screen", { vetId: vetId });
-  };
-  const LogoutClick = async () => {
-    await AsyncStorage.removeItem("authToken");
-    console.log("User logged out: cleared auth token.");
-    navigation.replace("Home");
-  };
-
   const ShowTips = () => {
-    navigation.navigate("Tips Screen", { vetId: vetId, userType: userType });
+    navigation.navigate("Tips", { vetId: vetId, userType: userType });
   };
 
   return (
@@ -52,11 +45,11 @@ export default function VetHomeScreen({ route, navigation }) {
       <StatusBar backgroundColor={COLORS.gray} />
       <ScrollView style={{ flex: 1 }}>
         <View style={{ alignItems: "center" }}>
-          {userType === "petOwner" && (
+          {userType === "petOwner" ? (
             <TouchableOpacity style={styles.tipsButton} onPress={ShowTips}>
               <MaterialIcons name="my-library-books" size={24} color={COLORS.white} />
             </TouchableOpacity>
-          )}
+          ) : null}
           <Image source={{ uri: vetDetails.profilePicture }} style={styles.vetProfileImage} />
 
           <Text style={styles.name}>{vetDetails.name}</Text>
@@ -81,27 +74,25 @@ export default function VetHomeScreen({ route, navigation }) {
             </View>
           </View>
 
-          {vetDetails.about !== "" && (
+          {vetDetails.about !== "" ? (
             <View style={styles.aboutContainer}>
               <Text style={styles.aboutTitle}>About</Text>
               <Text style={styles.description}>{vetDetails.about}</Text>
             </View>
-          )}
+          ) : null}
 
-          {userType === "petOwner" && (
-            <>
-              <Rating
-                vetDetails={vetDetails}
-                onNewRating={({ newRating, newRatingCount }) =>
-                  setVetDetails({
-                    ...vetDetails,
-                    rating: newRating,
-                    ratingCount: newRatingCount,
-                  })
-                }
-              />
-            </>
-          )}
+          {userType === "petOwner" ? (
+            <Rating
+              vetDetails={vetDetails}
+              onNewRating={({ newRating, newRatingCount }) =>
+                setVetDetails({
+                  ...vetDetails,
+                  rating: newRating,
+                  ratingCount: newRatingCount,
+                })
+              }
+            />
+          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>

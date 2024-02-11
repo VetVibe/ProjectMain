@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import DetailsContainer from "../../components/DetailsContainer/DetailsContainer";
 import { MaterialIcons } from "@expo/vector-icons";
-import { COLORS } from "../../constants";
 import { mapPetDetails } from "../../utils";
 import { TITELS } from "../../constants";
 import { clientServer } from "../../server";
@@ -30,7 +29,7 @@ export default function PetProfileScreen({ route, navigation }) {
   }, [petId, navigation]);
 
   const navigateToEditScreen = () => {
-    navigation.navigate("Pet Profile Screen Edit", { petId: petId });
+    navigation.navigate("Edit Pet Profile", { petId: petId });
   };
 
   const deletePet = async () => {
@@ -41,7 +40,7 @@ export default function PetProfileScreen({ route, navigation }) {
   return (
     <View>
       <TouchableOpacity onPress={navigateToEditScreen} style={styles.editButton}>
-        <MaterialIcons name="edit" size={24} color={COLORS.white} />
+        <MaterialIcons name="edit" size={24} color="black" />
       </TouchableOpacity>
 
       <TouchableOpacity onPress={deletePet} style={styles.deleteButton}>

@@ -9,10 +9,14 @@ export const clientServer = {
   // -------------------- Pet Owner --------------------
   registerPetOwner: async (userData) => {
     try {
-      const response = await clientServer.server.post(PET_OWNER_ENDPOINTS.REGISTER, userData);
-      return response.data;
+      await clientServer.server.post(PET_OWNER_ENDPOINTS.REGISTER, userData);
+      console.log("Client | Register Pet Owner: Success");
     } catch (error) {
-      console.error("Error registering pet owner:", error.response);
+      if (error.response.status === 409) {
+        console.log("Client | Register Pet Owner | Error: User already exists.");
+      } else {
+        console.error("Client | Register Pet Owner | Error:", error.response);
+      }
       throw error;
     }
   },
@@ -20,17 +24,16 @@ export const clientServer = {
   loginPetOwner: async (credentials) => {
     try {
       const response = await clientServer.server.post(PET_OWNER_ENDPOINTS.LOGIN, credentials);
-      const data = response.data;
-      const token = data.token;
-      AsyncStorage.setItem("authToken", token);
-      return data.userId;
+      await AsyncStorage.setItem("userId", response.data.userId);
+      await AsyncStorage.setItem("userType", "petOwner");
+      console.log("Client | Login Pet Owner: Success");
     } catch (error) {
       if (error.response.status === 404) {
-        console.log("Login Pet Owner: User not found.");
+        console.log("Client | Login Pet Owner: User not found.");
       } else if (error.response.status === 401) {
-        console.log("Login Pet Owner: Password is incorrect.");
+        console.log("Client | Login Pet Owner: Password is incorrect.");
       } else {
-        console.error("Error logging in pet owner:", error.response);
+        console.error("Client | Login Pet Owner | Error:", error.response);
       }
       throw error;
     }
@@ -127,10 +130,9 @@ export const clientServer = {
   loginVet: async (credentials) => {
     try {
       const response = await clientServer.server.post(VET_ENDPOINTS.LOGIN, credentials);
-      const data = response.data;
-      const token = data.token;
-      AsyncStorage.setItem("authToken", token);
-      return data.userId;
+      await AsyncStorage.setItem("vetId", response.data.userId);
+      await AsyncStorage.setItem("userType", "vet");
+      console.log("Client | Login Vet: Success");
     } catch (error) {
       if (error.response) {
         // The request was made and the server responded with a status code
@@ -200,6 +202,7 @@ export const clientServer = {
 
   getTip: async (tipId) => {
     try {
+      if (!tipId) return;
       const response = await clientServer.server.get(TIP_ENDPOINTS.GET_TIP(tipId));
       return response.data;
     } catch (error) {
@@ -209,6 +212,7 @@ export const clientServer = {
 
   getTipsByIds: async (tipIds) => {
     try {
+      if (!tipIds) return;
       const fetchTipsDetails = tipIds.map((tipId) => clientServer.getTip(tipId));
       const tipsDetailsArray = await Promise.all(fetchTipsDetails);
       return tipsDetailsArray;

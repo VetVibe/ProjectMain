@@ -1,21 +1,7 @@
-import { randomBytes } from "crypto";
-import jwt from "jsonwebtoken";
-
-// Import models
 import Veterinarian from "./models/veterinarian.js";
 import PetOwner from "./models/pet_owner.js";
 import Pet from "./models/pet.js";
 import Tip from "./models/tip.js";
-import mongoose from "mongoose";
-
-// Function to generate a secret key
-const generateSecretKey = () => {
-  const secretKey = randomBytes(32).toString("hex");
-  return secretKey;
-};
-
-// Generate a secret key
-const secretKey = generateSecretKey();
 
 // Pet Owner Functions
 const registerPetOwner = async (req, res) => {
@@ -24,22 +10,17 @@ const registerPetOwner = async (req, res) => {
     const existingOwner = await PetOwner.findOne({ email });
 
     if (existingOwner) {
-      return res.status(404).json({ message: "Email already registered" });
+      return res.status(409).json();
     }
 
     const newOwner = new PetOwner(req.body);
-
-    // Generate and store the verification token
-    newOwner.verificationToken = randomBytes(20).toString("hex");
-
-    // Save the new user to the database
     await newOwner.save();
 
-    res.status(201).json({ message: "Pet owner registration successful", userId: newOwner._id });
-    console.log("Pet owner registration successful");
+    res.status(201).json();
+    console.log("DB | Register Pet Owner: Pet owner registration successful.");
   } catch (error) {
-    console.log("Error registering user", error);
-    res.status(500).json({ message: "Error registering user" });
+    console.log("DB | Register Pet Owner | Error:", error);
+    res.status(500).json();
   }
 };
 
@@ -49,18 +30,15 @@ const loginPetOwner = async (req, res) => {
     const owner = await PetOwner.findOne({ email });
 
     if (!owner) {
-      return res.status(404).json({ message: "Email doesnt register" });
+      return res.status(404).json();
     }
 
     if (owner.password !== password) {
-      return res.status(401).json({ message: "Incorrect password" });
+      return res.status(401).json();
     }
 
-    // Sign a JWT token with the user's ID and the secret key
-    const token = jwt.sign({ userId: owner._id }, secretKey);
-
-    res.status(200).json({ token, userId: owner._id });
-    console.log("Pet owner logged in successfully");
+    res.status(200).json({ userId: owner._id });
+    console.log("DB | Login Pet Owner: Pet owner logged in successfully.");
   } catch (error) {
     res.status(500).json({ message: "Login failed" });
   }
@@ -132,37 +110,19 @@ const getPetOwnerDetails = async (req, res) => {
 // Veterinarian Functions
 const registerVeterinarian = async (req, res) => {
   try {
-    const { name, email, vetId, password, phoneNumber, location, specialization, profilePicture } = req.body;
+    const { vetId } = req.body;
     const existingV = await Veterinarian.findOne({ vetId });
 
     if (existingV) {
       return res.status(404).json({ message: "Veterinarian already registered" });
     }
 
-    // Create a new veterinarian user
-    const newVeterinarian = new Veterinarian({
-      name,
-      email,
-      vetId,
-      password,
-      phoneNumber,
-      location,
-      specialization,
-      profilePicture,
-    });
-
-    // Generate and store the verification token (if needed)
-    newVeterinarian.verificationToken = randomBytes(20).toString("hex");
-
-    // Save the new veterinarian to the database
+    const newVeterinarian = new Veterinarian(req.body);
     await newVeterinarian.save();
 
     // Send a response indicating successful registration
-    res.status(201).json({
-      message: "Registration successful for veterinarian",
-      userId: newVeterinarian._id,
-    });
-    console.log("Veterinarian registration successful");
+    res.status(201).json();
+    console.log("DB | Veterinarian registration successful");
   } catch (error) {
     console.log("Error registering veterinarian", error);
     res.status(500).json({ message: "Error registering veterinarian" });
@@ -175,17 +135,13 @@ const loginVeterinarian = async (req, res) => {
     const veterinarian = await Veterinarian.findOne({ email });
 
     if (!veterinarian) {
-      return res.status(404).json({ message: "Invalid id" });
+      return res.status(404).json();
     }
 
     if (veterinarian.password !== password) {
       return res.status(401).json({ message: "Invalid password" });
     }
-
-    // Sign a JWT token with the user's ID and the secret key
-    const token = jwt.sign({ userId: veterinarian._id }, secretKey);
-
-    res.status(200).json({ token, userId: veterinarian._id });
+    res.status(200).json({ userId: veterinarian._id });
     console.log("Veterinarian logged in successfully");
   } catch (error) {
     res.status(500).json({ message: "Login failed" });
@@ -319,11 +275,9 @@ const getAllTips = async (req, res) => {
 const addTip = async (req, res) => {
   try {
     const vetId = req.params.vetId;
-    console.log("addTip:", req.body.content);
     const content = req.body.content;
 
     const newTip = new Tip({ vetId: vetId, content: content });
-    newTip.verificationToken = randomBytes(20).toString("hex");
     await newTip.save();
 
     const vet = await Veterinarian.findById(vetId);
@@ -353,7 +307,7 @@ const getTip = async (req, res) => {
     res.status(200).json(tip);
   } catch (error) {
     console.error("Error fetching tips information", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json();
   }
 };
 

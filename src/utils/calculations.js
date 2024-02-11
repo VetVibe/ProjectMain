@@ -1,6 +1,5 @@
 // Function to calculate age based on birthdate
 export const calculateAge = (birthdate) => {
-  console.log(birthdate);
   const today = new Date();
   const birthDate = new Date(birthdate);
   let age = today.getFullYear() - birthDate.getFullYear();

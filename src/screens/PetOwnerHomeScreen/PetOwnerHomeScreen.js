@@ -7,16 +7,19 @@ import { clientServer } from "../../server";
 
 export default function PetOwnerHomeScreen({ navigation }) {
   const [userPets, setUserPets] = useState([]);
-
-  const petOwnerId = AsyncStorage.getItem("userId");
+  const [petOwnerId, setPetOwnerId] = useState(null);
 
   useEffect(() => {
     const updateUserPetDetails = async () => {
       try {
-        const petIds = await clientServer.getPetOwnerPets(petOwnerId);
-        if (petIds && petIds.pets) {
-          const petsInfo = await clientServer.getPetsDetails(petIds.pets);
-          setUserPets(petsInfo);
+        const id = await AsyncStorage.getItem("userId");
+        setPetOwnerId(id);
+        if (id) {
+          const petIds = await clientServer.getPetOwnerPets(id);
+          if (petIds && petIds.pets) {
+            const petsInfo = await clientServer.getPetsDetails(petIds.pets);
+            setUserPets(petsInfo);
+          }
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -36,12 +39,12 @@ export default function PetOwnerHomeScreen({ navigation }) {
   }, [petOwnerId, navigation]);
 
   const handleNavigateToEditProfile = () => {
-    navigation.navigate("Pet Profile Screen Edit", { petOwnerId: petOwnerId });
+    navigation.navigate("Edit Pet Profile", { petOwnerId: petOwnerId });
   };
 
   const handlePetSelect = (pet) => {
     // Navigate to Pet Profile Screen with the selected pet's ID
-    navigation.navigate("Pet Profile Screen", { petId: pet._id });
+    navigation.navigate("Pet Profile", { petId: pet._id });
   };
 
   return (
@@ -52,7 +55,6 @@ export default function PetOwnerHomeScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Horizontal FlatList for Pets */}
       <View style={styles.petsContainer}>
         {userPets?.length > 0 ? (
           <FlatList

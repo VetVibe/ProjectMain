@@ -21,18 +21,21 @@ import { isPasswordValid } from "../../utils";
 import { TITELS } from "../../constants";
 import { clientServer } from "../../server";
 
-export default function PetOwnerProfileScreen({ route, navigation }) {
+export default function PetOwnerProfileScreen({ navigation }) {
+  const [petOwnerId, setPetOwnerId] = useState(null);
   const [petOwnerDetails, setPetOwnerDetails] = useState({});
   const [selectedImage, setSelectedImage] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  const petOwnerId = route.params.petOwnerId;
-
   useEffect(() => {
     const fetchPetOwnerDetails = async () => {
-      const data = await clientServer.getPetOwnerInfo(petOwnerId);
-      setPetOwnerDetails(data);
-      setSelectedImage(data.profilePicture);
+      const id = await AsyncStorage.getItem("userId");
+      setPetOwnerId(id || null);
+      if (id) {
+        const data = await clientServer.getPetOwnerInfo(id);
+        setPetOwnerDetails(data);
+        setSelectedImage(data.profilePicture);
+      }
     };
     fetchPetOwnerDetails();
   }, [petOwnerId]);
@@ -47,7 +50,8 @@ export default function PetOwnerProfileScreen({ route, navigation }) {
   };
 
   const handleLogout = async () => {
-    await AsyncStorage.removeItem("authToken");
+    await AsyncStorage.removeItem("userId");
+    await AsyncStorage.removeItem("userType");
     console.log("Pet owner logged out: cleared auth token.");
     navigation.replace("Home");
   };
@@ -116,10 +120,11 @@ export default function PetOwnerProfileScreen({ route, navigation }) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
-        <TouchableOpacity style={styles.editProfileButton} onPress={() => setIsEditing(true)}>
-          <MaterialIcons name="edit" size={24} color={COLORS.white} />
-        </TouchableOpacity>
-
+        {!isEditing ? (
+          <TouchableOpacity style={styles.editProfileButton} onPress={() => setIsEditing(true)}>
+            <MaterialIcons name="edit" size={24} color={COLORS.white} />
+          </TouchableOpacity>
+        ) : null}
         <View style={styles.imageContainer}>
           <TouchableOpacity onPress={handleImagePicker}>
             {selectedImage !== null && selectedImage !== "" ? (
@@ -169,7 +174,7 @@ export default function PetOwnerProfileScreen({ route, navigation }) {
             />
             <Text style={styles.label}>{TITELS["phoneNumber"]}</Text>
             <TextInput
-              style={styles.input}
+              style={styles.textInput}
               placeholder={TITELS["phoneNumber"]}
               value={petOwnerDetails.phoneNumber || ""}
               editable={isEditing}
@@ -190,7 +195,7 @@ export default function PetOwnerProfileScreen({ route, navigation }) {
             </>
           ) : (
             <TouchableOpacity style={styles.saveButton} onPress={LogoutClick}>
-              <Text style={styles.logoutButton}>Log out</Text>
+              <Text style={styles.saveButtonText}>Log out</Text>
             </TouchableOpacity>
           )}
         </ScrollView>

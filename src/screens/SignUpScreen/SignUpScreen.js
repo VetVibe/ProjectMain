@@ -55,11 +55,11 @@ export default function SignUpScreen({ navigation }) {
       name,
       email,
       password,
+      phoneNumber,
       profilePicture: profilePicture,
       ...(activeTab === "vet" && {
         location: selectedCity,
         vetId: id,
-        phoneNumber,
         specialization: selectedSpecialization,
       }),
     };
@@ -73,11 +73,10 @@ export default function SignUpScreen({ navigation }) {
     } catch (error) {
       console.error("Error registering user:", error);
 
-      // Check if the error is a 404 error indicating that the user (veterinarian) is already registered
-      if (error.response && error.response.status === 404) {
+      // Check if the error is a 409 error indicating that the user is already registered
+      if (error.response && error.response.status === 409) {
         Alert.alert("Registration failed", "This user is already registered.");
       } else {
-        // Show a generic error message for other registration failures
         Alert.alert("Registration failed.");
       }
     }
@@ -149,12 +148,12 @@ export default function SignUpScreen({ navigation }) {
         keyboardType="phone-pad"
       />
 
-      {activeTab === "vet" && (
+      {activeTab === "vet" ? (
         <>
           <TextInput style={styles.input} placeholder="Veterinarian ID" value={id} onChangeText={handleChangeID} />
           <VetSearchForm setSelectedLocation={setSelectedCity} setSelectedSpecialization={setSelectedSpecialization} />
         </>
-      )}
+      ) : null}
 
       <TouchableOpacity style={styles.button} onPress={handleImagePick}>
         <Text style={styles.buttonText}>Choose Profile Picture</Text>

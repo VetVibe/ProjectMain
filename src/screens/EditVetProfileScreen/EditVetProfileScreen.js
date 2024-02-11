@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import { COLORS, FONTS } from "../../constants";
@@ -20,20 +21,42 @@ import { clientServer } from "../../server";
 import { encodeImageAsBase64 } from "../../../imageUtils";
 
 export default function EditVetProfileScreen({ route, navigation }) {
+  const [vetId, setVetId] = useState(null);
   const [vetDetails, setVetDetails] = useState({});
   const [selectedImage, setSelectedImage] = useState();
 
-  const vetId = route.params.vetId;
-
   useEffect(() => {
     const fetchVetDetails = async () => {
-      const data = await clientServer.getVetInfo(vetId);
-      const mapedVetDetails = mapVetDetails(data);
-      setVetDetails(mapedVetDetails);
-      setSelectedImage(mapedVetDetails.profilePicture);
+      try {
+        const id = await AsyncStorage.getItem("vetId");
+        setVetId(id);
+        const data = await clientServer.getVetInfo(id);
+        const mapedVetDetails = mapVetDetails(data);
+        setVetDetails(mapedVetDetails);
+        setSelectedImage(mapedVetDetails.profilePicture);
+      } catch (error) {
+        console.log(error);
+      }
     };
     fetchVetDetails();
   }, [vetId]);
+
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem("vetId");
+    await AsyncStorage.removeItem("userType");
+    console.log("Vet logged out: cleared storage.");
+    navigation.replace("Home");
+  };
+
+  const LogoutClick = async () => {
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      { text: "OK", onPress: () => handleLogout() },
+    ]);
+  };
 
   const handleChange = (inputIdentifier, newValue) => {
     setVetDetails((prevUserInput) => {
@@ -97,6 +120,9 @@ export default function EditVetProfileScreen({ route, navigation }) {
           <InputContainer details={vetDetails} onChangeText={(key, text) => handleChange(key, text)} />
           <TouchableOpacity style={styles.saveButton} onPress={saveChanges}>
             <Text style={styles.saveButtonText}>Save Changes</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.saveButton} onPress={LogoutClick}>
+            <Text style={styles.saveButtonText}>Log out</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

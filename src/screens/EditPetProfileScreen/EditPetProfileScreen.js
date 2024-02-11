@@ -70,7 +70,6 @@ const EditPetProfileScreen = ({ route, navigation }) => {
       imgSrc: petImage,
     };
     const petDetailsSchema = mapPetDetailsToSchema(updatedData);
-    console.log("petDetailsSchema", petDetailsSchema);
     try {
       if (petId) {
         await clientServer.updatePetInfo(petId, petDetailsSchema);
@@ -116,7 +115,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
       <TabsContainer tabs={PET_PROFILE_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
 
       <ScrollView style={{ flexGrow: 1 }}>
-        {activeTab === "petInfo" && (
+        {activeTab === "petInfo" ? (
           <View>
             <TouchableOpacity onPress={handleImagePicker}>
               <Image source={{ uri: petImage }} style={styles.petImage} />
@@ -126,9 +125,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
               onChangeText={(key, text) => handleChange(key, text, activeTab)}
             />
           </View>
-        )}
-
-        {activeTab === "medicalHistory" && (
+        ) : (
           <MedicalInfoView
             details={petMedicalInfoInput}
             onChangeText={(key, text) => handleChange(key, text, activeTab)}
