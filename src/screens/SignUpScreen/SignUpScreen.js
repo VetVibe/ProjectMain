@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, Image, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from "react-native";
 import TabsContainer from "../../components/TabsContainer/TabsContainer";
 import { ROLES_TABS } from "../../constants";
 import * as ImagePicker from "expo-image-picker";
@@ -48,7 +57,10 @@ export default function SignUpScreen({ navigation }) {
       return;
     }
     if (!name || !email || !password) {
-      Alert.alert("Incomplete Information", "Please fill in all required fields");
+      Alert.alert(
+        "Incomplete Information",
+        "Please fill in all required fields"
+      );
       return;
     }
     const newUser = {
@@ -110,15 +122,28 @@ export default function SignUpScreen({ navigation }) {
         }
       }
     } else {
-      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
+      Alert.alert(
+        "Permission denied",
+        "Permission to access the photo library was denied."
+      );
     }
   };
 
   return (
     <View style={styles.container}>
-      <TabsContainer tabs={ROLES_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
+      <TabsContainer
+        tabs={ROLES_TABS}
+        activeTab={activeTab}
+        handleTabPress={handleTabPress}
+      />
 
-      <TextInput autoCorrect={false} style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
+      <TextInput
+        autoCorrect={false}
+        style={styles.input}
+        placeholder="Name"
+        value={name}
+        onChangeText={setName}
+      />
 
       <TextInput
         autoCorrect={false}
@@ -150,15 +175,25 @@ export default function SignUpScreen({ navigation }) {
 
       {activeTab === "vet" ? (
         <>
-          <TextInput style={styles.input} placeholder="Veterinarian ID" value={id} onChangeText={handleChangeID} />
-          <VetSearchForm setSelectedLocation={setSelectedCity} setSelectedSpecialization={setSelectedSpecialization} />
+          <TextInput
+            style={styles.input}
+            placeholder="Veterinarian ID"
+            value={id}
+            onChangeText={handleChangeID}
+          />
+          <VetSearchForm
+            setSelectedLocation={setSelectedCity}
+            setSelectedSpecialization={setSelectedSpecialization}
+          />
         </>
       ) : null}
 
       <TouchableOpacity style={styles.button} onPress={handleImagePick}>
         <Text style={styles.buttonText}>Choose Profile Picture</Text>
       </TouchableOpacity>
-      {profilePicture && <Image source={{ uri: profilePicture }} style={styles.profileImage} />}
+      {profilePicture && (
+        <Image source={{ uri: profilePicture }} style={styles.profileImage} />
+      )}
 
       <Button title="Register" onPress={handleRegistration} />
     </View>
@@ -217,5 +252,11 @@ const styles = StyleSheet.create({
     height: 100,
     marginTop: 10,
     borderRadius: 5, // Adjusted border radius
+  },
+  backButton: {
+    position: "absolute",
+    top: 20,
+    left: 20,
+    zIndex: 1,
   },
 });

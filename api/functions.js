@@ -2,6 +2,7 @@ import Veterinarian from "./models/veterinarian.js";
 import PetOwner from "./models/pet_owner.js";
 import Pet from "./models/pet.js";
 import Tip from "./models/tip.js";
+import { randomBytes } from "crypto";
 
 // Pet Owner Functions
 const registerPetOwner = async (req, res) => {
@@ -17,7 +18,9 @@ const registerPetOwner = async (req, res) => {
     await newOwner.save();
 
     res.status(201).json();
-    console.log("DB | Register Pet Owner: Pet owner registration successful.");
+    console.log(
+      `DB | Register Pet Owner: Pet owner registration successful. User ID: ${newOwner._id}`
+    );
   } catch (error) {
     console.log("DB | Register Pet Owner | Error:", error);
     res.status(500).json();
@@ -38,7 +41,9 @@ const loginPetOwner = async (req, res) => {
     }
 
     res.status(200).json({ userId: owner._id });
-    console.log("DB | Login Pet Owner: Pet owner logged in successfully.");
+    console.log(
+      `DB | Login Pet Owner: Pet owner logged in successfully. User ID: ${owner._id}`
+    );
   } catch (error) {
     res.status(500).json({ message: "Login failed" });
   }
@@ -50,10 +55,14 @@ const updatePetOwnerInfo = async (req, res) => {
 
   try {
     // Find the pet owner by ID
+    console.log(`User ID: ${petOwnerId}`);
+
     const petOwner = await PetOwner.findById(petOwnerId);
 
     if (!petOwner) {
-      return res.status(404).json({ success: false, message: "Pet owner not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Pet owner not found" });
     }
 
     // Update the pet owner details
@@ -76,6 +85,7 @@ const updatePetOwnerInfo = async (req, res) => {
 const getPetOwnerPets = async (req, res) => {
   try {
     const petOwnerId = req.params.petOwnerId;
+    console.log(`User ID: ${petOwnerId}`);
     const petOwner = await PetOwner.findById(petOwnerId);
 
     if (!petOwner) {
@@ -94,6 +104,7 @@ const getPetOwnerPets = async (req, res) => {
 const getPetOwnerDetails = async (req, res) => {
   try {
     const petOwnerId = req.params.petOwnerId;
+    console.log(`User ID: ${petOwnerId}`);
     const petOwner = await PetOwner.findById(petOwnerId);
 
     if (!petOwner) {
@@ -114,7 +125,9 @@ const registerVeterinarian = async (req, res) => {
     const existingV = await Veterinarian.findOne({ vetId });
 
     if (existingV) {
-      return res.status(404).json({ message: "Veterinarian already registered" });
+      return res
+        .status(404)
+        .json({ message: "Veterinarian already registered" });
     }
 
     const newVeterinarian = new Veterinarian(req.body);
@@ -162,7 +175,9 @@ const rateVeterinarian = async (req, res) => {
     }
 
     if (veterinarian && petOwner.ratings.includes(email)) {
-      return res.status(400).json({ message: "You have already rated this vert" });
+      return res
+        .status(400)
+        .json({ message: "You have already rated this vert" });
     }
     petOwner.ratings.push(email);
     veterinarian.rate += rating;
@@ -228,7 +243,9 @@ const updateVeterinarianInfo = async (req, res) => {
     }
 
     console.log(`Vet with ID ${vetId} updated successfully.`);
-    res.status(200).json({ message: `Vet with ID ${vetId} updated successfully.` });
+    res
+      .status(200)
+      .json({ message: `Vet with ID ${vetId} updated successfully.` });
   } catch (error) {
     console.error("Error updating vet:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -251,7 +268,7 @@ const getVeterinarianTips = async (req, res) => {
 };
 
 // Tip Functions
-const getAllTips = async (req, res) => {
+const getAllTips = async (_, res) => {
   try {
     // Populate the 'vetId' field in each tip with the 'name' field from the referenced veterinarian document
     const tips = await Tip.find().populate("vetId", "name profilePicture"); // Ensure you're also populating the profilePicture
@@ -328,7 +345,9 @@ const updateTipInfo = async (req, res) => {
     }
 
     console.log(`Tip with ID ${tipId} updated successfully.`);
-    res.status(200).json({ message: `Tip with ID ${tipId} updated successfully.` });
+    res
+      .status(200)
+      .json({ message: `Tip with ID ${tipId} updated successfully.` });
   } catch (error) {
     console.error("Error updating tip:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -381,7 +400,9 @@ const addPet = async (req, res) => {
     // Save the updated PetOwner document
     await petOwner.save();
 
-    res.status(201).json({ message: "Pet added successfully", petId: newPet._id });
+    res
+      .status(201)
+      .json({ message: "Pet added successfully", petId: newPet._id });
   } catch (error) {
     console.log("Error adding a pet:", error);
     res.status(500).json({ message: "Error adding a pet" });
@@ -420,7 +441,9 @@ const updatePetInfo = async (req, res) => {
     }
 
     console.log(`Pet with ID ${petId} updated successfully.`);
-    res.status(200).json({ message: `Pet with ID ${petId} updated successfully.` });
+    res
+      .status(200)
+      .json({ message: `Pet with ID ${petId} updated successfully.` });
   } catch (error) {
     console.error("Error updating pet:", error);
     res.status(500).json({ message: "Internal server error" });

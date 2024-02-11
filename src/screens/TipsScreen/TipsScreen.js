@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { View, TouchableOpacity, Text, TextInput, Button, FlatList, StyleSheet, Image } from "react-native";
+import {
+  View,
+  TouchableOpacity,
+  Text,
+  TextInput,
+  Button,
+  FlatList,
+  StyleSheet,
+  Image,
+} from "react-native";
 import { COLORS } from "../../constants";
 import { MaterialIcons, AntDesign } from "@expo/vector-icons";
 import { clientServer } from "../../server";
@@ -37,7 +46,8 @@ export default function TipsScreen({ route }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const type = (await AsyncStorage.getItem("userType")) || route.params?.userType;
+        const type =
+          (await AsyncStorage.getItem("userType")) || route.params?.userType;
         setUserType(type);
 
         const id = (await AsyncStorage.getItem("vetId")) || route.params?.vetId;
@@ -74,8 +84,15 @@ export default function TipsScreen({ route }) {
   };
 
   const handleSavePress = async (tipId) => {
-    setVetTips((prevTips) => prevTips.map((tip) => (tip._id === tipId ? { ...tip, content: editedTipContent } : tip)));
-    await clientServer.updateTip(tipId, { vetId: vetId, content: editedTipContent });
+    setVetTips((prevTips) =>
+      prevTips.map((tip) =>
+        tip._id === tipId ? { ...tip, content: editedTipContent } : tip
+      )
+    );
+    await clientServer.updateTip(tipId, {
+      vetId: vetId,
+      content: editedTipContent,
+    });
 
     // Clear editing state
     setEditingTipId(null);
@@ -124,7 +141,10 @@ export default function TipsScreen({ route }) {
       <View style={styles.tipContainer}>
         {isEditing ? (
           <View>
-            <TextInput value={editedTipContent} onChangeText={(text) => setEditedTipContent(text)} />
+            <TextInput
+              value={editedTipContent}
+              onChangeText={(text) => setEditedTipContent(text)}
+            />
             <View style={{ flexDirection: "row", marginTop: 5 }}>
               <Button title="Save" onPress={() => handleSavePress(item._id)} />
               <Button title="Cancel" onPress={handleCancelPress} />
@@ -135,7 +155,9 @@ export default function TipsScreen({ route }) {
             <Text style={styles.tipContent}>{item.content}</Text>
             {userType == "vet" ? (
               <>
-                <TouchableOpacity onPress={() => handleEditPress(item._id, item.content)}>
+                <TouchableOpacity
+                  onPress={() => handleEditPress(item._id, item.content)}
+                >
                   <MaterialIcons name="edit" size={24} color={COLORS.black} />
                 </TouchableOpacity>
 
@@ -155,15 +177,38 @@ export default function TipsScreen({ route }) {
       if (vetId) {
         return (
           <>
-            <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}> Vet Tips:</Text>
-            <FlatList data={vetTips} renderItem={renderItem} keyExtractor={(item) => item?._id} />
+            <Text
+              style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}
+            >
+              {" "}
+              Vet Tips:
+            </Text>
+            <FlatList
+              data={allTips}
+              renderItem={renderItem}
+              keyExtractor={(item) => item?._id}
+            />
           </>
         );
       } else {
         return (
           <>
-            <Text style={{ fontSize: 20, marginTop: 10, fontWeight: "bold", marginBottom: 10 }}> Vet Tips:</Text>
-            <FlatList data={allTips} renderItem={renderItemOtherVet} keyExtractor={(item) => item?._id} />
+            <Text
+              style={{
+                fontSize: 20,
+                marginTop: 10,
+                fontWeight: "bold",
+                marginBottom: 10,
+              }}
+            >
+              {" "}
+              Vet Tips:
+            </Text>
+            <FlatList
+              data={allTips}
+              renderItem={renderItemOtherVet}
+              keyExtractor={(item) => item?._id}
+            />
           </>
         );
       }
@@ -171,7 +216,12 @@ export default function TipsScreen({ route }) {
       return (
         <View>
           <>
-            <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}> My Tips:</Text>
+            <Text
+              style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}
+            >
+              {" "}
+              My Tips:
+            </Text>
             {isAdding ? (
               <>
                 <TextInput
@@ -191,10 +241,28 @@ export default function TipsScreen({ route }) {
                 <AntDesign name="pluscircleo" size={24} color="black" />
               </TouchableOpacity>
             )}
-            <FlatList data={vetTips} renderItem={renderItem} keyExtractor={(item) => item?._id} />
+            <FlatList
+              data={vetTips}
+              renderItem={renderItem}
+              keyExtractor={(item) => item?._id}
+            />
           </>
-          <Text style={{ fontSize: 20, marginTop: 10, fontWeight: "bold", marginBottom: 10 }}> Vet Tips:</Text>
-          <FlatList data={allTips} renderItem={renderItemOtherVet} keyExtractor={(item) => item?._id} />
+          <Text
+            style={{
+              fontSize: 20,
+              marginTop: 10,
+              fontWeight: "bold",
+              marginBottom: 10,
+            }}
+          >
+            {" "}
+            Vet Tips:
+          </Text>
+          <FlatList
+            data={allTips}
+            renderItem={renderItemOtherVet}
+            keyExtractor={(item) => item?._id}
+          />
         </View>
       );
     }

@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, FlatList } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Image,
+  FlatList,
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { COLORS } from "../../constants";
@@ -62,7 +70,10 @@ export default function PetOwnerHomeScreen({ navigation }) {
             horizontal={true}
             keyExtractor={(item) => item._id}
             renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => handlePetSelect(item)} style={styles.petItem}>
+              <TouchableOpacity
+                onPress={() => handlePetSelect(item)}
+                style={styles.petItem}
+              >
                 <Image source={{ uri: item.imgSrc }} style={styles.petImage} />
                 <Text style={styles.petName}>{item.name}</Text>
               </TouchableOpacity>
@@ -77,7 +88,9 @@ export default function PetOwnerHomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  addButton: {},
+  addButton: {
+    marginTop: 20, // Add margin top to move the button down
+  },
   container: {
     flex: 1,
     padding: 20,
@@ -114,7 +127,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   searchSection: {
-    paddingTop: 90, // Added top padding to push the entire section down
+    paddingTop: 10, // Added top padding to push the entire section down
   },
   vetItem: {
     flexDirection: "row",
