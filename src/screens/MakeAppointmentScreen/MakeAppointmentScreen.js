@@ -20,7 +20,8 @@ export default function MakeAppointmentScreen({ route, navigation }) {
   const [selectedTime, setSelectedTime] = useState(null);
   const [vetAppointments, setVetAppointments] = useState({});
   const [availableTimes, setAvailableTimes] = useState([]);
-  const petOwnerId = route.params.petOwnerId || null;
+  const [userType, setUserType] = useState(null);
+  const petOwnerId = route.params?.petOwnerId || null;
 
   const today = moment().format("YYYY-MM-DD");
   const oneMonthsLater = moment().add(1, "months").format("YYYY-MM-DD");
@@ -50,6 +51,8 @@ export default function MakeAppointmentScreen({ route, navigation }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const type = (await AsyncStorage.getItem("userType")) || route.params.userType;
+        setUserType(type);
         const id = (await AsyncStorage.getItem("vetId")) || route.params.vetId;
         setVetId(id);
 
@@ -67,17 +70,13 @@ export default function MakeAppointmentScreen({ route, navigation }) {
       if (petOwnerId) {
         setSelectedDate(day.dateString);
         const allTimes = getTimesNum(vetTimes.start, vetTimes.end);
-        const bookedTimes = vetAppointments
-          ? appointmentsTime(vetAppointments, new Date(day))
-          : null;
-        const availableTimes = bookedTimes
-          ? allTimes.filter((time) => !bookedTimes.includes(time))
-          : allTimes;
+        const bookedTimes = vetAppointments ? appointmentsTime(vetAppointments, new Date(day)) : null;
+        const availableTimes = bookedTimes ? allTimes.filter((time) => !bookedTimes.includes(time)) : allTimes;
         setAvailableTimes(availableTimes);
       } else {
-        navigation.navigation("Appointments", {
+        navigation.navigate("Appointments", {
           userId: vetId,
-          date: selectedDate,
+          day: selectedDate,
         });
       }
     } catch (error) {

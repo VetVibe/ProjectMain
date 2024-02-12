@@ -54,7 +54,9 @@ export default function VetHomeScreen({ route, navigation }) {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.makeAppointmentButton}
-                onPress={() => navigation.navigate("Make Appointment", { petOwnerId: petOwnerId, vetId: vetId })}
+                onPress={() =>
+                  navigation.navigate("Make Appointment", { petOwnerId: petOwnerId, vetId: vetId, userType: userType })
+                }
               ></TouchableOpacity>
             </>
           ) : null}

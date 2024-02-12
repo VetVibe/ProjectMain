@@ -515,7 +515,7 @@ const getAppointmentsByVet = async (req, res) => {
   try {
     const userId = req.params.vetId;
     const appointments = await Appointment.find({ vetId: userId });
-    res.status(200).json(appointments);
+    res.status(200).json({ appointments });
     console.log(`DB | Get appointments by vet id | Appointments for vet ${userId} fetched successfully`);
   } catch (e) {
     console.error("DB | Get appointments by vet id | Error:", e);

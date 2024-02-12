@@ -16,7 +16,7 @@ export default function CustomTabBar() {
         <TouchableOpacity onPress={() => navigation.navigate("Tips Screen") & setFocused(2)}>
           <FontAwesome name="search" size={24} color="black" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate("Appointments") & setFocused(3)}>
+        <TouchableOpacity onPress={() => navigation.navigate("Make Appointment") & setFocused(3)}>
           <AntDesign name="calendar" size={24} color="black" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Edit Vet Profile Screen") & setFocused(3)}>

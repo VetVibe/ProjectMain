@@ -16,7 +16,6 @@ export default function AppointmentsScreen({ navigation, route }) {
     try {
       const response = await clientServer.getAppointmentsByOwner(petOwnerId);
       const { appointments } = response;
-      // console.log("Appointments by owner:", appointments);
       const updatedAppointments = await Promise.all(
         appointments.map(async (appointment) => {
           let { name, phoneNumber } = await clientServer.getVetInfo(appointment.vetId);
@@ -36,7 +35,8 @@ export default function AppointmentsScreen({ navigation, route }) {
   const fetchAllVetAppointments = async (vetId) => {
     try {
       const response = await clientServer.getAppointmentsByVet(vetId);
-      const { appointments } = response; // Extracting the appointments array from the response
+      const { appointments } = response;
+      console.log(day);
       const appointmentsByDay = appointments.filter((appointment) => appointment.date === day);
       console.log("Appointments by vet and day:", appointmentsByDay);
 
@@ -48,15 +48,15 @@ export default function AppointmentsScreen({ navigation, route }) {
 
   const fetchData = async () => {
     try {
-      if (vetId) {
+      const type = await AsyncStorage.getItem("userType");
+      if (type == "vet") {
+        const id = vetId || (await AsyncStorage.getItem("vetId"));
         setUserType("vet");
-        fetchAllVetAppointments(vetId);
-      } else if (petOwnerId) {
-        setUserType("petOwner");
-        fetchAllPetOwnerAppointments(petOwnerId);
-      } else {
-        const id = await AsyncStorage.getItem("userId");
+        fetchAllVetAppointments(id);
+      } else if (type == "petOwner") {
+        const id = petOwnerId || (await AsyncStorage.getItem("userId"));
         setPetOwnerId(id);
+        setUserType("petOwner");
         fetchAllPetOwnerAppointments(id);
       }
     } catch (error) {
