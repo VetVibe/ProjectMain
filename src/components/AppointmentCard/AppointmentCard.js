@@ -1,41 +1,50 @@
 import React, { useState, useEffect } from "react";
-import { TouchableOpacity, Text, View, StyleSheet } from "react-native";
+import { TouchableOpacity, Text, View, StyleSheet, Image } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { clientServer } from "../../server";
 
 export default function AppointmentCard({
   appointment,
   onPressCancel,
   userType,
+  userDetails,
 }) {
-  const [userDetails, setUserDetails] = useState(null);
-  const { vetId, petOwnerId, date, time } = appointment;
+  const { _id, vetId, petOwnerId, date, time } = appointment;
+  const { name, phoneNumber, imageUrl } = userDetails;
+  console.log("vetId:", vetId);
+  console.log("_id:", _id);
+  console.log("petOwnerId:", petOwnerId);
+  console.log("date:", date);
+  console.log("time:", time);
 
   const formattedDate = new Date(date);
   const day = formattedDate.getDate();
   const month = formattedDate.toLocaleString("default", { month: "short" });
+
+  const [profilePicture, setProfilePicture] = useState(null);
 
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
         let userDetailsResponse;
         if (userType === "vet") {
-          userDetailsResponse = await clientServer.getPetOwnerInfo(petOwnerId);
+          // For vets, extract profile picture from vetId directly
+          setProfilePicture(userDetailsResponse.profilePicture);
         } else if (userType === "petOwner") {
-          userDetailsResponse = await clientServer.getVetInfo(vetId);
+          userDetailsResponse = await clientServer.getVetInfo(vetId._id);
+          console.log("User details response:", userDetailsResponse);
+          // Decode Base64-encoded profile picture
+          setProfilePicture(atob(userDetailsResponse.profilePicture));
         }
-        console.log("User details:", userDetailsResponse); // Add this line to check user details
-        setUserDetails(userDetailsResponse);
       } catch (error) {
         console.error("Error fetching user details:", error);
       }
     };
 
     // Call fetchUserDetails only when userType, vetId, or petOwnerId change
-    if (userType && vetId && petOwnerId) {
+    if (userType && vetId._id && petOwnerId) {
       fetchUserDetails();
     }
-  }, [userType, vetId, petOwnerId]);
+  }, [userType, vetId._id, petOwnerId]);
 
   return (
     <View>
@@ -49,16 +58,29 @@ export default function AppointmentCard({
           </View>
         </View>
         <View style={styles.info_container}>
-          <Text style={styles.appType}>{userDetails?.name}</Text>
-          <Text style={styles.appType}>{userDetails?.phoneNumber}</Text>
-          <Text style={styles.time}>
-            {`${String(time).padStart(2, "0")}:00 - ${String(time + 1).padStart(
-              2,
-              "0"
-            )}:00`}
-          </Text>
+          <View style={styles.info}>
+            <View style={styles.textContainer}>
+              {name && (
+                <>
+                  <Text style={styles.appType}>{name}</Text>
+                  <Text style={styles.appType}>{phoneNumber}</Text>
+                </>
+              )}
+              <Text style={styles.time}>
+                {`${String(time).padStart(2, "0")}:00 - ${String(
+                  time + 1
+                ).padStart(2, "0")}:00`}
+              </Text>
+            </View>
+            {profilePicture && (
+              <Image
+                source={{ uri: `data:image/jpeg;base64,${profilePicture}` }}
+                style={styles.image}
+              />
+            )}
+          </View>
         </View>
-        <TouchableOpacity onPress={() => onPressCancel(appointment._id)}>
+        <TouchableOpacity onPress={() => onPressCancel(_id)}>
           <MaterialIcons name="delete" size={24} color="black" />
         </TouchableOpacity>
       </View>
@@ -74,7 +96,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 24,
     marginBottom: 16,
     paddingVertical: 8,
-    backgroundColor: "#fff", // Add a background color
+    backgroundColor: "#fff",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -87,7 +109,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#fff", // Add a background color
+    backgroundColor: "#fff",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -111,5 +133,10 @@ const styles = StyleSheet.create({
   time: {
     fontSize: 14,
     padding: 8,
+  },
+  image: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
   },
 });

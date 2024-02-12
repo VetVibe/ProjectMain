@@ -25,13 +25,22 @@ export default function AppointmentsScreen({ navigation, route }) {
     try {
       const response = await clientServer.getAppointmentsByOwner(petOwnerId);
       const { appointments } = response;
-      console.log("Appointments by owner:", appointments);
-      setAppointmentList(
-        appointments.map((appointment) => ({
-          ...appointment,
-          userDetails: appointment.vetDetails, // Assuming vetDetails contain the vet's name and image
-        }))
+      // console.log("Appointments by owner:", appointments);
+      const updatedAppointments = await Promise.all(
+        appointments.map(async (appointment) => {
+          let userDetailsResponse;
+          if (userType === "petOwner") {
+            userDetailsResponse = await clientServer.getVetInfo(
+              appointment.vetId._id
+            );
+          }
+          return {
+            ...appointment,
+            userDetails: userDetailsResponse || appointment.vetId,
+          };
+        })
       );
+      setAppointmentList(updatedAppointments);
     } catch (error) {
       console.log("Error fetching appointments by owner:", error);
     }
@@ -45,6 +54,7 @@ export default function AppointmentsScreen({ navigation, route }) {
         (appointment) => appointment.date === day
       );
       console.log("Appointments by vet and day:", appointmentsByDay);
+
       setAppointmentList(appointmentsByDay);
     } catch (error) {
       console.log("Error fetching appointments by vet:", error);
@@ -71,7 +81,7 @@ export default function AppointmentsScreen({ navigation, route }) {
 
   useEffect(() => {
     fetchData();
-  }, [petOwnerId]);
+  }, []);
 
   async function removeAppointment(appointmentId) {
     try {
@@ -125,8 +135,8 @@ export default function AppointmentsScreen({ navigation, route }) {
               <AppointmentCard
                 appointment={appointment}
                 serviceInfo={appointment.serviceInfo}
-                key={appointment.id}
-                userDetails={appointment.userDetails} // Pass userDetails prop
+                key={appointment._id} // Adjusted line
+                userDetails={appointment.vetId} // Pass userDetails prop
                 onPressCancel={() => handleCancel(appointment)}
               />
             ))}
