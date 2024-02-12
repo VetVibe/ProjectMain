@@ -12,11 +12,12 @@ export default function PetOwnerHomeScreen({ navigation }) {
   useEffect(() => {
     const updateUserPetDetails = async () => {
       try {
-        const id = await AsyncStorage.getItem("userId");
+        const id = petOwnerId || (await AsyncStorage.getItem("userId"));
         setPetOwnerId(id);
+
         if (id) {
           const petsInfo = await clientServer.getPetsByOwnerId(id);
-          setUserPets(petsInfo);
+          setUserPets(petsInfo?.pets || []);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -33,7 +34,7 @@ export default function PetOwnerHomeScreen({ navigation }) {
         focusListener();
       }
     };
-  }, [petOwnerId, navigation]);
+  }, [userPets, navigation]);
 
   const handleNavigateToEditProfile = () => {
     navigation.navigate("Edit Pet Profile", { petOwnerId: petOwnerId });

@@ -2,49 +2,11 @@ import React, { useState, useEffect } from "react";
 import { TouchableOpacity, Text, View, StyleSheet, Image } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
-export default function AppointmentCard({
-  appointment,
-  onPressCancel,
-  userType,
-  userDetails,
-}) {
-  const { _id, vetId, petOwnerId, date, time } = appointment;
-  const { name, phoneNumber, imageUrl } = userDetails;
-  console.log("vetId:", vetId);
-  console.log("_id:", _id);
-  console.log("petOwnerId:", petOwnerId);
-  console.log("date:", date);
-  console.log("time:", time);
-
+export default function AppointmentCard({ appointment, onPressCancel }) {
+  const { _id, vetId, petOwnerId, date, time, name, phoneNumber } = appointment;
   const formattedDate = new Date(date);
   const day = formattedDate.getDate();
   const month = formattedDate.toLocaleString("default", { month: "short" });
-
-  const [profilePicture, setProfilePicture] = useState(null);
-
-  useEffect(() => {
-    const fetchUserDetails = async () => {
-      try {
-        let userDetailsResponse;
-        if (userType === "vet") {
-          // For vets, extract profile picture from vetId directly
-          setProfilePicture(userDetailsResponse.profilePicture);
-        } else if (userType === "petOwner") {
-          userDetailsResponse = await clientServer.getVetInfo(vetId._id);
-          console.log("User details response:", userDetailsResponse);
-          // Decode Base64-encoded profile picture
-          setProfilePicture(atob(userDetailsResponse.profilePicture));
-        }
-      } catch (error) {
-        console.error("Error fetching user details:", error);
-      }
-    };
-
-    // Call fetchUserDetails only when userType, vetId, or petOwnerId change
-    if (userType && vetId._id && petOwnerId) {
-      fetchUserDetails();
-    }
-  }, [userType, vetId._id, petOwnerId]);
 
   return (
     <View>
@@ -67,20 +29,12 @@ export default function AppointmentCard({
                 </>
               )}
               <Text style={styles.time}>
-                {`${String(time).padStart(2, "0")}:00 - ${String(
-                  time + 1
-                ).padStart(2, "0")}:00`}
+                {`${String(time).padStart(2, "0")}:00 - ${String(time + 1).padStart(2, "0")}:00`}
               </Text>
             </View>
-            {profilePicture && (
-              <Image
-                source={{ uri: `data:image/jpeg;base64,${profilePicture}` }}
-                style={styles.image}
-              />
-            )}
           </View>
         </View>
-        <TouchableOpacity onPress={() => onPressCancel(_id)}>
+        <TouchableOpacity onPress={onPressCancel}>
           <MaterialIcons name="delete" size={24} color="black" />
         </TouchableOpacity>
       </View>

@@ -1,21 +1,12 @@
 import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Alert,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from "react-native";
 import { clientServer } from "../../server";
 import AppointmentCard from "../../components/AppointmentCard/AppointmentCard";
 
 export default function AppointmentsScreen({ navigation, route }) {
   const [appointmentList, setAppointmentList] = useState([]);
-  const [petOwnerId, setPetOwnerId] = useState(
-    route.params?.petOwnerId || null
-  );
+  const [petOwnerId, setPetOwnerId] = useState(route.params?.petOwnerId || null);
   const [userType, setUserType] = useState(null);
 
   const vetId = route.params?.vetId || null;
@@ -28,15 +19,11 @@ export default function AppointmentsScreen({ navigation, route }) {
       // console.log("Appointments by owner:", appointments);
       const updatedAppointments = await Promise.all(
         appointments.map(async (appointment) => {
-          let userDetailsResponse;
-          if (userType === "petOwner") {
-            userDetailsResponse = await clientServer.getVetInfo(
-              appointment.vetId._id
-            );
-          }
+          let { name, phoneNumber } = await clientServer.getVetInfo(appointment.vetId);
           return {
             ...appointment,
-            userDetails: userDetailsResponse || appointment.vetId,
+            name: name,
+            phoneNumber: phoneNumber,
           };
         })
       );
@@ -50,9 +37,7 @@ export default function AppointmentsScreen({ navigation, route }) {
     try {
       const response = await clientServer.getAppointmentsByVet(vetId);
       const { appointments } = response; // Extracting the appointments array from the response
-      const appointmentsByDay = appointments.filter(
-        (appointment) => appointment.date === day
-      );
+      const appointmentsByDay = appointments.filter((appointment) => appointment.date === day);
       console.log("Appointments by vet and day:", appointmentsByDay);
 
       setAppointmentList(appointmentsByDay);
@@ -100,9 +85,7 @@ export default function AppointmentsScreen({ navigation, route }) {
       },
       {
         text: "Yes",
-        onPress: () => {
-          removeAppointment(appointmentId);
-        },
+        onPress: () => removeAppointment(appointmentId),
       },
     ]);
   };
@@ -113,9 +96,7 @@ export default function AppointmentsScreen({ navigation, route }) {
       <View style={styles.list_container}>
         {!appointmentList || appointmentList?.length === 0 ? (
           <>
-            <Text style={styles.emptyViewText}>
-              You dont have appointments!
-            </Text>
+            <Text style={styles.emptyViewText}>You dont have appointments!</Text>
             {userType === "petOwner" ? (
               <TouchableOpacity
                 onPress={() =>
@@ -134,10 +115,8 @@ export default function AppointmentsScreen({ navigation, route }) {
             {appointmentList.map((appointment) => (
               <AppointmentCard
                 appointment={appointment}
-                serviceInfo={appointment.serviceInfo}
-                key={appointment._id} // Adjusted line
-                userDetails={appointment.vetId} // Pass userDetails prop
-                onPressCancel={() => handleCancel(appointment)}
+                key={appointment._id}
+                onPressCancel={() => handleCancel(appointment._id)}
               />
             ))}
           </View>

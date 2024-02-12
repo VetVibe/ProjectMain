@@ -245,8 +245,7 @@ export const clientServer = {
 
   deleteAppointment: async (appointmentId) => {
     try {
-      const response = await clientServer.server.delete(APPOINTMENT_ENDPOINTS.DELETE(appointmentId));
-      return response.data;
+      await clientServer.server.delete(APPOINTMENT_ENDPOINTS.DELETE(appointmentId));
     } catch (error) {
       console.error(`Error during deleting appointment ${appointmentId} details:`, error.response);
     }

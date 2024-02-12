@@ -1,15 +1,7 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Button,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-} from "react-native";
+import { View, Button, Image, StyleSheet, TouchableOpacity, ScrollView, Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { StackActions } from "@react-navigation/native";
+import { TabActions } from "@react-navigation/native";
 import TabsContainer from "../../components/TabsContainer/TabsContainer";
 import { mapPetDetails, mapPetDetailsToSchema } from "../../utils";
 import { PET_PROFILE_TABS } from "../../constants";
@@ -33,9 +25,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
     try {
       (async () => {
         if (petId) {
-          const mapedPetDetails = mapPetDetails(
-            await clientServer.getPetDetails(petId)
-          );
+          const mapedPetDetails = mapPetDetails(await clientServer.getPetDetails(petId));
           setPetBasicInfoInput(mapedPetDetails.basicInfo);
           setMedicalInfoInput(mapedPetDetails.medicalInfo);
           setPetImage(mapedPetDetails.imgSrc);
@@ -85,13 +75,12 @@ const EditPetProfileScreen = ({ route, navigation }) => {
         await clientServer.updatePetInfo(petId, petDetailsSchema);
         navigation.goBack();
       } else if (petOwnerId) {
-        const petId = await clientServer.registerPet(
-          petOwnerId,
-          petDetailsSchema
-        );
-        navigation.dispatch(
-          StackActions.replace("Pet Profile", { petId: petId })
-        );
+        const petId = await clientServer.registerPet(petOwnerId, petDetailsSchema);
+        setPetBasicInfoInput({});
+        setMedicalInfoInput({});
+        setPetImage("https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/65761296352685.5eac4787a4720.jpg");
+        const jumpToAction = TabActions.jumpTo("Pet Owner Home", { petId: petId });
+        navigation.dispatch(jumpToAction);
       }
     } catch (error) {
       console.error("Error updating pet info:", error);
@@ -121,20 +110,13 @@ const EditPetProfileScreen = ({ route, navigation }) => {
         }
       }
     } else {
-      Alert.alert(
-        "Permission denied",
-        "Permission to access the photo library was denied."
-      );
+      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
     }
   };
 
   return (
     <View style={styles.container}>
-      <TabsContainer
-        tabs={PET_PROFILE_TABS}
-        activeTab={activeTab}
-        handleTabPress={handleTabPress}
-      />
+      <TabsContainer tabs={PET_PROFILE_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
 
       <ScrollView style={{ flexGrow: 1 }}>
         {activeTab === "petInfo" ? (
