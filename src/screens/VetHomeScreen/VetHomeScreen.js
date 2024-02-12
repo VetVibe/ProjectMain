@@ -15,6 +15,7 @@ export default function VetHomeScreen({ route, navigation }) {
   const [vetDetails, setVetDetails] = useState({});
 
   const userType = route.params?.userType || "vet";
+  const petOwnerId = route.params?.petOwnerId || null;
 
   const fetchVetDetails = async () => {
     const id = (await AsyncStorage.getItem("vetId")) || route.params?.userId;
@@ -48,10 +49,13 @@ export default function VetHomeScreen({ route, navigation }) {
         <View style={{ alignItems: "center" }}>
           {userType === "petOwner" ? (
             <>
-            <TouchableOpacity style={styles.tipsButton} onPress={ShowTips}>
-              <MaterialIcons name="my-library-books" size={24} color={COLORS.white} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.makeAppointmentButton}  onPress={() => navigation.navigate("Make An Appointment", vetDetails)}></TouchableOpacity>
+              <TouchableOpacity style={styles.tipsButton} onPress={ShowTips}>
+                <MaterialIcons name="my-library-books" size={24} color={COLORS.white} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.makeAppointmentButton}
+                onPress={() => navigation.navigate("Make Appointment", { petOwnerId: petOwnerId, vetId: vetId })}
+              ></TouchableOpacity>
             </>
           ) : null}
           <Image source={{ uri: vetDetails.profilePicture }} style={styles.vetProfileImage} />

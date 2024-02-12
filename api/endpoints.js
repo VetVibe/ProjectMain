@@ -2,11 +2,7 @@ export const PET_OWNER_ENDPOINTS = {
   REGISTER: "/pet-owner/register",
   LOGIN: "/pet-owner/login",
   UPDATE_INFO: `/pet-owner/update-info/:petOwnerId`,
-  PETS: `/pet-owner/:petOwnerId/pets`,
   DETAILS: `/pet-owner/:petOwnerId`,
-  
-  MAKE_APPOINTMENT: "/pet-owner/make-appointment",
-  CANCEL_APPOINTMENT: "/pet-owner/make-appointment",
 };
 
 export const VETERINARIAN_ENDPOINTS = {
@@ -17,19 +13,25 @@ export const VETERINARIAN_ENDPOINTS = {
   DETAILS: `/veterinarian/:vetId`,
   UPDATE_INFO: `/veterinarian/update-info/:vetId`,
   TIPS: `/veterinarian/:vetId/tips`,
-  
-  CANCEL_APPOINTMENT: "/pet-owner/make-appointment",
 };
 
 export const TIP_ENDPOINTS = {
   ALL: "/tip",
-  ADD: `/tip/addTip/:vetId`,
-  DETAILS: `/tip/:tipId`,
+  BY_VET_ID: `/tip/:vetId`,
+  DETAILS: `/tip/tip-details/:tipId`,
   UPDATE_INFO: `/tip/update-info/:tipId`,
 };
 
 export const PET_ENDPOINTS = {
   REGISTER: `/pet/register/:petOwnerId`,
-  DETAILS: `/pet/:petId`,
+  BY_OWNER_ID: `/pet/:petOwnerId`,
+  DETAILS: `/pet/pet-details/:petId`,
   UPDATE_INFO: `/pet/update-info/:petId`,
+};
+
+export const APPOINTMENT_ENDPOINTS = {
+  ALL: "/appointment", //GET
+  DELETE: `/appointment/delete/:appointmentId`,
+  BY_OWNER: `/appointment/owner/:petOwnerId`,
+  BY_VET: `/appointment/vet/:vetId`,
 };

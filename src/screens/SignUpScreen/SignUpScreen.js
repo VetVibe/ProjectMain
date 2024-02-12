@@ -1,15 +1,7 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from "react-native";
+import { View, Text, TextInput, Button, Image, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import TabsContainer from "../../components/TabsContainer/TabsContainer";
+import WorkingTimePicker from "../../components/WorkingTimePicker/WorkingTimePicker";
 import { ROLES_TABS } from "../../constants";
 import * as ImagePicker from "expo-image-picker";
 import { encodeImageAsBase64 } from "../../../imageUtils";
@@ -27,6 +19,8 @@ export default function SignUpScreen({ navigation }) {
   const [profilePicture, setProfilePicture] = useState(null);
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedSpecialization, setSelectedSpecialization] = useState("");
+  const [start, setStart] = useState();
+  const [end, setEnd] = useState();
 
   const handleTabPress = (tab) => {
     setActiveTab(tab);
@@ -57,12 +51,10 @@ export default function SignUpScreen({ navigation }) {
       return;
     }
     if (!name || !email || !password) {
-      Alert.alert(
-        "Incomplete Information",
-        "Please fill in all required fields"
-      );
+      Alert.alert("Incomplete Information", "Please fill in all required fields");
       return;
     }
+    // TODO: handle end time < start time for vet
     const newUser = {
       name,
       email,
@@ -122,28 +114,15 @@ export default function SignUpScreen({ navigation }) {
         }
       }
     } else {
-      Alert.alert(
-        "Permission denied",
-        "Permission to access the photo library was denied."
-      );
+      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
     }
   };
 
   return (
     <View style={styles.container}>
-      <TabsContainer
-        tabs={ROLES_TABS}
-        activeTab={activeTab}
-        handleTabPress={handleTabPress}
-      />
+      <TabsContainer tabs={ROLES_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
 
-      <TextInput
-        autoCorrect={false}
-        style={styles.input}
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
-      />
+      <TextInput autoCorrect={false} style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
 
       <TextInput
         autoCorrect={false}
@@ -175,25 +154,16 @@ export default function SignUpScreen({ navigation }) {
 
       {activeTab === "vet" ? (
         <>
-          <TextInput
-            style={styles.input}
-            placeholder="Veterinarian ID"
-            value={id}
-            onChangeText={handleChangeID}
-          />
-          <VetSearchForm
-            setSelectedLocation={setSelectedCity}
-            setSelectedSpecialization={setSelectedSpecialization}
-          />
+          <TextInput style={styles.input} placeholder="Veterinarian ID" value={id} onChangeText={handleChangeID} />
+          <VetSearchForm setSelectedLocation={setSelectedCity} setSelectedSpecialization={setSelectedSpecialization} />
+          <WorkingTimePicker start={start} end={end} setStart={setStart} setEnd={setEnd} />
         </>
       ) : null}
 
       <TouchableOpacity style={styles.button} onPress={handleImagePick}>
         <Text style={styles.buttonText}>Choose Profile Picture</Text>
       </TouchableOpacity>
-      {profilePicture && (
-        <Image source={{ uri: profilePicture }} style={styles.profileImage} />
-      )}
+      {profilePicture && <Image source={{ uri: profilePicture }} style={styles.profileImage} />}
 
       <Button title="Register" onPress={handleRegistration} />
     </View>

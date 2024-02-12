@@ -1,24 +1,24 @@
 import { Schema, Types, model } from "mongoose";
 
 const AppointmentSchema = new Schema({
-    vet: {
-      type: Types.ObjectId,
-      ref: "Veterinarian", // Reference to the Veterinarian model
-      required: true,
-    },
-    petOwner: {
-      type: Types.ObjectId,
-      ref: "Pet Owner",
-      required: true,
-    },
-    hour: {
-      type: Number,
-      required:true
-    },
-    date: {
-      type: Date,
-      required: true,
-    },
+  vetId: {
+    type: Types.ObjectId,
+    ref: "Veterinarian",
+    required: true,
+  },
+  petOwnerId: {
+    type: Types.ObjectId,
+    ref: "Pet Owner",
+    required: true,
+  },
+  date: {
+    type: Date,
+    required: true,
+  },
+  time: {
+    type: Number,
+    required: true,
+  },
 });
 
 const Appointment = model("Appointment", AppointmentSchema);

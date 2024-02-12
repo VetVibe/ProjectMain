@@ -4,7 +4,6 @@ import {
   registerPetOwner,
   loginPetOwner,
   updatePetOwnerInfo,
-  getPetOwnerPets,
   getPetOwnerDetails,
   registerVeterinarian,
   loginVeterinarian,
@@ -12,7 +11,7 @@ import {
   getVeterinarians,
   getVeterinarianInfo,
   updateVeterinarianInfo,
-  getVeterinarianTips,
+  getTipsByVetId,
   getAllTips,
   addTip,
   getTip,
@@ -20,22 +19,28 @@ import {
   deleteTip,
   addPet,
   getPetInfo,
+  getPetsByOwnerId,
   updatePetInfo,
   deletePet,
-  makeAppointment,
-  cancelAppointment,
+  getAllAppointments,
+  deleteAppointment,
+  getAppointmentsByOwner,
+  addAppointmentsByOwner,
+  getAppointmentsByVet,
 } from "./functions.js";
-import { PET_OWNER_ENDPOINTS, VETERINARIAN_ENDPOINTS, TIP_ENDPOINTS, PET_ENDPOINTS } from "./endpoints.js";
+import {
+  PET_OWNER_ENDPOINTS,
+  VETERINARIAN_ENDPOINTS,
+  TIP_ENDPOINTS,
+  PET_ENDPOINTS,
+  APPOINTMENT_ENDPOINTS,
+} from "./endpoints.js";
 
 // Pet Owner routes
 router.post(PET_OWNER_ENDPOINTS.REGISTER, registerPetOwner);
 router.post(PET_OWNER_ENDPOINTS.LOGIN, loginPetOwner);
 router.put(PET_OWNER_ENDPOINTS.UPDATE_INFO, updatePetOwnerInfo);
-router.get(PET_OWNER_ENDPOINTS.PETS, getPetOwnerPets);
 router.get(PET_OWNER_ENDPOINTS.DETAILS, getPetOwnerDetails);
-router.get(PET_OWNER_ENDPOINTS.MAKE_APPOINTMENT, makeAppointment);
-router.get(PET_OWNER_ENDPOINTS.CANCEL_APPOINTMENT, cancelAppointment);
-
 
 // Veterinarian routes
 router.post(VETERINARIAN_ENDPOINTS.REGISTER, registerVeterinarian);
@@ -44,12 +49,11 @@ router.post(VETERINARIAN_ENDPOINTS.RATE, rateVeterinarian);
 router.get(VETERINARIAN_ENDPOINTS.ALL, getVeterinarians);
 router.get(VETERINARIAN_ENDPOINTS.DETAILS, getVeterinarianInfo);
 router.put(VETERINARIAN_ENDPOINTS.UPDATE_INFO, updateVeterinarianInfo);
-router.get(VETERINARIAN_ENDPOINTS.TIPS, getVeterinarianTips);
-router.get(VETERINARIAN_ENDPOINTS.CANCEL_APPOINTMENT, cancelAppointment);
 
 // Tip routes
 router.get(TIP_ENDPOINTS.ALL, getAllTips);
-router.post(TIP_ENDPOINTS.ADD, addTip);
+router.get(TIP_ENDPOINTS.BY_VET_ID, getTipsByVetId);
+router.post(TIP_ENDPOINTS.BY_VET_ID, addTip);
 router.get(TIP_ENDPOINTS.DETAILS, getTip);
 router.put(TIP_ENDPOINTS.UPDATE_INFO, updateTipInfo);
 router.delete(TIP_ENDPOINTS.DETAILS, deleteTip);
@@ -57,7 +61,15 @@ router.delete(TIP_ENDPOINTS.DETAILS, deleteTip);
 // Pet routes
 router.post(PET_ENDPOINTS.REGISTER, addPet);
 router.get(PET_ENDPOINTS.DETAILS, getPetInfo);
+router.get(PET_ENDPOINTS.BY_OWNER_ID, getPetsByOwnerId);
 router.put(PET_ENDPOINTS.UPDATE_INFO, updatePetInfo);
 router.delete(PET_ENDPOINTS.DETAILS, deletePet);
+
+// Appointment routes
+router.get(APPOINTMENT_ENDPOINTS.ALL, getAllAppointments);
+router.delete(APPOINTMENT_ENDPOINTS.DELETE, deleteAppointment);
+router.get(APPOINTMENT_ENDPOINTS.BY_OWNER, getAppointmentsByOwner);
+router.post(APPOINTMENT_ENDPOINTS.BY_OWNER, addAppointmentsByOwner);
+router.get(APPOINTMENT_ENDPOINTS.BY_VET, getAppointmentsByVet);
 
 export default router;

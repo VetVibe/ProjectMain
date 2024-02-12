@@ -14,8 +14,8 @@ import {
   PetOwnerProfileScreen,
   TipsScreen,
   VetSearchScreen,
-  VetAppointmentsScreen,
-  MakeAnAppointmentScreen,
+  AppointmentsScreen,
+  MakeAppointmentScreen,
 } from "./src/screens";
 import CustomPetOwnerTabBar from "./src/components/CustomTabBar/CustomPetOwnerTabBar";
 import CustomVetTabBar from "./src/components/CustomTabBar/CustomVetTabBar";
@@ -33,7 +33,8 @@ function PetOwnerTabs() {
       <Tab.Screen name="Pet Profile" component={PetProfileScreen} />
       <Tab.Screen name="Edit Pet Profile" component={EditPetProfileScreen} />
       <Tab.Screen name="Vet Home Screen" component={VetHomeScreen} />
-      <Tab.Screen name="Appointments" component={VetAppointmentsScreen} />
+      <Tab.Screen name="Make Appointment" component={MakeAppointmentScreen} />
+      <Tab.Screen name="Appointments" component={AppointmentsScreen} />
     </Tab.Navigator>
   );
 }
@@ -43,7 +44,8 @@ function VetTabs() {
     <Tab.Navigator tabBar={(props) => <CustomVetTabBar {...props} />} screenOptions={{ headerShown: false }}>
       <Tab.Screen name="Vet Home Screen" component={VetHomeScreen} />
       <Tab.Screen name="Tips Screen" component={TipsScreen} />
-      <Tab.Screen name="Appointments" component={VetAppointmentsScreen} />
+      <Tab.Screen name="Make Appointment" component={MakeAppointmentScreen} />
+      <Tab.Screen name="Appointments" component={AppointmentsScreen} />
       <Tab.Screen name="Edit Vet Profile Screen" component={EditVetProfileScreen} />
     </Tab.Navigator>
   );
@@ -57,7 +59,6 @@ export default function App() {
         <Stack.Screen name="Sign up" component={SignUpScreen} />
         <Stack.Screen name="Pet Owner Tabs" component={PetOwnerTabs} />
         <Stack.Screen name="Vet Tabs" component={VetTabs} />
-        <Stack.Screen name="Make An Appointment" component={MakeAnAppointmentScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

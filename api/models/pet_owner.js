@@ -1,4 +1,4 @@
-import { Schema, Types, model } from "mongoose";
+import { Schema, model } from "mongoose";
 
 const PetOwnerSchema = new Schema({
   name: {
@@ -20,14 +20,7 @@ const PetOwnerSchema = new Schema({
   profilePicture: {
     type: String,
   },
-  pets: {
-    type: [Types.ObjectId],
-  },
   ratings: { type: [String], default: [] },
-  appointments: [{
-    type:Schema.Types.ObjectId,
-    ref: "Appointment"
-  }],
 });
 
 const PetOwner = model("Pet Owner", PetOwnerSchema);

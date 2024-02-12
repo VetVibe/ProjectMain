@@ -1,6 +1,6 @@
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import React, { useState } from "react";
-import { Entypo, FontAwesome, MaterialIcons, Ionicons } from "@expo/vector-icons";
+import { Entypo, FontAwesome, MaterialIcons, Ionicons, AntDesign } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 
 export default function CustomPetOwnerTabBar() {
@@ -18,6 +18,9 @@ export default function CustomPetOwnerTabBar() {
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Tips") & setFocused(3)}>
           <MaterialIcons name="my-library-books" size={24} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("Appointments") & setFocused(3)}>
+          <AntDesign name="calendar" size={24} color="black" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Pet Owner Profile") & setFocused(3)}>
           <Ionicons name="person" size={24} color="black" />

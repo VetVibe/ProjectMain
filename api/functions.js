@@ -3,10 +3,9 @@ import PetOwner from "./models/pet_owner.js";
 import Pet from "./models/pet.js";
 import Tip from "./models/tip.js";
 import { randomBytes } from "crypto";
-import { isSameDayDates, toDateString } from "./utils.js";
 import Appointment from "./models/appointment.js";
 
-// Pet Owner Functions
+// ----------- Pet Owner -----------
 const registerPetOwner = async (req, res) => {
   try {
     const { email } = req.body;
@@ -20,11 +19,9 @@ const registerPetOwner = async (req, res) => {
     await newOwner.save();
 
     res.status(201).json();
-    console.log(
-      `DB | Register Pet Owner: Pet owner registration successful. User ID: ${newOwner._id}`
-    );
+    console.log(`DB | Register Pet Owner: Pet owner registration successful. User ID: ${newOwner._id}`);
   } catch (error) {
-    console.log("DB | Register Pet Owner | Error:", error);
+    console.error("DB | Register Pet Owner | Error:", error);
     res.status(500).json();
   }
 };
@@ -43,11 +40,10 @@ const loginPetOwner = async (req, res) => {
     }
 
     res.status(200).json({ userId: owner._id });
-    console.log(
-      `DB | Login Pet Owner: Pet owner logged in successfully. User ID: ${owner._id}`
-    );
+    console.log(`DB | Login Pet Owner: Pet owner logged in successfully. User ID: ${owner._id}`);
   } catch (error) {
     res.status(500).json({ message: "Login failed" });
+    console.error("DB | Login Pet Owner | Error:", error);
   }
 };
 
@@ -56,15 +52,10 @@ const updatePetOwnerInfo = async (req, res) => {
   const updatedData = req.body.updatedData;
 
   try {
-    // Find the pet owner by ID
-    console.log(`User ID: ${petOwnerId}`);
-
     const petOwner = await PetOwner.findById(petOwnerId);
 
     if (!petOwner) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Pet owner not found" });
+      return res.status(404).json({ success: false, message: "Pet owner not found" });
     }
 
     // Update the pet owner details
@@ -77,151 +68,48 @@ const updatePetOwnerInfo = async (req, res) => {
       success: true,
       message: "Pet owner details updated successfully",
     });
-    console.log("Pet owner details updated successfully");
+    console.log("DB | Update Pet owner details: Pet owner details updated successfully.");
   } catch (error) {
-    console.error("Error updating pet owner details:", error);
+    console.error("DB | Update Pet owner details | Error:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
-  }
-};
-
-const getPetOwnerPets = async (req, res) => {
-  try {
-    const petOwnerId = req.params.petOwnerId;
-    console.log(`User ID: ${petOwnerId}`);
-    const petOwner = await PetOwner.findById(petOwnerId);
-
-    if (!petOwner) {
-      return res.status(404).json({ message: "Pet Owner not found" });
-    }
-
-    res.status(201).json({ pets: petOwner.pets });
-    console.log(`Pet owner ${petOwnerId} pets fetched successfully`);
-  } catch (error) {
-    console.error("Error fetching user's pets:", error);
-
-    res.status(500).json({ error: "Error fetching user's pets" });
   }
 };
 
 const getPetOwnerDetails = async (req, res) => {
   try {
     const petOwnerId = req.params.petOwnerId;
-    console.log(`User ID: ${petOwnerId}`);
-    const petOwner = await PetOwner.findById(petOwnerId)
-          .populate({
-            path: "appointments",
-            populate: {
-              path:"vet",
-              model: "Veterinarian"
-            }
-          });
+    const petOwner = await PetOwner.findById(petOwnerId);
 
     if (!petOwner) {
+      console.error(`DB | Pet owner Details | Pet owner ${petOwnerId} not found.`);
       return res.status(404).json({ message: "Pet Owner not found" });
     }
     res.status(200).json(petOwner);
-    console.log(`Pet owner ${petOwnerId} details fetched successfully`);
+    console.log(`DB | Pet owner Details | Pet owner ${petOwnerId} details fetched successfully.`);
   } catch (error) {
-    console.error("Error fetching pet owner details:", error);
+    console.error("DB | Pet owner Details | Error:", error);
     res.status(500).json({ error: "Error fetching pet owner details" });
   }
 };
 
-
-const cancelAppointment = async (req,res) => {
-  try {
-    const  appointmentId = req.params.appointmentId;
-
-    const appointment = await Appointment.findById(appointmentId)
-    if (!appointment) {
-      return res.status(404).json({ message: "Appointment not found" });
-    }
-    
-    const petOwner = await PetOwner.findById(appointment.petOwner)
-    const veterinarian = await Veterinarian.findById(appointment.vet)
-
-    petOwner.appointments = petOwner.appointments.filter(appointmentOther => appointmentOther !== appointmentId)
-    veterinarian.appointments = veterinarian.appointments.filter(appointmentOther => appointmentOther !== appointmentId)
-
-    await petOwner.save()
-    await veterinarian.save()
-
-    return res.status(200).json(appointment)
-  } catch(e) {
-    return res.status(500).json({error: e.message})
-  }
-
-}
-
-const makeAppointment = async (req, res) => {
-  try {
-    const { petOwnerId, vetId, date, hour } = req.body;
-    console.log(`User ID: ${petOwnerId}`);
-    const petOwner = await PetOwner.findById(petOwnerId).populate('appointments');
-    const veterinarian = await Veterinarian.findById(vetId).populate('appointments');
-
-    if (!petOwner) {
-      return res.status(404).json({ message: "Pet Owner not found" });
-    }
-    else if (!veterinarian) {
-      return res.status(404).json({ message: "Veterinarian not found" });
-    }
-
-    // the requested hour is not within veterinarian working hours
-    if(hour < veterinarian.workingHours.start || hour > veterinarian.workingHours.end) {
-      throw new Error(`This veterinarian does not accept customers at this hour (${hour})`)
-    }
-    const appintmentDate = new Date(date)
-    const appointmentsForTheDate_petOwner = petOwner.appointments.find(appointment => isSameDayDates(appointment.date, appintmentDate) && hour === appointment.hour)
-    const appointmentsForTheDate_vet = veterinarian.appointments.find(appointment => isSameDayDates(appointment.date, appintmentDate)  && hour === appointment.hour)
-
-
-    if(appointmentsForTheDate_petOwner) { // petowner already has an appointment here
-      throw new Error(`You already have an appointment on ${toDateString(date, hour)}` )
-    }
-    else if(appointmentsForTheDate_vet) {  // veterinarian already has an appointment here
-      throw new Error(`This veterinarian alreay has an appointment on ${toDateString(date, hour)}, please try another date` )
-    }
-
-   
-    const newAppointment = await Appointment.create({
-      petOwner: petOwnerId,
-      vet: vetId,
-      date,
-      hour
-    })
-    petOwner.appointments.push(newAppointment)
-    veterinarian.appointments.push(newAppointment)
-    await petOwner.save()
-    await veterinarian.save()
-
-    res.status(200).json(newAppointment);
-    console.log(`Pet owner ${petOwnerId} successfuly made an appointment with veterinarian ${vetId} on ${toDateString(date, hour)}`);
-  } catch (error) {
-    console.error("Error making an appointment:", error);
-    res.status(500).json({ error: error.message});
-  }
-};
-// Veterinarian Functions
+// ----------- Veterinarian Functions -----------
 const registerVeterinarian = async (req, res) => {
   try {
     const { vetId } = req.body;
     const existingV = await Veterinarian.findOne({ vetId });
 
     if (existingV) {
-      return res
-        .status(404)
-        .json({ message: "Veterinarian already registered" });
+      console.error("DB | Veterinarian registration | Error: Veterinarian already registered.");
+      return res.status(409).json({ message: "Veterinarian already registered" });
     }
 
     const newVeterinarian = new Veterinarian(req.body);
     await newVeterinarian.save();
 
-    // Send a response indicating successful registration
     res.status(201).json();
-    console.log("DB | Veterinarian registration successful");
+    console.log("DB | Veterinarian registration successful.");
   } catch (error) {
-    console.log("Error registering veterinarian", error);
+    console.error("DB | Veterinarian registration | Error:", error);
     res.status(500).json({ message: "Error registering veterinarian" });
   }
 };
@@ -232,15 +120,18 @@ const loginVeterinarian = async (req, res) => {
     const veterinarian = await Veterinarian.findOne({ email });
 
     if (!veterinarian) {
+      console.error("DB| Veterinarian login | Error: Veterinarian not found.");
       return res.status(404).json();
     }
 
     if (veterinarian.password !== password) {
+      console.error("DB| Veterinarian login | Error: Invalid password.");
       return res.status(401).json({ message: "Invalid password" });
     }
     res.status(200).json({ userId: veterinarian._id });
-    console.log("Veterinarian logged in successfully");
+    console.log("DB| Veterinarian login | Veterinarian logged in successfully.");
   } catch (error) {
+    console.error("DB| Veterinarian login | Error:", error);
     res.status(500).json({ message: "Login failed" });
   }
 };
@@ -259,9 +150,7 @@ const rateVeterinarian = async (req, res) => {
     }
 
     if (veterinarian && petOwner.ratings.includes(email)) {
-      return res
-        .status(400)
-        .json({ message: "You have already rated this vert" });
+      return res.status(400).json({ message: "You have already rated this vert" });
     }
     petOwner.ratings.push(email);
     veterinarian.rate += rating;
@@ -298,20 +187,15 @@ const getVeterinarians = async (req, res) => {
 const getVeterinarianInfo = async (req, res) => {
   try {
     const vetId = req.params.vetId;
-    const veterinarian = await Veterinarian.findById(vetId)
-      .populate({
-        path: "appointments",
-        populate: {
-          path:"petOwner",
-          model: "Pet Owner"
-        }
-    });;
+    const veterinarian = await Veterinarian.findById(vetId);
     if (!veterinarian) {
+      console.error(`DB | Vet info | Error: Vet with ID ${vetId} not found.`);
       return res.status(404).json({ message: "Veterinarian not found" });
     }
     res.status(200).json(veterinarian);
+    console.log(`DB | Vet info | Vet with ID ${vetId} fetched successfully.`);
   } catch (error) {
-    console.error("Error fetching vet information", error);
+    console.error("DB | Vet info | Error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -329,40 +213,41 @@ const updateVeterinarianInfo = async (req, res) => {
     );
 
     if (!updatedVet) {
-      console.error(`Vet with ID ${vetId} not found.`);
+      console.error(`DB| Update Vet Info | Error: Vet with ID ${vetId} not found.`);
       return res.status(404).json({ message: "Veterinarian not found" });
     }
 
-    console.log(`Vet with ID ${vetId} updated successfully.`);
-    res
-      .status(200)
-      .json({ message: `Vet with ID ${vetId} updated successfully.` });
+    console.log(`DB| Update Vet Info | Vet with ID ${vetId} updated successfully.`);
+    res.status(200).json({ message: `Vet with ID ${vetId} updated successfully.` });
   } catch (error) {
-    console.error("Error updating vet:", error);
+    console.error("DB| Update Vet Info | Error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
-const getVeterinarianTips = async (req, res) => {
+// ----------- Tips -----------
+const getTipsByVetId = async (req, res) => {
   try {
     const vetId = req.params.vetId;
-    const vet = await Veterinarian.findById(vetId);
+    const tips = await Tip.find({ vetId: vetId });
 
-    if (!vet) {
-      return res.status(404).json({ message: "Vet not found" });
+    if (!tips) {
+      console.error(`DB| Get vet tips | Error: Tips for vet with ID ${vetId} not found.`);
+      return res.status(404).json({ message: "Tips not found" });
     }
-    res.status(201).json(vet.tips);
+
+    res.status(201).json(tips);
+    console.log(`DB| Get vet tips | Tips for vet with ID ${vetId} fetched successfully.`);
   } catch (error) {
-    console.error("Error fetching Veterinarian tips:", error);
+    console.error(`DB| Get vet tips | Error:`, error);
     res.status(500).json({ error: "Error fetching Veterinarian tips" });
   }
 };
 
-// Tip Functions
 const getAllTips = async (_, res) => {
   try {
     // Populate the 'vetId' field in each tip with the 'name' field from the referenced veterinarian document
-    const tips = await Tip.find().populate("vetId", "name profilePicture"); // Ensure you're also populating the profilePicture
+    const tips = await Tip.find().populate("vetId", "name profilePicture");
     const tipsWithVetNames = tips.map((tip) => ({
       _id: tip._id,
       content: tip.content,
@@ -374,8 +259,9 @@ const getAllTips = async (_, res) => {
           : "https://www.behance.net/gallery/189614555/VetProfile.jpg",
     }));
     res.status(200).json(tipsWithVetNames);
+    console.log("DB | Fetch all tips | All tips fetched successfully.");
   } catch (error) {
-    console.error("Error fetching all tips", error);
+    console.error("DB | Fetch all tips | Error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -388,19 +274,10 @@ const addTip = async (req, res) => {
     const newTip = new Tip({ vetId: vetId, content: content });
     await newTip.save();
 
-    const vet = await Veterinarian.findById(vetId);
-
-    if (!vet) {
-      return res.status(404).json({ message: "Veterinarian not found" });
-    }
-
-    vet.tips.push(newTip._id);
-    await vet.save();
-
     res.status(201).json({ message: "Tip added successfully" });
-    console.log(`Added tip for vet ${vetId}.`);
+    console.log(`DB| Add tip | Added tip for vet ${vetId}.`);
   } catch (error) {
-    console.error("Error adding tips", error);
+    console.error("DB| Add tip | Error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -409,12 +286,16 @@ const getTip = async (req, res) => {
   try {
     const tipId = req.params.tipId;
     const tip = await Tip.findById(tipId);
+
     if (!tip) {
+      console.error(`DB | Get tip | Tip with ID ${tipId} not found.`);
       return res.status(404).json({ message: "Tip not found" });
     }
+
     res.status(200).json(tip);
+    console.log(`DB | Get tip | Tip with ID ${tipId} fetched successfully.`);
   } catch (error) {
-    console.error("Error fetching tips information", error);
+    console.error("DB | Get tip | Error:", error);
     res.status(500).json();
   }
 };
@@ -431,16 +312,14 @@ const updateTipInfo = async (req, res) => {
     );
 
     if (!updatedTip) {
-      console.error(`Tip with ID ${tipId} not found.`);
+      console.error(`DB| Update tip | Tip with ID ${tipId} not found.`);
       return res.status(404).json({ message: "Tip not found" });
     }
 
-    console.log(`Tip with ID ${tipId} updated successfully.`);
-    res
-      .status(200)
-      .json({ message: `Tip with ID ${tipId} updated successfully.` });
+    console.log(`DB| Update tip | Tip with ID ${tipId} updated successfully.`);
+    res.status(200).json({ message: `Tip with ID ${tipId} updated successfully.` });
   } catch (error) {
-    console.error("Error updating tip:", error);
+    console.error("DB| Update tip | Error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -449,53 +328,31 @@ const deleteTip = async (req, res) => {
   try {
     const tipId = req.params.tipId;
     const tip = await Tip.findByIdAndDelete(tipId);
+
     if (!tip) {
+      console.error(`DB| Delete tip | Tip with ID ${tipId} not found.`);
       return res.status(404).json({ message: "Tip not found" });
     }
 
-    // If the pet has an owner, update the PetOwner's pets array
-    if (tip.vetId) {
-      await Veterinarian.findByIdAndUpdate(tip.vetId, {
-        $pull: { tips: tip._id },
-      });
-    }
-
     res.status(200).json({ message: "Tip deleted successfully" });
+    console.log(`DB| Delete tip | Tip with ID ${tipId} deleted successfully.`);
   } catch (error) {
+    console.error("DB| Delete tip | Error:", error);
     res.status(500).json({ message: "Error deleting tip", error });
   }
 };
 
-// Pet Functions
+// ----------- Pet -----------
 const addPet = async (req, res) => {
   try {
     const petOwnerId = req.params.petOwnerId;
     const newPet = new Pet({ ownerId: petOwnerId, ...req.body });
-
-    // Generate and store the verification token
-    newPet.verificationToken = randomBytes(20).toString("hex");
-
-    // Save the new pet to the database
     await newPet.save();
 
-    // Find the corresponding PetOwner document by ownerId
-    const petOwner = await PetOwner.findById(petOwnerId);
-
-    if (!petOwner) {
-      return res.status(404).json({ message: "Pet Owner not found" });
-    }
-
-    // Add the new pet's ObjectId to the pets array of the PetOwner
-    petOwner.pets.push(newPet._id);
-
-    // Save the updated PetOwner document
-    await petOwner.save();
-
-    res
-      .status(201)
-      .json({ message: "Pet added successfully", petId: newPet._id });
+    res.status(201).json({ message: "Pet added successfully", petId: newPet._id });
+    console.log(`DB | Add pet | Pet added successfully. Pet ID: ${newPet._id}`);
   } catch (error) {
-    console.log("Error adding a pet:", error);
+    console.error("DB | Add pet | Error:", error);
     res.status(500).json({ message: "Error adding a pet" });
   }
 };
@@ -504,13 +361,35 @@ const getPetInfo = async (req, res) => {
   try {
     const petId = req.params.petId;
     const pet = await Pet.findById(petId);
+
     if (!pet) {
+      console.error(`DB | Get pet info | Pet with ID ${petId} not found.`);
       return res.status(404).json({ message: "Pet not found" });
     }
+
     res.status(200).json(pet);
+    console.log(`DB | Get pet info | Pet with ID ${petId} fetched successfully.`);
   } catch (error) {
-    console.error("Error fetching pet information", error);
+    console.error("DB | Get pet info | Error:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const getPetsByOwnerId = async (req, res) => {
+  try {
+    const petOwnerId = req.params.petOwnerId;
+    const pets = await Pet.find({ ownerId: petOwnerId });
+
+    if (!pets) {
+      console.error(`DB | Pet owner pets | Pet owner ${petOwnerId} pets not found.`);
+      return res.status(404).json({ message: "Pet not found" });
+    }
+
+    res.status(201).json({ pets: pets });
+    console.log(`DB | Pet owner pets | Pet owner ${petOwnerId} pets fetched successfully.`);
+  } catch (error) {
+    console.error("DB | Pet owner pets | Error:", error);
+    res.status(500).json({ error: "Error fetching user's pets" });
   }
 };
 
@@ -527,16 +406,14 @@ const updatePetInfo = async (req, res) => {
     );
 
     if (!updatedPet) {
-      console.error(`Pet with ID ${petId} not found.`);
+      console.error(`DB| Update Pet | Pet with ID ${petId} not found.`);
       return res.status(404).json({ message: "Pet not found" });
     }
 
-    console.log(`Pet with ID ${petId} updated successfully.`);
-    res
-      .status(200)
-      .json({ message: `Pet with ID ${petId} updated successfully.` });
+    console.log(`DB| Update Pet | Pet with ID ${petId} updated successfully.`);
+    res.status(200).json({ message: `Pet with ID ${petId} updated successfully.` });
   } catch (error) {
-    console.error("Error updating pet:", error);
+    console.error("DB| Update Pet | Error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -548,19 +425,95 @@ const deletePet = async (req, res) => {
     // Find and delete the pet
     const pet = await Pet.findByIdAndDelete(petId);
     if (!pet) {
+      console.error(`DB| Delete Pet | Pet with ID ${petId} not found.`);
       return res.status(404).json({ message: "Pet not found" });
     }
 
-    // If the pet has an owner, update the PetOwner's pets array
-    if (pet.ownerId) {
-      await PetOwner.findByIdAndUpdate(pet.ownerId, {
-        $pull: { pets: pet._id },
-      });
+    res.status(200).json({ message: "Pet deleted successfully" });
+    console.log(`DB| Delete Pet | Pet with ID ${petId} deleted successfully.`);
+  } catch (error) {
+    console.error("DB| Delete Pet | Error:", error);
+    res.status(500).json({ message: "Error deleting pet", error });
+  }
+};
+
+// ----------- Appointments -----------
+const getAllAppointments = async (req, res) => {
+  try {
+    const appointments = await Appointment.find();
+    res.status(200).json(appointments);
+    console.log("DB | Get all appointments | All appointments fetched successfully.");
+  } catch (error) {
+    console.error("DB | Get all appointments | Error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const deleteAppointment = async (req, res) => {
+  try {
+    const appointmentId = req.params.appointmentId;
+    const appointment = await Appointment.findByIdAndDelete(appointmentId);
+    if (!appointment) {
+      console.error(`DB | Delete appointment | Appointment with ID ${appointmentId} not found.`);
+      res.status(404).json({ message: "Appointment not found" });
+      return;
     }
 
-    res.status(200).json({ message: "Pet deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Error deleting pet", error });
+    res.status(200).json(appointment);
+    console.log(`DB | Delete appointment | Appointment with ID ${appointmentId} deleted successfully`);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+    console.error("DB | Delete appointment | Error:", e);
+  }
+};
+
+const getAppointmentsByOwner = async (req, res) => {
+  try {
+    const userId = req.params.petOwnerId;
+    const appointments = await Appointment.find({ petOwnerId: userId });
+    res.status(200).json({ appointments });
+    console.log(`DB | Get appointments by owner id | Appointments for user ${userId} fetched successfully`);
+  } catch (e) {
+    console.error("DB | Get appointments by owner id | Error:", e);
+    return res.status(500).json({ error: e.message });
+  }
+};
+
+const addAppointmentsByOwner = async (req, res) => {
+  try {
+    const userId = req.params.petOwnerId;
+    const { vetId, date, time } = req.body;
+
+    const isAppointmentExists = await Appointment.findOne({ petOwnerId: userId, vetId: vetId, date: date });
+    if (isAppointmentExists) {
+      console.error("DB | Add appointment by owner ID | Error: Appointment already exists");
+      return res.status(409).json({ message: "Appointment already exists" });
+    }
+
+    const newAppointment = await Appointment.create({
+      petOwnerId: userId,
+      vetId: vetId,
+      date: date,
+      time: time,
+    });
+
+    res.status(200).json(newAppointment);
+    console.log(`DB | Add appointment by owner ID | Appointment for user ${userId} added successfully`);
+  } catch (e) {
+    console.error("DB | Add appointment by owner ID | Error adding appointment by user ID:", e);
+    return res.status(500).json({ error: e.message });
+  }
+};
+
+const getAppointmentsByVet = async (req, res) => {
+  try {
+    const userId = req.params.vetId;
+    const appointments = await Appointment.find({ vetId: userId });
+    res.status(200).json(appointments);
+    console.log(`DB | Get appointments by vet id | Appointments for vet ${userId} fetched successfully`);
+  } catch (e) {
+    console.error("DB | Get appointments by vet id | Error:", e);
+    return res.status(500).json({ error: e.message });
   }
 };
 
@@ -568,17 +521,14 @@ export {
   registerPetOwner,
   loginPetOwner,
   updatePetOwnerInfo,
-  getPetOwnerPets,
   getPetOwnerDetails,
-  makeAppointment,
-  cancelAppointment,
   registerVeterinarian,
   loginVeterinarian,
   rateVeterinarian,
   getVeterinarians,
   getVeterinarianInfo,
   updateVeterinarianInfo,
-  getVeterinarianTips,
+  getTipsByVetId,
   getAllTips,
   addTip,
   getTip,
@@ -586,6 +536,12 @@ export {
   deleteTip,
   addPet,
   getPetInfo,
+  getPetsByOwnerId,
   updatePetInfo,
   deletePet,
+  getAllAppointments,
+  deleteAppointment,
+  getAppointmentsByOwner,
+  addAppointmentsByOwner,
+  getAppointmentsByVet,
 };

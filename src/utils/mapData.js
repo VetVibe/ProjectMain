@@ -44,10 +44,10 @@ export const mapVetDetails = (vetData) => {
     rate: vetData?.rate || 0,
     clientsCount: vetData?.clientsCount || 0,
     about: vetData?.about || "",
-    tips: vetData?.tips || [],
     location: vetData?.location || "",
     specialization: vetData?.specialization || "",
-    appointments: vetData?.appointments || [],
+    start: vetData?.start || 8,
+    end: vetData?.end || 20,
   };
 };
 
@@ -62,10 +62,10 @@ export const mapVetDetailsToSchema = (vetDetails) => {
     rate: vetDetails.rate,
     clientsCount: vetDetails.clientsCount,
     about: vetDetails.about,
-    tips: vetDetails.tips,
     location: vetDetails.location,
     specialization: vetDetails.specialization,
-    appointments: vetDetails.appointments,
+    start: vetDetails.start,
+    end: vetDetails.end,
   };
 };
 
@@ -86,4 +86,25 @@ export const organizeAppointments = (appointments) => {
   });
 
   return organizedList;
+};
+
+export const getTimesNum = (start, end) => {
+  const timesList = [];
+  for (let i = start; i < end; i++) {
+    timesList.push(i);
+  }
+  return timesList;
+};
+
+export const appointmentsTime = (appointments, currentDate) => {
+  const timeList = [];
+
+  appointments.forEach((appointment) => {
+    const date = new Date(appointment.date);
+    if (date.getDate() === currentDate.getDate()) {
+      timeList.push(appointment.time);
+    }
+  });
+
+  return timeList;
 };

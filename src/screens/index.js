@@ -8,8 +8,8 @@ import VetHomeScreen from "./VetHomeScreen/VetHomeScreen";
 import EditVetProfileScreen from "./EditVetProfileScreen/EditVetProfileScreen";
 import TipsScreen from "./TipsScreen/TipsScreen";
 import VetSearchScreen from "./VetSearchScreen/VetSearchScreen";
-import VetAppointmentsScreen from "./VetAppointmentsScreen/VetAppointmentsScreen";
-import MakeAnAppointmentScreen from "./VetAppointmentsScreen/MakeAnAppointmentScreen";
+import AppointmentsScreen from "./AppointmentsScreen/AppointmentsScreen";
+import MakeAppointmentScreen from "./MakeAppointmentScreen/MakeAppointmentScreen";
 
 export {
   HomeScreen,
@@ -22,6 +22,6 @@ export {
   EditVetProfileScreen,
   TipsScreen,
   VetSearchScreen,
-  VetAppointmentsScreen,
-  MakeAnAppointmentScreen,
+  AppointmentsScreen,
+  MakeAppointmentScreen,
 };

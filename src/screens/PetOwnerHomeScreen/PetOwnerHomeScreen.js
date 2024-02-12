@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Image,
-  FlatList,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, FlatList } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { COLORS } from "../../constants";
@@ -23,11 +15,8 @@ export default function PetOwnerHomeScreen({ navigation }) {
         const id = await AsyncStorage.getItem("userId");
         setPetOwnerId(id);
         if (id) {
-          const petIds = await clientServer.getPetOwnerPets(id);
-          if (petIds && petIds.pets) {
-            const petsInfo = await clientServer.getPetsDetails(petIds.pets);
-            setUserPets(petsInfo);
-          }
+          const petsInfo = await clientServer.getPetsByOwnerId(id);
+          setUserPets(petsInfo);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -70,10 +59,7 @@ export default function PetOwnerHomeScreen({ navigation }) {
             horizontal={true}
             keyExtractor={(item) => item._id}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => handlePetSelect(item)}
-                style={styles.petItem}
-              >
+              <TouchableOpacity onPress={() => handlePetSelect(item)} style={styles.petItem}>
                 <Image source={{ uri: item.imgSrc }} style={styles.petImage} />
                 <Text style={styles.petName}>{item.name}</Text>
               </TouchableOpacity>

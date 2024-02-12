@@ -1,5 +1,12 @@
 import axios from "axios";
-import { BASE_URL, PET_OWNER_ENDPOINTS, VET_ENDPOINTS, PET_ENDPOINTS, TIP_ENDPOINTS } from "../constants";
+import {
+  BASE_URL,
+  PET_OWNER_ENDPOINTS,
+  VET_ENDPOINTS,
+  PET_ENDPOINTS,
+  TIP_ENDPOINTS,
+  APPOINTMENT_ENDPOINTS,
+} from "../constants";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -12,10 +19,10 @@ export const clientServer = {
       await clientServer.server.post(PET_OWNER_ENDPOINTS.REGISTER, userData);
       console.log("Client | Register Pet Owner: Success");
     } catch (error) {
-      if (error.response.status === 409) {
+      if (error && error.response && error.response.status === 409) {
         console.log("Client | Register Pet Owner | Error: User already exists.");
       } else {
-        console.error("Client | Register Pet Owner | Error:", error.response);
+        console.error("Client | Register Pet Owner | Error:", error);
       }
       throw error;
     }
@@ -60,15 +67,6 @@ export const clientServer = {
     }
   },
 
-  getPetOwnerPets: async (petOwnerId) => {
-    try {
-      const response = await clientServer.server.get(PET_OWNER_ENDPOINTS.PETS(petOwnerId));
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching pet owner pets:", error);
-    }
-  },
-
   // -------------------- Pet --------------------
   getPetDetails: async (petId) => {
     try {
@@ -79,14 +77,12 @@ export const clientServer = {
     }
   },
 
-  getPetsDetails: async (petIds) => {
+  getPetsByOwnerId: async (petOwnerId) => {
     try {
-      const fetchPetDetails = petIds.map((petId) => clientServer.getPetDetails(petId));
-
-      const petDetailsArray = await Promise.all(fetchPetDetails);
-      return petDetailsArray;
+      const response = await clientServer.server.get(PET_ENDPOINTS.BY_OWNER_ID(petOwnerId));
+      return response.data;
     } catch (error) {
-      console.error("Error fetching pets details:", error);
+      console.log("Error fetching pet owner pets:", error);
     }
   },
 
@@ -180,15 +176,6 @@ export const clientServer = {
     }
   },
 
-  getVetTips: async (vetId) => {
-    try {
-      const response = await clientServer.server.get(VET_ENDPOINTS.TIPS(vetId));
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching vet tips:", error.response);
-    }
-  },
-
   //  -------------------- Tips --------------------
   addTip: async (vetId, content) => {
     try {
@@ -210,20 +197,18 @@ export const clientServer = {
     }
   },
 
-  getTipsByIds: async (tipIds) => {
+  getTipsByVetId: async (vetId) => {
     try {
-      if (!tipIds) return;
-      const fetchTipsDetails = tipIds.map((tipId) => clientServer.getTip(tipId));
-      const tipsDetailsArray = await Promise.all(fetchTipsDetails);
-      return tipsDetailsArray;
+      const response = await clientServer.server.get(TIP_ENDPOINTS.BY_VET_ID(vetId));
+      return response.data;
     } catch (error) {
-      console.error(`Error fetching tip ${tipIds} details:`, error.response);
+      console.error("Error fetching vet tips:", error.response);
     }
   },
 
-  getTips: async (tipIds) => {
+  getAllTips: async () => {
     try {
-      const response = await clientServer.server.get(TIP_ENDPOINTS.GET_TIPS);
+      const response = await clientServer.server.get(TIP_ENDPOINTS.ALL);
       return response.data;
     } catch (error) {
       console.error("Error fetching tips details:", error.response);
@@ -248,20 +233,48 @@ export const clientServer = {
     }
   },
 
-//  -------------------- Appointments --------------------
-getPetOwnerAppointments: async () => {
-  try {
+  //  -------------------- Appointments --------------------
+  getAllAppointments: async () => {
+    try {
+      const response = await clientServer.server.get(APPOINTMENT_ENDPOINTS.ALL);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching all appointments:", error.response);
+    }
+  },
 
-  } catch (error) {
+  deleteAppointment: async (appointmentId) => {
+    try {
+      const response = await clientServer.server.delete(APPOINTMENT_ENDPOINTS.DELETE(appointmentId));
+      return response.data;
+    } catch (error) {
+      console.error(`Error during deleting appointment ${appointmentId} details:`, error.response);
+    }
+  },
 
-  }
-},
+  getAppointmentsByOwner: async (petOwnerId) => {
+    try {
+      const response = await clientServer.server.get(APPOINTMENT_ENDPOINTS.BY_OWNER(petOwnerId));
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching appointments by owner:", error.response);
+    }
+  },
 
-getVetAppointments: async () => {
-  try {
+  addAppointmentsByOwner: async (petOwnerId, appointmentData) => {
+    try {
+      await clientServer.server.post(APPOINTMENT_ENDPOINTS.BY_OWNER(petOwnerId), appointmentData);
+    } catch (error) {
+      console.error("Error adding appointments by owner:", error);
+    }
+  },
 
-  } catch (error) {
-
-  }
-},
+  getAppointmentsByVet: async (vetId) => {
+    try {
+      const response = await clientServer.server.get(APPOINTMENT_ENDPOINTS.BY_VET(vetId));
+      return response.data;
+    } catch (error) {
+      console.error("Client | Error fetching appointments by vet:", error.response);
+    }
+  },
 };

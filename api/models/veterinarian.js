@@ -1,7 +1,6 @@
 // Import the mongoose library
 import { Schema, Types, model } from "mongoose";
 
-
 const veterinarianSchema = new Schema({
   name: {
     type: String,
@@ -39,9 +38,6 @@ const veterinarianSchema = new Schema({
   about: {
     type: String,
   },
-  tips: {
-    type: [Types.ObjectId],
-  },
   location: {
     type: String,
     required: true,
@@ -50,17 +46,20 @@ const veterinarianSchema = new Schema({
     type: String,
     required: true,
   },
-  workingHours: {
-    type: {
-      start: { type: Number, min: 0, max: 23},
-      end: {  type: Number ,min: 0, max: 23}
-    },
-    default: {start: 8, end: 20}
+  start: {
+    type: Number,
+    min: 0,
+    max: 23,
+    default: 8,
+    required: true,
   },
-  appointments: [{
-    type:Schema.Types.ObjectId,
-    ref: "Appointment"
-  }],
+  end: {
+    type: Number,
+    min: 0,
+    max: 23,
+    default: 20,
+    required: true,
+  },
 });
 
 const Veterinarian = model("Veterinarian", veterinarianSchema);
