@@ -1,7 +1,13 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { TouchableOpacity, Text, View, StyleSheet } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
+import { clientServer } from "../../server";
 
-export default function AppointmentCard({ appointment, onPressCancel, userType }) {
+export default function AppointmentCard({
+  appointment,
+  onPressCancel,
+  userType,
+}) {
   const [userDetails, setUserDetails] = useState(null);
   const { vetId, petOwnerId, date, time } = appointment;
 
@@ -12,20 +18,24 @@ export default function AppointmentCard({ appointment, onPressCancel, userType }
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
+        let userDetailsResponse;
         if (userType === "vet") {
-          const userDetails = await clientServer.getPetOwnerDetails(petOwnerId);
-          setUserDetails(userDetails);
+          userDetailsResponse = await clientServer.getPetOwnerInfo(petOwnerId);
         } else if (userType === "petOwner") {
-          const userDetails = await clientServer.getVetDetails(vetId);
-          setUserDetails(userDetails);
+          userDetailsResponse = await clientServer.getVetInfo(vetId);
         }
+        console.log("User details:", userDetailsResponse); // Add this line to check user details
+        setUserDetails(userDetailsResponse);
       } catch (error) {
         console.error("Error fetching user details:", error);
       }
     };
 
-    fetchUserDetails();
-  }, [userDetails]);
+    // Call fetchUserDetails only when userType, vetId, or petOwnerId change
+    if (userType && vetId && petOwnerId) {
+      fetchUserDetails();
+    }
+  }, [userType, vetId, petOwnerId]);
 
   return (
     <View>
@@ -39,10 +49,13 @@ export default function AppointmentCard({ appointment, onPressCancel, userType }
           </View>
         </View>
         <View style={styles.info_container}>
-          <Text style={styles.appType}>{userDetails.name}</Text>
-          <Text style={styles.appType}>{userDetails.phoneNumber}</Text>
+          <Text style={styles.appType}>{userDetails?.name}</Text>
+          <Text style={styles.appType}>{userDetails?.phoneNumber}</Text>
           <Text style={styles.time}>
-            {`${String(time).padStart(2, "0")}:00 - ${String(time + 1).padStart(2, "0")}:00`}
+            {`${String(time).padStart(2, "0")}:00 - ${String(time + 1).padStart(
+              2,
+              "0"
+            )}:00`}
           </Text>
         </View>
         <TouchableOpacity onPress={() => onPressCancel(appointment._id)}>
@@ -61,6 +74,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 24,
     marginBottom: 16,
     paddingVertical: 8,
+    backgroundColor: "#fff", // Add a background color
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     elevation: 6,
@@ -72,6 +87,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#fff", // Add a background color
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -80,10 +97,6 @@ const styles = StyleSheet.create({
   info_container: {
     flex: 1,
     justifyContent: "center",
-  },
-  icon_container: {
-    margin: 16,
-    justifyContent: "flex-start",
   },
   date_text: {
     fontSize: 34,

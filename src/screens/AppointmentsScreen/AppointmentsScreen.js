@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+} from "react-native";
 import { clientServer } from "../../server";
 import AppointmentCard from "../../components/AppointmentCard/AppointmentCard";
 
 export default function AppointmentsScreen({ navigation, route }) {
   const [appointmentList, setAppointmentList] = useState([]);
-  const [petOwnerId, setPetOwnerId] = useState(route.params?.petOwnerId || null);
+  const [petOwnerId, setPetOwnerId] = useState(
+    route.params?.petOwnerId || null
+  );
   const [userType, setUserType] = useState(null);
 
   const vetId = route.params?.vetId || null;
@@ -14,20 +23,31 @@ export default function AppointmentsScreen({ navigation, route }) {
 
   const fetchAllPetOwnerAppointments = async (petOwnerId) => {
     try {
-      const appointments = await clientServer.getAppointmentsByOwner(petOwnerId);
-      setAppointmentList(appointments);
+      const response = await clientServer.getAppointmentsByOwner(petOwnerId);
+      const { appointments } = response;
+      console.log("Appointments by owner:", appointments);
+      setAppointmentList(
+        appointments.map((appointment) => ({
+          ...appointment,
+          userDetails: appointment.vetDetails, // Assuming vetDetails contain the vet's name and image
+        }))
+      );
     } catch (error) {
-      console.log(error);
+      console.log("Error fetching appointments by owner:", error);
     }
   };
 
   const fetchAllVetAppointments = async (vetId) => {
     try {
-      const allAppointments = await clientServer.getAppointmentsByVet(vetId);
-      const appointmentsByDay = allAppointments.filter((appointment) => appointment.date === day);
+      const response = await clientServer.getAppointmentsByVet(vetId);
+      const { appointments } = response; // Extracting the appointments array from the response
+      const appointmentsByDay = appointments.filter(
+        (appointment) => appointment.date === day
+      );
+      console.log("Appointments by vet and day:", appointmentsByDay);
       setAppointmentList(appointmentsByDay);
     } catch (error) {
-      console.log(error);
+      console.log("Error fetching appointments by vet:", error);
     }
   };
 
@@ -35,14 +55,14 @@ export default function AppointmentsScreen({ navigation, route }) {
     try {
       if (vetId) {
         setUserType("vet");
-        fetchAllVetAppointments();
+        fetchAllVetAppointments(vetId);
       } else if (petOwnerId) {
         setUserType("petOwner");
-        fetchAllPetOwnerAppointments();
+        fetchAllPetOwnerAppointments(petOwnerId);
       } else {
         const id = await AsyncStorage.getItem("userId");
         setPetOwnerId(id);
-        fetchAllPetOwnerAppointments();
+        fetchAllPetOwnerAppointments(id);
       }
     } catch (error) {
       console.log(error);
@@ -83,10 +103,17 @@ export default function AppointmentsScreen({ navigation, route }) {
       <View style={styles.list_container}>
         {!appointmentList || appointmentList?.length === 0 ? (
           <>
-            <Text style={styles.emptyViewText}>You dont have appointments!</Text>
+            <Text style={styles.emptyViewText}>
+              You dont have appointments!
+            </Text>
             {userType === "petOwner" ? (
               <TouchableOpacity
-                onPress={() => navigation.navigate("Make Appointment", { petOwnerId: petOwnerId, vetId: vetId })}
+                onPress={() =>
+                  navigation.navigate("Make Appointment", {
+                    petOwnerId: petOwnerId,
+                    vetId: vetId,
+                  })
+                }
               >
                 <Text style={styles.emptyViewText}>Make an appointment</Text>
               </TouchableOpacity>
@@ -99,6 +126,7 @@ export default function AppointmentsScreen({ navigation, route }) {
                 appointment={appointment}
                 serviceInfo={appointment.serviceInfo}
                 key={appointment.id}
+                userDetails={appointment.userDetails} // Pass userDetails prop
                 onPressCancel={() => handleCancel(appointment)}
               />
             ))}

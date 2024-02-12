@@ -67,11 +67,18 @@ export default function MakeAppointmentScreen({ route, navigation }) {
       if (petOwnerId) {
         setSelectedDate(day.dateString);
         const allTimes = getTimesNum(vetTimes.start, vetTimes.end);
-        const bookedTimes = vetAppointments ? appointmentsTime(vetAppointments, new Date(day)) : null;
-        const availableTimes = bookedTimes ? allTimes.filter((time) => !bookedTimes.includes(time)) : allTimes;
+        const bookedTimes = vetAppointments
+          ? appointmentsTime(vetAppointments, new Date(day))
+          : null;
+        const availableTimes = bookedTimes
+          ? allTimes.filter((time) => !bookedTimes.includes(time))
+          : allTimes;
         setAvailableTimes(availableTimes);
       } else {
-        navigation.navigation("Appointments", { userId: vetId, date: selectedDate });
+        navigation.navigation("Appointments", {
+          userId: vetId,
+          date: selectedDate,
+        });
       }
     } catch (error) {
       console.error(error);
@@ -86,7 +93,10 @@ export default function MakeAppointmentScreen({ route, navigation }) {
         time: selectedTime,
       };
       await clientServer.addAppointmentsByOwner(petOwnerId, appointment);
-      const jumpToAction = TabActions.jumpTo("Appointments", { petOwnerId: petOwnerId, userType: "petOwner" });
+      const jumpToAction = TabActions.jumpTo("Appointments", {
+        petOwnerId: petOwnerId,
+        userType: "petOwner",
+      });
       navigation.dispatch(jumpToAction);
     } catch (error) {
       console.error(error);
@@ -100,10 +110,14 @@ export default function MakeAppointmentScreen({ route, navigation }) {
         <View>
           <Image
             source={
-              vetDetails.profilePicture ||
-              "https://mir-s3-cdn-cf.behance.net/projects/max_808_webp/3c6f95189614555.Y3JvcCwxMDI0LDgwMCwwLDExMQ.jpg"
+              vetDetails.profilePicture
+                ? { uri: vetDetails.profilePicture }
+                : {
+                    uri: "https://mir-s3-cdn-cf.behance.net/projects/max_808_webp/3c6f95189614555.Y3JvcCwxMDI0LDgwMCwwLDExMQ.jpg",
+                  }
             }
           />
+
           <View>
             <View>
               <Text>{vetDetails.name}</Text>

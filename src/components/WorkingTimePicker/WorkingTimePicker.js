@@ -20,12 +20,15 @@ export default function WorkingTimePicker({ start, end, setStart, setEnd }) {
     setEnd(time);
     setEndTimePickerVisible(false);
   };
+
   return (
     <>
       <>
         <Text>From</Text>
-        <TouchableOpacity onPress={setStartTimePickerVisible}>
-          <Text>{start ? `${String(start.getHours()).padStart(2, "0")}:00` : "8:00"}</Text>
+        <TouchableOpacity onPress={() => setStartTimePickerVisible(true)}>
+          <Text>
+            {start ? `${String(start.getHours()).padStart(2, "0")}:00` : "8:00"}
+          </Text>
         </TouchableOpacity>
         <DateTimePickerModal
           isVisible={isStartTimePickerVisible}
@@ -36,8 +39,10 @@ export default function WorkingTimePicker({ start, end, setStart, setEnd }) {
       </>
       <>
         <Text>To</Text>
-        <TouchableOpacity onPress={setEndTimePickerVisible}>
-          <Text>{end ? `${String(end.getHours()).padStart(2, "0")}:00` : "20:00"}</Text>
+        <TouchableOpacity onPress={() => setEndTimePickerVisible(true)}>
+          <Text>
+            {end ? `${String(end.getHours()).padStart(2, "0")}:00` : "20:00"}
+          </Text>
         </TouchableOpacity>
         <DateTimePickerModal
           isVisible={isEndTimePickerVisible}
