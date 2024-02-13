@@ -7,7 +7,7 @@ import Header from "../../components/Header/Header";
 import PawImage from "../../assets/paw.jpg";
 import { clientServer } from "../../server";
 import { StackActions } from "@react-navigation/native";
-
+import { Alert } from "react-native";
 const HomeScreen = ({ navigation }) => {
   const [form, setValues] = useState({
     email: "",
@@ -30,10 +30,19 @@ const HomeScreen = ({ navigation }) => {
         [inputIdentifier]: newValue,
       };
     });
-    setIncorrectInput((prevState) => ({ ...prevState, incorrectEmail: false, incorrectPassword: false }));
+    setIncorrectInput((prevState) => ({
+      ...prevState,
+      incorrectEmail: false,
+      incorrectPassword: false,
+    }));
   };
 
   const onSignInPress = async () => {
+    if (!form.email || !form.password) {
+      // Check if email or password fields are empty
+      Alert.alert("Error", "Please enter both email and password.");
+      return;
+    }
     try {
       if (activeTab === "vet") {
         await clientServer.loginVet(form);
@@ -44,10 +53,16 @@ const HomeScreen = ({ navigation }) => {
       }
     } catch (error) {
       if (error.response && error.response.status === 404) {
-        setIncorrectInput((prevState) => ({ ...prevState, incorrectEmail: true }));
+        setIncorrectInput((prevState) => ({
+          ...prevState,
+          incorrectEmail: true,
+        }));
         return;
       } else if (error.response && error.response.status === 401) {
-        setIncorrectInput((prevState) => ({ ...prevState, incorrectPassword: true }));
+        setIncorrectInput((prevState) => ({
+          ...prevState,
+          incorrectPassword: true,
+        }));
         return;
       } else {
         console.error("Error logging in:", error);
@@ -61,7 +76,11 @@ const HomeScreen = ({ navigation }) => {
         <Header headerText={"Vet Vibe"} imgSrc={PawImage} />
       </View>
 
-      <TabsContainer tabs={ROLES_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
+      <TabsContainer
+        tabs={ROLES_TABS}
+        activeTab={activeTab}
+        handleTabPress={handleTabPress}
+      />
       <Text style={styles.label}>{TITELS["email"]}</Text>
       <TextInput
         placeholder={"Email"}
@@ -71,7 +90,9 @@ const HomeScreen = ({ navigation }) => {
         onChangeText={(value) => handleChangeText("email", value)}
       />
       {incorrectInput.incorrectEmail ? (
-        <Text style={styles.error}>{`User with email: ${form.email} wasn't found.`}</Text>
+        <Text
+          style={styles.error}
+        >{`User with email: ${form.email} wasn't found.`}</Text>
       ) : null}
 
       <Text style={styles.label}>{TITELS["password"]}</Text>
@@ -84,7 +105,9 @@ const HomeScreen = ({ navigation }) => {
         onChangeText={(value) => handleChangeText("password", value)}
         secureTextEntry
       />
-      {incorrectInput.incorrectPassword ? <Text style={styles.error}>{"The password is incorrect."}</Text> : null}
+      {incorrectInput.incorrectPassword ? (
+        <Text style={styles.error}>{"The password is incorrect."}</Text>
+      ) : null}
       <Button
         title={"Login"}
         titleStyle={styles.loginButtonText}
