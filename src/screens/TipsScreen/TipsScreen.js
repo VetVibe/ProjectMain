@@ -1,9 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { View, TouchableOpacity, Text, TextInput, Button, FlatList, StyleSheet, Image } from "react-native";
+import {
+  View,
+  TouchableOpacity,
+  Text,
+  TextInput,
+  Button,
+  FlatList,
+  StyleSheet,
+  Image,
+} from "react-native";
 import { COLORS } from "../../constants";
 import { MaterialIcons, AntDesign } from "@expo/vector-icons";
 import { clientServer } from "../../server";
+import LoadingIndicator from "../../components/LoadingIndicator";
 
 export default function TipsScreen({ route }) {
   const [vetId, setVetId] = useState(null);
@@ -14,155 +24,198 @@ export default function TipsScreen({ route }) {
   const [editedTipContent, setEditedTipContent] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [tip, setTip] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const fetchAllTips = async () => {
+  const fetchAllTips = useCallback(async () => {
     try {
       const tips = await clientServer.getAllTips();
       setAllTips(tips);
     } catch (error) {
       console.log(error);
     }
-  };
+  }, []);
 
-  const fetchTipsById = async (vetId) => {
+  const fetchTipsById = useCallback(async (id) => {
     try {
-      const tipsDetailsArray = await clientServer.getTipsByVetId(vetId);
+      const tipsDetailsArray = await clientServer.getTipsByVetId(id);
       setVetTips(tipsDetailsArray);
     } catch (error) {
       console.log(error);
     }
-  };
+  }, []);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const type =
+        route.params?.userType || (await AsyncStorage.getItem("userType"));
+      setUserType(type);
+      const id = route.params?.vetId || (await AsyncStorage.getItem("vetId"));
+      setVetId(id || null);
+
+      if (userType === "petOwner") {
+        if (id) {
+          await fetchTipsById(id);
+        } else {
+          await fetchAllTips();
+        }
+      } else if (userType === "vet") {
+        await fetchTipsById(id);
+        await fetchAllTips();
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.log(error);
+      setLoading(false);
+    }
+  }, [route.params, userType, fetchAllTips, fetchTipsById]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const type = route.params?.userType || (await AsyncStorage.getItem("userType"));
-        setUserType(type);
-
-        const id = route.params?.vetId || (await AsyncStorage.getItem("vetId"));
-        setVetId(id || null);
-
-        if (userType === "petOwner") {
-          if (id) {
-            fetchTipsById(id);
-          } else {
-            fetchAllTips();
-          }
-        } else if (userType === "vet") {
-          fetchTipsById(id);
-          fetchAllTips();
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    };
     fetchData();
-  }, [vetId]);
+  }, [fetchData]);
 
-  const handleEditPress = (tipId, currentContent) => {
+  const handleEditPress = useCallback((tipId, currentContent) => {
     setEditingTipId(tipId);
     setEditedTipContent(currentContent);
-  };
-  const handleDeletePress = async (tipId) => {
-    try {
-      await clientServer.deleteTip(tipId);
-      await fetchTipsById(vetId);
-    } catch (error) {
-      console.error("Error deleting tip:", error);
-    }
-  };
+  }, []);
 
-  const handleSavePress = async (tipId) => {
-    setVetTips((prevTips) => prevTips.map((tip) => (tip._id === tipId ? { ...tip, content: editedTipContent } : tip)));
-    await clientServer.updateTip(tipId, {
-      vetId: vetId,
-      content: editedTipContent,
-    });
+  const handleDeletePress = useCallback(
+    async (tipId) => {
+      try {
+        await clientServer.deleteTip(tipId);
+        await fetchTipsById(vetId);
+      } catch (error) {
+        console.error("Error deleting tip:", error);
+      }
+    },
+    [fetchTipsById, vetId]
+  );
 
-    // Clear editing state
+  const handleSavePress = useCallback(
+    async (tipId) => {
+      setVetTips((prevTips) =>
+        prevTips.map((tip) =>
+          tip._id === tipId ? { ...tip, content: editedTipContent } : tip
+        )
+      );
+      await clientServer.updateTip(tipId, {
+        vetId: vetId,
+        content: editedTipContent,
+      });
+      setEditingTipId(null);
+      setEditedTipContent("");
+    },
+    [vetId, editedTipContent]
+  );
+
+  const handleCancelPress = useCallback(() => {
     setEditingTipId(null);
     setEditedTipContent("");
-  };
+  }, []);
 
-  const handleCancelPress = () => {
-    // Clear editing state
-    setEditingTipId(null);
-    setEditedTipContent("");
-  };
-
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     await clientServer.addTip(vetId, tip);
     await fetchTipsById(vetId);
     setIsAdding(false);
     setEditingTipId(null);
     setEditedTipContent("");
-  };
-  const handleCancel = () => {
+  }, [vetId, tip, fetchTipsById]);
+
+  const handleCancel = useCallback(() => {
     setIsAdding(false);
     setTip("");
-  };
+  }, []);
 
-  const renderItemOtherVet = ({ item }) => {
-    if (!item) return null;
-    if (vetId && item.vetId == vetId) return null;
-    return (
-      <View style={styles.tipContainer}>
-        <Image
-          source={{ uri: item.VetImage }} // Make sure to update this to use item-specific images if available
-          resizeMode="cover"
-          style={styles.profileImage}
-        />
-        <View style={styles.tipTextContainer}>
-          <Text style={styles.tipContent}>{item.content}</Text>
-          <Text style={styles.vetName}>By: {item.vetName}</Text>
-        </View>
-      </View>
-    );
-  };
-
-  const renderItem = ({ item }) => {
-    if (!item) return null;
-    const isEditing = item?._id === editingTipId;
-
-    return (
-      <View style={styles.tipContainer}>
-        {isEditing ? (
-          <View>
-            <TextInput value={editedTipContent} onChangeText={(text) => setEditedTipContent(text)} />
-            <View style={{ flexDirection: "row", marginTop: 5 }}>
-              <Button title="Save" onPress={() => handleSavePress(item._id)} />
-              <Button title="Cancel" onPress={handleCancelPress} />
-            </View>
-          </View>
-        ) : (
+  const renderItemOtherVet = useCallback(
+    ({ item }) => {
+      if (!item || (vetId && item.vetId === vetId)) return null;
+      return (
+        <View style={styles.tipContainer}>
+          <Image
+            source={{ uri: item.VetImage }}
+            resizeMode="cover"
+            style={styles.profileImage}
+          />
           <View style={styles.tipTextContainer}>
             <Text style={styles.tipContent}>{item.content}</Text>
-            {userType == "vet" ? (
-              <>
-                <TouchableOpacity onPress={() => handleEditPress(item._id, item.content)}>
-                  <MaterialIcons name="edit" size={24} color={COLORS.black} />
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => handleDeletePress(item._id)}>
-                  <MaterialIcons name="delete" size={24} color="black" />
-                </TouchableOpacity>
-              </>
-            ) : null}
+            <Text style={styles.vetName}>By: {item.vetName}</Text>
           </View>
-        )}
-      </View>
-    );
-  };
+        </View>
+      );
+    },
+    [vetId]
+  );
 
-  const renderItems = () => {
+  const renderItem = useCallback(
+    ({ item }) => {
+      if (!item) return null;
+      const isEditing = item._id === editingTipId;
+
+      return (
+        <View style={styles.tipContainer}>
+          {isEditing ? (
+            <View>
+              <TextInput
+                value={editedTipContent}
+                onChangeText={setEditedTipContent}
+              />
+              <View style={{ flexDirection: "row", marginTop: 5 }}>
+                <Button
+                  title="Save"
+                  onPress={() => handleSavePress(item._id)}
+                />
+                <Button title="Cancel" onPress={handleCancelPress} />
+              </View>
+            </View>
+          ) : (
+            <View style={styles.tipTextContainer}>
+              <Text style={styles.tipContent}>{item.content}</Text>
+              {userType === "vet" && (
+                <>
+                  <TouchableOpacity
+                    onPress={() => handleEditPress(item._id, item.content)}
+                  >
+                    <MaterialIcons name="edit" size={24} color={COLORS.black} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleDeletePress(item._id)}>
+                    <MaterialIcons name="delete" size={24} color="black" />
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          )}
+        </View>
+      );
+    },
+    [
+      editingTipId,
+      editedTipContent,
+      handleSavePress,
+      handleCancelPress,
+      handleEditPress,
+      handleDeletePress,
+      userType,
+    ]
+  );
+
+  const renderItems = useCallback(() => {
     if (userType === "petOwner") {
       return (
         <>
-          <Text style={{ fontSize: 20, fontWeight: "bold", marginTop: 20 }}> Vet Tips:</Text>
+          <Text style={{ fontSize: 20, fontWeight: "bold", marginTop: 20 }}>
+            {" "}
+            Vet Tips:
+          </Text>
           <FlatList
             data={vetId ? vetTips : allTips}
             renderItem={renderItemOtherVet}
             keyExtractor={(item) => item?._id}
+            getItemLayout={(data, index) => ({
+              length: 100, // Adjust according to your item's height
+              offset: 100 * index,
+              index,
+            })}
           />
         </>
       );
@@ -170,7 +223,12 @@ export default function TipsScreen({ route }) {
       return (
         <View>
           <>
-            <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}> My Tips:</Text>
+            <Text
+              style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}
+            >
+              {" "}
+              My Tips:
+            </Text>
             {isAdding ? (
               <>
                 <TextInput
@@ -190,7 +248,16 @@ export default function TipsScreen({ route }) {
                 <AntDesign name="pluscircleo" size={24} color="black" />
               </TouchableOpacity>
             )}
-            <FlatList data={vetTips} renderItem={renderItem} keyExtractor={(item) => item?._id} />
+            <FlatList
+              data={vetTips}
+              renderItem={renderItem}
+              keyExtractor={(item) => item?._id}
+              getItemLayout={(data, index) => ({
+                length: 100, // Adjust according to your item's height
+                offset: 100 * index,
+                index,
+              })}
+            />
           </>
           <Text
             style={{
@@ -202,75 +269,54 @@ export default function TipsScreen({ route }) {
           >
             Vet Tips:
           </Text>
-          <FlatList data={allTips} renderItem={renderItemOtherVet} keyExtractor={(item) => item?._id} />
+          <FlatList
+            data={allTips}
+            renderItem={renderItemOtherVet}
+            keyExtractor={(item) => item?._id}
+            getItemLayout={(data, index) => ({
+              length: 100, // Adjust according to your item's height
+              offset: 100 * index,
+              index,
+            })}
+          />
         </View>
       );
     }
-  };
+  }, [
+    vetId,
+    userType,
+    vetTips,
+    allTips,
+    tip,
+    isAdding,
+    renderItemOtherVet,
+    renderItem,
+    handleSave,
+    handleCancel,
+  ]);
 
-  return <View>{renderItems()}</View>;
+  return <View>{loading ? <LoadingIndicator /> : renderItems()}</View>;
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    marginTop: 60,
-    marginBottom: 40,
-    marginLeft: 0,
-  },
   tipContainer: {
-    flexDirection: "row", // Set flexDirection to row to align items horizontally
+    flexDirection: "row",
     backgroundColor: "#f0f0f0",
     borderRadius: 2,
     padding: 5,
     marginBottom: 10,
-    alignItems: "center", // Align items vertically in the center
+    alignItems: "center",
   },
   tipContent: {
     fontSize: 16,
   },
-  input: {
-    height: 40,
-    width: "100%", // Updated to span the entire width
-    borderColor: "#FFA500",
-    borderWidth: 1,
-    marginBottom: 20,
-    paddingLeft: 10,
-    borderRadius: 20, // Added to make it round
-    backgroundColor: "#FFFFFF", // White
-  },
-  vetName: {
-    fontStyle: "italic",
-    marginTop: 5,
-  },
-  editProfileButton: {
-    position: "absolute",
-    right: 20,
-    top: 20,
-    zIndex: 1,
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
-  },
   profileImage: {
-    height: 60, // Adjust the size as needed
-    width: 60, // Adjust the size as needed
-    borderRadius: 20, // Make it round
-    marginRight: 15, // Add some spacing between the image and the text
+    height: 60,
+    width: 60,
+    borderRadius: 20,
+    marginRight: 15,
   },
   tipTextContainer: {
-    flex: 1, // Take up the remaining space
-  },
-  addButton: {
-    alignSelf: "flex-end",
-    marginBottom: 10,
+    flex: 1,
   },
 });

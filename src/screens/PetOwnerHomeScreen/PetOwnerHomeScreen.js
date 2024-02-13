@@ -1,14 +1,24 @@
 import React, { useState, useCallback } from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, FlatList } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Image,
+  FlatList,
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { COLORS } from "../../constants";
 import { clientServer } from "../../server";
+import LoadingIndicator from "../../components/LoadingIndicator";
 
 export default function PetOwnerHomeScreen({ navigation }) {
   const [userPets, setUserPets] = useState([]);
   const [petOwnerId, setPetOwnerId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useFocusEffect(
     useCallback(() => {
@@ -23,6 +33,8 @@ export default function PetOwnerHomeScreen({ navigation }) {
           }
         } catch (error) {
           console.error("Error fetching data:", error);
+        } finally {
+          setLoading(false); // Set loading to false when data fetching is complete
         }
       };
 
@@ -40,36 +52,41 @@ export default function PetOwnerHomeScreen({ navigation }) {
   };
 
   return (
-    <ScrollView>
+    <View style={styles.container}>
       <View style={styles.addButton}>
         <TouchableOpacity onPress={handleNavigateToEditProfile}>
           <Icon name="plus" size={20} color="black" />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.petsContainer}>
-        {userPets?.length > 0 ? (
-          <FlatList
-            data={userPets}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => handlePetSelect(item)} style={styles.petItem}>
-                <Image source={{ uri: item.imgSrc }} style={styles.petImage} />
-                <Text style={styles.petName}>{item.name}</Text>
-              </TouchableOpacity>
-            )}
-          />
-        ) : (
-          <Text>No pets in your collection</Text>
-        )}
-      </View>
-    </ScrollView>
+      {loading ? (
+        <LoadingIndicator /> // Show loading indicator when data is being fetched
+      ) : userPets?.length > 0 ? (
+        <FlatList
+          data={userPets}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => handlePetSelect(item)}
+              style={styles.petItem}
+            >
+              <Image source={{ uri: item.imgSrc }} style={styles.petImage} />
+              <Text style={styles.petName}>{item.name}</Text>
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={styles.petsContainer}
+        />
+      ) : (
+        <Text style={styles.noPetsText}>No pets in your collection</Text>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   addButton: {
-    marginTop: 20, // Add margin top to move the button down
+    marginTop: 20,
+    alignItems: "center",
   },
   container: {
     flex: 1,
@@ -77,70 +94,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  searchInput: {
-    height: 40,
-    width: "80%",
-    borderColor: "gray",
-    borderWidth: 1,
-    marginBottom: 20,
-    paddingLeft: 10,
-  },
-  searchButton: {
-    backgroundColor: "#FFA500",
-    padding: 10,
-    borderRadius: 5,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  profileButton: {
-    backgroundColor: "#FFA500",
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 20,
-  },
-  searchSection: {
-    paddingTop: 10, // Added top padding to push the entire section down
-  },
-  vetItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  viewTipsButton: {
-    backgroundColor: "#FFA500",
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  tipsButton: {
-    position: "absolute",
-    right: 20,
-    top: 60,
-    zIndex: 2,
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
-  },
-  profileImage: {
-    height: 60, // Adjust the size as needed
-    width: 60, // Adjust the size as needed
-    borderRadius: 20, // Make it round
-    marginRight: 15, // Add some spacing between the image and the text
-  },
   petsContainer: {
-    height: 150, // Adjust as needed
     alignItems: "center",
     padding: 10,
   },
@@ -156,5 +110,8 @@ const styles = StyleSheet.create({
   petName: {
     textAlign: "center",
     marginTop: 5,
+  },
+  noPetsText: {
+    textAlign: "center",
   },
 });

@@ -19,11 +19,13 @@ import InputContainer from "../../components/InputContainer/InputContainer";
 import { mapVetDetailsToSchema, mapVetDetails } from "../../utils";
 import { clientServer } from "../../server";
 import { encodeImageAsBase64 } from "../../../imageUtils";
+import LoadingIndicator from "../../components/LoadingIndicator";
 
 export default function EditVetProfileScreen({ route, navigation }) {
   const [vetId, setVetId] = useState(null);
   const [vetDetails, setVetDetails] = useState({});
   const [selectedImage, setSelectedImage] = useState();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchVetDetails = async () => {
@@ -34,6 +36,7 @@ export default function EditVetProfileScreen({ route, navigation }) {
         const mapedVetDetails = mapVetDetails(data);
         setVetDetails(mapedVetDetails);
         setSelectedImage(mapedVetDetails.profilePicture);
+        setLoading(false);
       } catch (error) {
         console.log(error);
       }
@@ -41,6 +44,9 @@ export default function EditVetProfileScreen({ route, navigation }) {
     fetchVetDetails();
   }, [vetId]);
 
+  if (loading) {
+    return <LoadingIndicator />;
+  }
   const handleLogout = async () => {
     await AsyncStorage.removeItem("vetId");
     await AsyncStorage.removeItem("userType");
@@ -100,24 +106,40 @@ export default function EditVetProfileScreen({ route, navigation }) {
         }
       }
     } else {
-      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
+      Alert.alert(
+        "Permission denied",
+        "Permission to access the photo library was denied."
+      );
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
+      >
         <ScrollView>
           <View style={styles.imageContainer}>
             <TouchableOpacity onPress={handleImagePicker}>
-              <Image source={{ uri: selectedImage }} style={styles.profileImage} />
+              <Image
+                source={{ uri: selectedImage }}
+                style={styles.profileImage}
+              />
               <View style={styles.cameraIcon}>
-                <MaterialIcons name="photo-camera" size={32} color={COLORS.primary} />
+                <MaterialIcons
+                  name="photo-camera"
+                  size={32}
+                  color={COLORS.primary}
+                />
               </View>
             </TouchableOpacity>
           </View>
 
-          <InputContainer details={vetDetails} onChangeText={(key, text) => handleChange(key, text)} />
+          <InputContainer
+            details={vetDetails}
+            onChangeText={(key, text) => handleChange(key, text)}
+          />
           <TouchableOpacity style={styles.saveButton} onPress={saveChanges}>
             <Text style={styles.saveButtonText}>Save Changes</Text>
           </TouchableOpacity>

@@ -1,5 +1,14 @@
 import React, { useState, useCallback } from "react";
-import { View, Text, Image, TouchableOpacity, SafeAreaView, ScrollView, Switch, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  SafeAreaView,
+  ScrollView,
+  Switch,
+  StyleSheet,
+} from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { COLORS, FONTS, SIZES } from "../../constants";
 import { StatusBar } from "expo-status-bar";
@@ -8,10 +17,12 @@ import { mapVetDetails } from "../../utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Rating from "../../components/Rating/Rating";
 import { clientServer } from "../../server";
+import LoadingIndicator from "../../components/LoadingIndicator";
 
 export default function VetHomeScreen({ route, navigation }) {
   const [vetId, setVetId] = useState(null);
   const [vetDetails, setVetDetails] = useState({});
+  const [loading, setLoading] = useState(true);
 
   const userType = route.params?.userType || "vet";
   const petOwnerId = route.params?.petOwnerId || null;
@@ -27,6 +38,7 @@ export default function VetHomeScreen({ route, navigation }) {
           const vetDetails = await clientServer.getVetInfo(id);
           const mapedVetDetails = mapVetDetails(vetDetails);
           setVetDetails(mapedVetDetails);
+          setLoading(false);
         } catch (error) {
           console.log(error);
         }
@@ -35,6 +47,10 @@ export default function VetHomeScreen({ route, navigation }) {
       fetchVetDetails();
     }, [vetId])
   );
+
+  if (loading) {
+    return <LoadingIndicator />;
+  }
 
   const ShowTips = () => {
     navigation.navigate("Tips", { vetId: vetId, userType: userType });
@@ -47,22 +63,35 @@ export default function VetHomeScreen({ route, navigation }) {
         <View style={{ alignItems: "center" }}>
           {userType === "petOwner" ? (
             <>
-              <TouchableOpacity style={styles.tipsButton} onPress={ShowTips}>
-                <MaterialIcons name="my-library-books" size={24} color={COLORS.white} />
-              </TouchableOpacity>
+              {/* <TouchableOpacity style={styles.tipsButton} onPress={ShowTips}>
+                <MaterialIcons
+                  name="my-library-books"
+                  size={24}
+                  color={COLORS.white}
+                />
+              </TouchableOpacity> */}
               <TouchableOpacity
                 style={styles.makeAppointmentButton}
                 onPress={() =>
-                  navigation.navigate("Make Appointment", { petOwnerId: petOwnerId, vetId: vetId, userType: userType })
+                  navigation.navigate("Make Appointment", {
+                    petOwnerId: petOwnerId,
+                    vetId: vetId,
+                    userType: userType,
+                  })
                 }
               />
             </>
           ) : (
-            <TouchableOpacity onPress={() => navigation.navigate("Edit Vet Profile Screen")}>
-              <Ionicons name="edit" size={24} color="black" />
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Edit Vet Profile Screen")}
+            >
+              <MaterialIcons name="edit" size={24} color="black" />
             </TouchableOpacity>
           )}
-          <Image source={{ uri: vetDetails.profilePicture }} style={styles.vetProfileImage} />
+          <Image
+            source={{ uri: vetDetails.profilePicture }}
+            style={styles.vetProfileImage}
+          />
 
           <Text style={styles.name}>{vetDetails.name}</Text>
           <Text style={styles.specialization}>{vetDetails.specialization}</Text>
@@ -80,7 +109,9 @@ export default function VetHomeScreen({ route, navigation }) {
           <View style={{ paddingVertical: 8, flexDirection: "row" }}>
             <View style={styles.infoBox}>
               <Text style={{ ...FONTS.h3, color: "black" }}>
-                {+vetDetails.clientsCount > 0 ? (+vetDetails.rate / +vetDetails.clientsCount).toFixed(1) : 0}
+                {+vetDetails.clientsCount > 0
+                  ? (+vetDetails.rate / +vetDetails.clientsCount).toFixed(1)
+                  : 0}
               </Text>
               <Text style={{ ...FONTS.body4, color: "black" }}>Rating</Text>
             </View>

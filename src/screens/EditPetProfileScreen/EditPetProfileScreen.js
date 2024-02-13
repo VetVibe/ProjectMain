@@ -1,6 +1,14 @@
 import React, { useState, useCallback } from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import { View, Button, Image, StyleSheet, TouchableOpacity, ScrollView, Alert } from "react-native";
+import {
+  View,
+  Button,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+} from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { StackActions } from "@react-navigation/native";
 import TabsContainer from "../../components/TabsContainer/TabsContainer";
@@ -10,7 +18,7 @@ import BasicInfoView from "./BasicInfoView";
 import MedicalInfoView from "./MedicalInfoView";
 import { clientServer } from "../../server";
 import { encodeImageAsBase64 } from "../../../imageUtils";
-
+import LoadingIndicator from "../../components/LoadingIndicator";
 const EditPetProfileScreen = ({ route, navigation }) => {
   const [activeTab, setActiveTab] = useState("petInfo"); // petInfo or medicalHistory
   const [petBasicInfoInput, setPetBasicInfoInput] = useState({});
@@ -18,18 +26,22 @@ const EditPetProfileScreen = ({ route, navigation }) => {
   const [petImage, setPetImage] = useState(
     "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/65761296352685.5eac4787a4720.jpg"
   );
+  const [loading, setLoading] = useState(true);
 
   const petId = route.params.petId;
   const petOwnerId = route.params.petOwnerId;
 
-  useFocusEffect(() => {
+  useFocusEffect(
     useCallback(() => {
       const fetchPetDetails = async () => {
         try {
-          const mapedPetDetails = petId ? mapPetDetails(await clientServer.getPetDetails(petId)) : mapPetDetails();
+          const mapedPetDetails = petId
+            ? mapPetDetails(await clientServer.getPetDetails(petId))
+            : mapPetDetails();
           setPetBasicInfoInput(mapedPetDetails?.basicInfo);
           setMedicalInfoInput(mapedPetDetails?.medicalInfo);
           setPetImage(mapedPetDetails?.imgSrc);
+          setLoading(false);
         } catch (error) {
           console.error("Error fetching data:", error);
         }
@@ -39,10 +51,12 @@ const EditPetProfileScreen = ({ route, navigation }) => {
       return () => {
         setPetBasicInfoInput({});
         setMedicalInfoInput({});
-        setPetImage("https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/65761296352685.5eac4787a4720.jpg");
+        setPetImage(
+          "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/65761296352685.5eac4787a4720.jpg"
+        );
       };
-    }, [petId]);
-  });
+    }, [petId])
+  );
 
   const handleTabPress = (tab) => {
     setActiveTab(tab);
@@ -108,37 +122,47 @@ const EditPetProfileScreen = ({ route, navigation }) => {
         }
       }
     } else {
-      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
+      Alert.alert(
+        "Permission denied",
+        "Permission to access the photo library was denied."
+      );
     }
   };
 
   return (
     <View style={styles.container}>
-      <TabsContainer tabs={PET_PROFILE_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
+      <TabsContainer
+        tabs={PET_PROFILE_TABS}
+        activeTab={activeTab}
+        handleTabPress={handleTabPress}
+      />
 
-      <ScrollView style={{ flexGrow: 1 }}>
-        {activeTab === "petInfo" ? (
-          <View>
-            <TouchableOpacity onPress={handleImagePicker}>
-              <Image source={{ uri: petImage }} style={styles.petImage} />
-            </TouchableOpacity>
-            <BasicInfoView
-              details={petBasicInfoInput}
+      {loading ? (
+        <LoadingIndicator />
+      ) : (
+        <ScrollView style={{ flexGrow: 1 }}>
+          {activeTab === "petInfo" ? (
+            <View>
+              <TouchableOpacity onPress={handleImagePicker}>
+                <Image source={{ uri: petImage }} style={styles.petImage} />
+              </TouchableOpacity>
+              <BasicInfoView
+                details={petBasicInfoInput}
+                onChangeText={(key, text) => handleChange(key, text, activeTab)}
+              />
+            </View>
+          ) : (
+            <MedicalInfoView
+              details={petMedicalInfoInput}
               onChangeText={(key, text) => handleChange(key, text, activeTab)}
             />
-          </View>
-        ) : (
-          <MedicalInfoView
-            details={petMedicalInfoInput}
-            onChangeText={(key, text) => handleChange(key, text, activeTab)}
-          />
-        )}
-      </ScrollView>
+          )}
+        </ScrollView>
+      )}
       <Button title="Save Changes" onPress={saveChanges} />
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   imageContainer: {
     flex: 1,

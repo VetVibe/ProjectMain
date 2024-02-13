@@ -46,7 +46,10 @@ function PetOwnerAppointments() {
 
 function PetOwnerTabs() {
   return (
-    <Tab.Navigator tabBar={(props) => <CustomPetOwnerTabBar {...props} />} screenOptions={{ headerShown: false }}>
+    <Tab.Navigator
+      tabBar={(props) => <CustomPetOwnerTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
+    >
       <Tab.Screen name="Pet Owner Home Tab" component={PetOwnerHomeTab} />
       <Tab.Screen name="Tips" component={TipsScreen} />
       <Tab.Screen name="Appointments" component={PetOwnerAppointments} />
@@ -58,8 +61,11 @@ function PetOwnerTabs() {
 function VetHome() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Vet Home Screen" component={VetHomeScreen} />
-      <Stack.Screen name="Edit Vet Profile Screen" component={EditVetProfileScreen} />
+      <Stack.Screen name="Vet Home" component={VetHomeScreen} />
+      <Stack.Screen
+        name="Edit Vet Profile Screen"
+        component={EditVetProfileScreen}
+      />
     </Stack.Navigator>
   );
 }
@@ -75,7 +81,10 @@ function VetAppointments() {
 
 function VetTabs() {
   return (
-    <Tab.Navigator tabBar={(props) => <CustomVetTabBar {...props} />} screenOptions={{ headerShown: false }}>
+    <Tab.Navigator
+      tabBar={(props) => <CustomVetTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
+    >
       <Tab.Screen name="Vet Home Screen" component={VetHome} />
       <Tab.Screen name="Tips Screen" component={TipsScreen} />
       <Tab.Screen name="Make Appointment" component={VetAppointments} />

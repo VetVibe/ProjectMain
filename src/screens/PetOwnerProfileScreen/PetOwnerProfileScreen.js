@@ -20,12 +20,14 @@ import { encodeImageAsBase64 } from "../../../imageUtils";
 import { isPasswordValid } from "../../utils";
 import { TITELS } from "../../constants";
 import { clientServer } from "../../server";
+import LoadingIndicator from "../../components/LoadingIndicator";
 
 export default function PetOwnerProfileScreen({ navigation }) {
   const [petOwnerId, setPetOwnerId] = useState(null);
   const [petOwnerDetails, setPetOwnerDetails] = useState({});
   const [selectedImage, setSelectedImage] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPetOwnerDetails = async () => {
@@ -35,6 +37,7 @@ export default function PetOwnerProfileScreen({ navigation }) {
         const data = await clientServer.getPetOwnerInfo(id);
         setPetOwnerDetails(data);
         setSelectedImage(data.profilePicture);
+        setLoading(false);
       }
     };
     fetchPetOwnerDetails();
@@ -78,7 +81,10 @@ export default function PetOwnerProfileScreen({ navigation }) {
     }
 
     if (!petOwnerDetails.name || petOwnerDetails.name === "") {
-      Alert.alert("Incomplete Information", "Please fill in all required fields: Cannot leave name empty.");
+      Alert.alert(
+        "Incomplete Information",
+        "Please fill in all required fields: Cannot leave name empty."
+      );
       return;
     }
 
@@ -113,29 +119,47 @@ export default function PetOwnerProfileScreen({ navigation }) {
         }
       }
     } else {
-      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
+      Alert.alert(
+        "Permission denied",
+        "Permission to access the photo library was denied."
+      );
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
-        {!isEditing ? (
-          <TouchableOpacity style={styles.editProfileButton} onPress={() => setIsEditing(true)}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
+      >
+        {loading ? (
+          <LoadingIndicator /> // Show loading indicator while fetching data
+        ) : !isEditing ? (
+          <TouchableOpacity
+            style={styles.editProfileButton}
+            onPress={() => setIsEditing(true)}
+          >
             <MaterialIcons name="edit" size={24} color={COLORS.white} />
           </TouchableOpacity>
         ) : null}
         <View style={styles.imageContainer}>
           <TouchableOpacity onPress={handleImagePicker}>
             {selectedImage !== null && selectedImage !== "" ? (
-              <Image source={{ uri: selectedImage }} style={styles.profileImage} />
+              <Image
+                source={{ uri: selectedImage }}
+                style={styles.profileImage}
+              />
             ) : (
               <View style={styles.profileImagePlaceholder}>
                 <Text style={styles.placeholderText}>Select an Image</Text>
               </View>
             )}
             <View style={styles.cameraIcon}>
-              <MaterialIcons name="photo-camera" size={32} color={COLORS.primary} />
+              <MaterialIcons
+                name="photo-camera"
+                size={32}
+                color={COLORS.primary}
+              />
             </View>
           </TouchableOpacity>
         </View>
@@ -189,7 +213,10 @@ export default function PetOwnerProfileScreen({ navigation }) {
               <TouchableOpacity style={styles.saveButton} onPress={saveChanges}>
                 <Text style={styles.saveButtonText}>Save Changes</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={() => setIsEditing(false)}>
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={() => setIsEditing(false)}
+              >
                 <Text style={styles.saveButtonText}>Cancel</Text>
               </TouchableOpacity>
             </>

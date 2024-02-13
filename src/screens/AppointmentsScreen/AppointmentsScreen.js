@@ -1,50 +1,65 @@
 import React, { useState, useCallback } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+} from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { clientServer } from "../../server";
 import AppointmentCard from "../../components/AppointmentCard/AppointmentCard";
+import LoadingIndicator from "../../components/LoadingIndicator";
 
 export default function AppointmentsScreen({ navigation, route }) {
+  console.log("Route params:", route.params);
   const [appointmentList, setAppointmentList] = useState([]);
-  const [petOwnerId, setPetOwnerId] = useState(route.params?.petOwnerId || null);
+  const [loading, setLoading] = useState(true);
+  const [petOwnerId, setPetOwnerId] = useState(
+    route.params?.petOwnerId || null
+  );
   const [userType, setUserType] = useState(null);
 
   const vetId = route.params?.vetId || null;
   const day = route.params?.day || null;
 
-  const fetchAllPetOwnerAppointments = async (petOwnerId) => {
+  const fetchAllPetOwnerAppointments = useCallback(async (id) => {
     try {
-      const appointments = await clientServer.getAppointmentsByOwner(petOwnerId);
+      const appointments = await clientServer.getAppointmentsByOwner(id);
       const updatedAppointments = await Promise.all(
         appointments.map(async (appointment) => {
-          let { name, phoneNumber } = await clientServer.getVetInfo(appointment.vetId);
-          return {
-            ...appointment,
-            name: name,
-            phoneNumber: phoneNumber,
-          };
+          const { name, phoneNumber } = await clientServer.getVetInfo(
+            appointment.vetId
+          );
+          return { ...appointment, name, phoneNumber };
         })
       );
       setAppointmentList(updatedAppointments);
     } catch (error) {
       console.log("Error fetching appointments by owner:", error);
     }
-  };
+  }, []);
 
-  const fetchAllVetAppointments = async (vetId) => {
+  const fetchAllVetAppointments = useCallback(async (id, day) => {
     try {
-      const appointments = await clientServer.getAppointmentsByVet(vetId);
-      console.log(day);
-      const appointmentsByDay = appointments.filter((appointment) => appointment.date === day);
-      console.log("Appointments by vet and day:", appointmentsByDay);
-
-      setAppointmentList(appointmentsByDay);
+      const appointments = await clientServer.getAppointmentsByVet(id);
+      const appointmentsByDay = appointments.filter(
+        (appointment) => appointment.date === day
+      );
+      const updatedAppointments = appointmentsByDay.map(async (appointment) => {
+        const { name, phoneNumber } = await clientServer.getPetOwnerInfo(
+          appointment.petOwnerId
+        );
+        return { ...appointment, name, phoneNumber };
+      });
+      setAppointmentList(updatedAppointments);
     } catch (error) {
       console.log("Error fetching appointments by vet:", error);
     }
-  };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -53,85 +68,102 @@ export default function AppointmentsScreen({ navigation, route }) {
           const type = await AsyncStorage.getItem("userType");
           setUserType(type);
 
-          if (type == "vet") {
-            fetchAllVetAppointments(vetId);
-          } else if (type == "petOwner") {
+          if (type === "vet" && vetId) {
+            await fetchAllVetAppointments(vetId, day);
+          } else if (type === "petOwner") {
             const id = petOwnerId || (await AsyncStorage.getItem("userId"));
             setPetOwnerId(id);
-            fetchAllPetOwnerAppointments(id);
+            await fetchAllPetOwnerAppointments(id);
+          } else {
+            console.log("Invalid userType or vetId");
           }
+          setLoading(false);
         } catch (error) {
           console.log(error);
+          setLoading(false);
         }
       };
 
       fetchData();
-    }, [])
+    }, [
+      vetId,
+      day,
+      petOwnerId,
+      fetchAllVetAppointments,
+      fetchAllPetOwnerAppointments,
+    ])
   );
 
-  const handleVetSearch = () => {
+  const handleVetSearch = useCallback(() => {
     navigation.navigate("Find Vets", {
       petOwnerId: petOwnerId,
       vetId: vetId,
     });
-  };
-  async function removeAppointment(appointmentId) {
-    try {
-      setAppointmentList((prevAppointments) => {
-        return prevAppointments.filter((appointment) => appointment._id !== appointmentId);
-      });
+  }, [navigation, petOwnerId, vetId]);
 
+  const removeAppointment = useCallback(async (appointmentId) => {
+    try {
+      setAppointmentList((prevAppointments) =>
+        prevAppointments.filter(
+          (appointment) => appointment._id !== appointmentId
+        )
+      );
       await clientServer.deleteAppointment(appointmentId);
     } catch (error) {
       console.error(error);
     }
-  }
+  }, []);
 
-  const handleCancel = (appointment) => {
-    Alert.alert("Are you sure you want to delete appointment?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Yes",
-        onPress: () => removeAppointment(appointment._id),
-      },
-    ]);
-  };
+  const handleCancel = useCallback(
+    (appointment) => {
+      Alert.alert("Are you sure you want to delete appointment?", [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: () => removeAppointment(appointment._id),
+        },
+      ]);
+    },
+    [removeAppointment]
+  );
 
   return (
     <ScrollView>
       <Text style={styles.header_text}>Your appointments</Text>
-      <View style={styles.list_container}>
-        {userType === "petOwner" && (
-          <TouchableOpacity onPress={handleVetSearch}>
-            <FontAwesome name="search" size={24} color="black" />
-          </TouchableOpacity>
-        )}
-        {!appointmentList || appointmentList?.length === 0 ? (
-          <>
-            <Text style={styles.emptyViewText}>No appointments.</Text>
-            {userType === "petOwner" && (
-              <TouchableOpacity onPress={handleVetSearch}>
-                <Text style={styles.emptyViewText}>Make an appointment</Text>
-              </TouchableOpacity>
-            )}
-          </>
-        ) : (
-          <View>
-            {appointmentList.map((appointment) => {
-              return (
+      {loading ? (
+        <LoadingIndicator />
+      ) : (
+        <View style={styles.list_container}>
+          {userType === "petOwner" && (
+            <TouchableOpacity onPress={handleVetSearch}>
+              <FontAwesome name="search" size={24} color="black" />
+            </TouchableOpacity>
+          )}
+          {!appointmentList || appointmentList?.length === 0 ? (
+            <>
+              <Text style={styles.emptyViewText}>No appointments.</Text>
+              {userType === "petOwner" && (
+                <TouchableOpacity onPress={handleVetSearch}>
+                  <Text style={styles.emptyViewText}>Make an appointment</Text>
+                </TouchableOpacity>
+              )}
+            </>
+          ) : (
+            <View>
+              {appointmentList.map((appointment) => (
                 <AppointmentCard
                   appointment={appointment}
                   key={appointment._id}
                   onPressCancel={() => handleCancel(appointment)}
                 />
-              );
-            })}
-          </View>
-        )}
-      </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
     </ScrollView>
   );
 }
