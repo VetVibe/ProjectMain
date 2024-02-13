@@ -53,7 +53,7 @@ router.put(VETERINARIAN_ENDPOINTS.UPDATE_INFO, updateVeterinarianInfo);
 // Tip routes
 router.get(TIP_ENDPOINTS.ALL, getAllTips);
 router.get(TIP_ENDPOINTS.BY_VET_ID, getTipsByVetId);
-router.post(TIP_ENDPOINTS.BY_VET_ID, addTip);
+router.post(TIP_ENDPOINTS.ADD_TIP, addTip);
 router.get(TIP_ENDPOINTS.DETAILS, getTip);
 router.put(TIP_ENDPOINTS.UPDATE_INFO, updateTipInfo);
 router.delete(TIP_ENDPOINTS.DETAILS, deleteTip);

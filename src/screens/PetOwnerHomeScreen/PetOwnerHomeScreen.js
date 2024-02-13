@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, FlatList } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from "react-native-vector-icons/FontAwesome";
@@ -9,39 +10,32 @@ export default function PetOwnerHomeScreen({ navigation }) {
   const [userPets, setUserPets] = useState([]);
   const [petOwnerId, setPetOwnerId] = useState(null);
 
-  useEffect(() => {
-    const updateUserPetDetails = async () => {
-      try {
-        const id = petOwnerId || (await AsyncStorage.getItem("userId"));
-        setPetOwnerId(id);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUserPetDetails = async () => {
+        try {
+          const id = petOwnerId || (await AsyncStorage.getItem("userId"));
+          setPetOwnerId(id);
 
-        if (id) {
-          const petsInfo = await clientServer.getPetsByOwnerId(id);
-          setUserPets(petsInfo?.pets || []);
+          if (id) {
+            const petsInfo = await clientServer.getPetsByOwnerId(id);
+            setUserPets(petsInfo?.pets || []);
+          }
+        } catch (error) {
+          console.error("Error fetching data:", error);
         }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
+      };
 
-    const focusListener = navigation.addListener("focus", () => {
-      updateUserPetDetails();
-    });
-
-    // Clean up the subscription when the component unmounts
-    return () => {
-      if (focusListener) {
-        focusListener();
-      }
-    };
-  }, [userPets, navigation]);
+      fetchUserPetDetails();
+    }, [petOwnerId])
+  );
+  // demo0@gmail.com Vetvibe123!
 
   const handleNavigateToEditProfile = () => {
     navigation.navigate("Edit Pet Profile", { petOwnerId: petOwnerId });
   };
 
   const handlePetSelect = (pet) => {
-    // Navigate to Pet Profile Screen with the selected pet's ID
     navigation.navigate("Pet Profile", { petId: pet._id });
   };
 
@@ -57,7 +51,6 @@ export default function PetOwnerHomeScreen({ navigation }) {
         {userPets?.length > 0 ? (
           <FlatList
             data={userPets}
-            horizontal={true}
             keyExtractor={(item) => item._id}
             renderItem={({ item }) => (
               <TouchableOpacity onPress={() => handlePetSelect(item)} style={styles.petItem}>

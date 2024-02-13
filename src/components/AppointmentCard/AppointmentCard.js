@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { TouchableOpacity, Text, View, StyleSheet, Image } from "react-native";
+import { TouchableOpacity, Text, View, StyleSheet } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
 export default function AppointmentCard({ appointment, onPressCancel }) {
@@ -21,13 +20,9 @@ export default function AppointmentCard({ appointment, onPressCancel }) {
         </View>
         <View style={styles.info_container}>
           <View style={styles.info}>
-            <View style={styles.textContainer}>
-              {name && (
-                <>
-                  <Text style={styles.appType}>{name}</Text>
-                  <Text style={styles.appType}>{phoneNumber}</Text>
-                </>
-              )}
+            <View>
+              <Text style={styles.appType}>{name}</Text>
+              <Text style={styles.appType}>{phoneNumber}</Text>
               <Text style={styles.time}>
                 {`${String(time).padStart(2, "0")}:00 - ${String(time + 1).padStart(2, "0")}:00`}
               </Text>

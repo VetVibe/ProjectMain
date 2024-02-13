@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { View, Text, Image, TouchableOpacity, SafeAreaView, ScrollView, Switch, StyleSheet } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { COLORS, FONTS, SIZES } from "../../constants";
 import { StatusBar } from "expo-status-bar";
-import { MaterialIcons } from "@expo/vector-icons";
+import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { mapVetDetails } from "../../utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Rating from "../../components/Rating/Rating";
 import { clientServer } from "../../server";
-import { Button } from "react-native-elements";
 
 export default function VetHomeScreen({ route, navigation }) {
   const [vetId, setVetId] = useState(null);
@@ -17,25 +16,24 @@ export default function VetHomeScreen({ route, navigation }) {
   const userType = route.params?.userType || "vet";
   const petOwnerId = route.params?.petOwnerId || null;
 
-  const fetchVetDetails = async () => {
-    const id = (await AsyncStorage.getItem("vetId")) || route.params?.userId;
-    setVetId(id);
-
-    const vetDetails = await clientServer.getVetInfo(id);
-    const mapedVetDetails = mapVetDetails(vetDetails);
-    setVetDetails(mapedVetDetails);
-  };
-
-  // Use useEffect to fetch vet details on component mount
-  useEffect(() => {
-    fetchVetDetails();
-  }, [vetId]);
-
   // Use useFocusEffect to fetch vet details when the screen comes into focus
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
+      const fetchVetDetails = async () => {
+        const id = route.params?.vetId || (await AsyncStorage.getItem("vetId"));
+        setVetId(id);
+
+        try {
+          const vetDetails = await clientServer.getVetInfo(id);
+          const mapedVetDetails = mapVetDetails(vetDetails);
+          setVetDetails(mapedVetDetails);
+        } catch (error) {
+          console.log(error);
+        }
+      };
+
       fetchVetDetails();
-    }, [])
+    }, [vetId])
   );
 
   const ShowTips = () => {
@@ -45,7 +43,7 @@ export default function VetHomeScreen({ route, navigation }) {
   return (
     <SafeAreaView style={styles.safeAreaContainer}>
       <StatusBar backgroundColor={COLORS.gray} />
-      <ScrollView style={{ flex: 1 }}>
+      <ScrollView>
         <View style={{ alignItems: "center" }}>
           {userType === "petOwner" ? (
             <>
@@ -57,9 +55,13 @@ export default function VetHomeScreen({ route, navigation }) {
                 onPress={() =>
                   navigation.navigate("Make Appointment", { petOwnerId: petOwnerId, vetId: vetId, userType: userType })
                 }
-              ></TouchableOpacity>
+              />
             </>
-          ) : null}
+          ) : (
+            <TouchableOpacity onPress={() => navigation.navigate("Edit Vet Profile Screen")}>
+              <Ionicons name="edit" size={24} color="black" />
+            </TouchableOpacity>
+          )}
           <Image source={{ uri: vetDetails.profilePicture }} style={styles.vetProfileImage} />
 
           <Text style={styles.name}>{vetDetails.name}</Text>

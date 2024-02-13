@@ -36,10 +36,10 @@ export default function TipsScreen({ route }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const type = (await AsyncStorage.getItem("userType")) || route.params?.userType;
+        const type = route.params?.userType || (await AsyncStorage.getItem("userType"));
         setUserType(type);
 
-        const id = (await AsyncStorage.getItem("vetId")) || route.params?.vetId;
+        const id = route.params?.vetId || (await AsyncStorage.getItem("vetId"));
         setVetId(id || null);
 
         if (userType === "petOwner") {
@@ -94,6 +94,8 @@ export default function TipsScreen({ route }) {
     await clientServer.addTip(vetId, tip);
     await fetchTipsById(vetId);
     setIsAdding(false);
+    setEditingTipId(null);
+    setEditedTipContent("");
   };
   const handleCancel = () => {
     setIsAdding(false);
@@ -154,31 +156,16 @@ export default function TipsScreen({ route }) {
 
   const renderItems = () => {
     if (userType === "petOwner") {
-      if (vetId) {
-        return (
-          <>
-            <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}> Vet Tips:</Text>
-            <FlatList data={allTips} renderItem={renderItem} keyExtractor={(item) => item?._id} />
-          </>
-        );
-      } else {
-        return (
-          <>
-            <Text
-              style={{
-                fontSize: 20,
-                marginTop: 10,
-                fontWeight: "bold",
-                marginBottom: 10,
-              }}
-            >
-              {" "}
-              Vet Tips:
-            </Text>
-            <FlatList data={allTips} renderItem={renderItemOtherVet} keyExtractor={(item) => item?._id} />
-          </>
-        );
-      }
+      return (
+        <>
+          <Text style={{ fontSize: 20, fontWeight: "bold", marginTop: 20 }}> Vet Tips:</Text>
+          <FlatList
+            data={vetId ? vetTips : allTips}
+            renderItem={renderItemOtherVet}
+            keyExtractor={(item) => item?._id}
+          />
+        </>
+      );
     } else if (userType === "vet") {
       return (
         <View>
@@ -213,7 +200,6 @@ export default function TipsScreen({ route }) {
               marginBottom: 10,
             }}
           >
-            {" "}
             Vet Tips:
           </Text>
           <FlatList data={allTips} renderItem={renderItemOtherVet} keyExtractor={(item) => item?._id} />

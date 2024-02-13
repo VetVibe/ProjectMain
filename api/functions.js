@@ -473,7 +473,7 @@ const getAppointmentsByOwner = async (req, res) => {
   try {
     const userId = req.params.petOwnerId;
     const appointments = await Appointment.find({ petOwnerId: userId });
-    res.status(200).json({ appointments });
+    res.status(200).json(appointments);
     console.log(`DB | Get appointments by owner id | Appointments for user ${userId} fetched successfully`);
   } catch (e) {
     console.error("DB | Get appointments by owner id | Error:", e);
@@ -515,7 +515,7 @@ const getAppointmentsByVet = async (req, res) => {
   try {
     const userId = req.params.vetId;
     const appointments = await Appointment.find({ vetId: userId });
-    res.status(200).json({ appointments });
+    res.status(200).json(appointments);
     console.log(`DB | Get appointments by vet id | Appointments for vet ${userId} fetched successfully`);
   } catch (e) {
     console.error("DB | Get appointments by vet id | Error:", e);

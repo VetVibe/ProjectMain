@@ -19,9 +19,6 @@ export default function CustomTabBar() {
         <TouchableOpacity onPress={() => navigation.navigate("Make Appointment") & setFocused(3)}>
           <AntDesign name="calendar" size={24} color="black" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate("Edit Vet Profile Screen") & setFocused(3)}>
-          <Ionicons name="person" size={24} color="black" />
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -36,12 +33,12 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 15,
   },
   icon: {
-    fontSize: 30,
+    fontSize: 40,
     padding: 8,
     color: "#222",
   },
   iconFocused: {
-    fontSize: 30,
+    fontSize: 40,
     padding: 8,
     color: "#000",
   },

@@ -30,7 +30,7 @@ export default function VetSearchScreen({ navigation }) {
   const handleVetPress = (vet) => {
     // Navigate to VetHomeScreen with the selected vet's ID and pet owner's ID
     navigation.navigate("Vet Home Screen", {
-      userId: vet._id,
+      vetId: vet._id,
       userType: "petOwner", // ID of the pet owner
       petOwnerId: petOwnerId,
     });

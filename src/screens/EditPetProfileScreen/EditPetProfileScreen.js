@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { View, Button, Image, StyleSheet, TouchableOpacity, ScrollView, Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { TabActions } from "@react-navigation/native";
+import { StackActions } from "@react-navigation/native";
 import TabsContainer from "../../components/TabsContainer/TabsContainer";
 import { mapPetDetails, mapPetDetailsToSchema } from "../../utils";
 import { PET_PROFILE_TABS } from "../../constants";
@@ -21,25 +22,27 @@ const EditPetProfileScreen = ({ route, navigation }) => {
   const petId = route.params.petId;
   const petOwnerId = route.params.petOwnerId;
 
-  useEffect(() => {
-    try {
-      (async () => {
-        if (petId) {
-          const mapedPetDetails = mapPetDetails(await clientServer.getPetDetails(petId));
-          setPetBasicInfoInput(mapedPetDetails.basicInfo);
-          setMedicalInfoInput(mapedPetDetails.medicalInfo);
-          setPetImage(mapedPetDetails.imgSrc);
-        } else {
-          const mapedPetDetails = mapPetDetails();
+  useFocusEffect(() => {
+    useCallback(() => {
+      const fetchPetDetails = async () => {
+        try {
+          const mapedPetDetails = petId ? mapPetDetails(await clientServer.getPetDetails(petId)) : mapPetDetails();
           setPetBasicInfoInput(mapedPetDetails?.basicInfo);
           setMedicalInfoInput(mapedPetDetails?.medicalInfo);
           setPetImage(mapedPetDetails?.imgSrc);
+        } catch (error) {
+          console.error("Error fetching data:", error);
         }
-      })();
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  }, [petId]);
+      };
+
+      fetchPetDetails();
+      return () => {
+        setPetBasicInfoInput({});
+        setMedicalInfoInput({});
+        setPetImage("https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/65761296352685.5eac4787a4720.jpg");
+      };
+    }, [petId]);
+  });
 
   const handleTabPress = (tab) => {
     setActiveTab(tab);
@@ -73,15 +76,10 @@ const EditPetProfileScreen = ({ route, navigation }) => {
     try {
       if (petId) {
         await clientServer.updatePetInfo(petId, petDetailsSchema);
-        navigation.goBack();
       } else if (petOwnerId) {
-        const petId = await clientServer.registerPet(petOwnerId, petDetailsSchema);
-        setPetBasicInfoInput({});
-        setMedicalInfoInput({});
-        setPetImage("https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/65761296352685.5eac4787a4720.jpg");
-        const jumpToAction = TabActions.jumpTo("Pet Owner Home", { petId: petId });
-        navigation.dispatch(jumpToAction);
+        await clientServer.registerPet(petOwnerId, petDetailsSchema);
       }
+      navigation.goBack();
     } catch (error) {
       console.error("Error updating pet info:", error);
     }

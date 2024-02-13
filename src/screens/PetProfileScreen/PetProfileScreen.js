@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import DetailsContainer from "../../components/DetailsContainer/DetailsContainer";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -11,22 +12,16 @@ export default function PetProfileScreen({ route, navigation }) {
   const [petDetails, setPetDetails] = useState({});
   const petId = route.params.petId;
 
-  useEffect(() => {
-    const updatePetDetails = async () => {
-      const mappedPetDetails = mapPetDetails(await clientServer.getPetDetails(petId));
-      setPetDetails(mappedPetDetails);
-    };
+  useFocusEffect(
+    useCallback(() => {
+      const fetchPetDetails = async () => {
+        const mappedPetDetails = mapPetDetails(await clientServer.getPetDetails(petId));
+        setPetDetails(mappedPetDetails);
+      };
 
-    // Listen for changes and update petDetails
-    const subscription = navigation.addListener("focus", updatePetDetails);
-
-    // Clean up the subscription when the component unmounts
-    return () => {
-      if (subscription) {
-        subscription();
-      }
-    };
-  }, [petId, navigation]);
+      fetchPetDetails();
+    }, [petId])
+  );
 
   const navigateToEditScreen = () => {
     navigation.navigate("Edit Pet Profile", { petId: petId });
@@ -48,7 +43,7 @@ export default function PetProfileScreen({ route, navigation }) {
       </TouchableOpacity>
 
       <Image source={{ uri: petDetails.imgSrc }} style={styles.petImage} />
-      <ScrollView style={{ flexGrow: 1 }}>
+      <ScrollView>
         <View style={tw`bg-white rounded-lg mt-3 px-4`}>
           {Object.entries(petDetails).map(([section, sectionDetails]) => {
             // Skip imgSrc section

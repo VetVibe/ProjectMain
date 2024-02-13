@@ -17,6 +17,7 @@ export const VETERINARIAN_ENDPOINTS = {
 
 export const TIP_ENDPOINTS = {
   ALL: "/tip",
+  ADD_TIP: `/tip/addTip/:vetId`,
   BY_VET_ID: `/tip/:vetId`,
   DETAILS: `/tip/tip-details/:tipId`,
   UPDATE_INFO: `/tip/update-info/:tipId`,
