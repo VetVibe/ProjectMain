@@ -69,25 +69,6 @@ export const mapVetDetailsToSchema = (vetDetails) => {
   };
 };
 
-export const organizeAppointments = (appointments) => {
-  const organizedList = {};
-
-  appointments.forEach((appointment) => {
-    const date = new Date(appointment.date);
-    const formattedDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-    const time = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-    const clientId = appointment.petOwnerId;
-
-    if (!organizedList[formattedDate]) {
-      organizedList[formattedDate] = [];
-    }
-
-    organizedList[formattedDate].push({ time, clientId });
-  });
-
-  return organizedList;
-};
-
 export const getTimesNum = (start, end) => {
   const timesList = [];
   for (let i = start; i < end; i++) {
@@ -96,15 +77,36 @@ export const getTimesNum = (start, end) => {
   return timesList;
 };
 
-export const appointmentsTime = (appointments, currentDate) => {
+export const appointmentsTimeByDate = (appointments, currentDate) => {
   const timeList = [];
 
   appointments.forEach((appointment) => {
     const date = new Date(appointment.date);
-    if (date.getDate() === currentDate.getDate()) {
+    if (date.getDate() === currentDate) {
       timeList.push(appointment.time);
     }
   });
 
   return timeList;
+};
+
+export const availableSlotsByDate = (appointments, currentDate, timeSlots) => {
+  const bookedSlots = appointmentsTimeByDate(appointments, currentDate);
+  return bookedSlots ? timeSlots.filter((time) => !bookedSlots.includes(time)) : timeSlots;
+};
+
+export const fullyBookedDates = (appointments, timeSlots) => {
+  const bookedDates = [];
+  const today = new Date();
+  const oneMonthLater = new Date(today.setMonth(today.getMonth() + 1));
+
+  for (let i = today; i < oneMonthLater; i.setDate(i.getDate() + 1)) {
+    const date = i.getDate();
+    const availableSlots = availableSlotsByDate(appointments, date, timeSlots);
+    if (availableSlots.length === 0) {
+      bookedDates.push(i);
+    }
+  }
+  bookedDates.push(today);
+  return bookedDates;
 };

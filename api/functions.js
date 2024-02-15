@@ -2,10 +2,7 @@ import Veterinarian from "./models/veterinarian.js";
 import PetOwner from "./models/pet_owner.js";
 import Pet from "./models/pet.js";
 import Tip from "./models/tip.js";
-import { randomBytes } from "crypto";
 import Appointment from "./models/appointment.js";
-import mongoose from "mongoose";
-import { Types } from "mongoose";
 
 // ----------- Pet Owner -----------
 const registerPetOwner = async (req, res) => {
@@ -20,7 +17,7 @@ const registerPetOwner = async (req, res) => {
     const newOwner = new PetOwner(req.body);
     await newOwner.save();
 
-    res.status(201).json();
+    res.status(201).json({ id: newOwner._id });
     console.log(`DB | Register Pet Owner: Pet owner registration successful. User ID: ${newOwner._id}`);
   } catch (error) {
     console.error("DB | Register Pet Owner | Error:", error);
@@ -41,7 +38,7 @@ const loginPetOwner = async (req, res) => {
       return res.status(401).json();
     }
 
-    res.status(200).json({ userId: owner._id });
+    res.status(200).json({ id: owner._id });
     console.log(`DB | Login Pet Owner: Pet owner logged in successfully. User ID: ${owner._id}`);
   } catch (error) {
     res.status(500).json({ message: "Login failed" });
@@ -54,22 +51,13 @@ const updatePetOwnerInfo = async (req, res) => {
   const updatedData = req.body.updatedData;
 
   try {
-    const petOwner = await PetOwner.findById(petOwnerId);
+    const petOwner = await PetOwner.findByIdAndUpdate(petOwnerId, updatedData);
 
     if (!petOwner) {
       return res.status(404).json({ success: false, message: "Pet owner not found" });
     }
 
-    // Update the pet owner details
-    Object.assign(petOwner, updatedData);
-
-    // Save the updated pet owner
-    await petOwner.save();
-
-    res.json({
-      success: true,
-      message: "Pet owner details updated successfully",
-    });
+    res.status(200);
     console.log("DB | Update Pet owner details: Pet owner details updated successfully.");
   } catch (error) {
     console.error("DB | Update Pet owner details | Error:", error);
@@ -97,8 +85,8 @@ const getPetOwnerDetails = async (req, res) => {
 // ----------- Veterinarian Functions -----------
 const registerVeterinarian = async (req, res) => {
   try {
-    const { vetId } = req.body;
-    const existingV = await Veterinarian.findOne({ vetId });
+    const { vetId, email } = req.body;
+    const existingV = await Veterinarian.findOne({ vetId: vetId, email: email });
 
     if (existingV) {
       console.error("DB | Veterinarian registration | Error: Veterinarian already registered.");
@@ -108,7 +96,7 @@ const registerVeterinarian = async (req, res) => {
     const newVeterinarian = new Veterinarian(req.body);
     await newVeterinarian.save();
 
-    res.status(201).json();
+    res.status(201).json({ id: newVeterinarian._id });
     console.log("DB | Veterinarian registration successful.");
   } catch (error) {
     console.error("DB | Veterinarian registration | Error:", error);
@@ -130,7 +118,7 @@ const loginVeterinarian = async (req, res) => {
       console.error("DB| Veterinarian login | Error: Invalid password.");
       return res.status(401).json({ message: "Invalid password" });
     }
-    res.status(200).json({ userId: veterinarian._id });
+    res.status(200).json({ id: veterinarian._id });
     console.log("DB| Veterinarian login | Veterinarian logged in successfully.");
   } catch (error) {
     console.error("DB| Veterinarian login | Error:", error);
@@ -207,12 +195,7 @@ const updateVeterinarianInfo = async (req, res) => {
     const vetId = req.params.vetId;
     const updatedVetData = req.body;
 
-    // Use findOneAndUpdate to find the vet by its _id and update the data
-    const updatedVet = await Veterinarian.findOneAndUpdate(
-      { _id: vetId },
-      { $set: updatedVetData },
-      { new: true } // Return the updated document
-    );
+    const updatedVet = await Veterinarian.findByIdAndUpdate(vetId, updatedVetData);
 
     if (!updatedVet) {
       console.error(`DB| Update Vet Info | Error: Vet with ID ${vetId} not found.`);
@@ -248,19 +231,8 @@ const getTipsByVetId = async (req, res) => {
 
 const getAllTips = async (_, res) => {
   try {
-    // Populate the 'vetId' field in each tip with the 'name' field from the referenced veterinarian document
-    const tips = await Tip.find().populate("vetId", "name profilePicture");
-    const tipsWithVetNames = tips.map((tip) => ({
-      _id: tip._id,
-      content: tip.content,
-      vetName: tip.vetId ? tip.vetId.name : "Unknown",
-      // Use the vet's profile picture if available; otherwise, use a default image
-      VetImage:
-        tip.vetId && tip.vetId.profilePicture
-          ? tip.vetId.profilePicture
-          : "https://www.behance.net/gallery/189614555/VetProfile.jpg",
-    }));
-    res.status(200).json(tipsWithVetNames);
+    const tips = await Tip.find();
+    res.status(200).json(tips);
     console.log("DB | Fetch all tips | All tips fetched successfully.");
   } catch (error) {
     console.error("DB | Fetch all tips | Error:", error);
@@ -307,11 +279,7 @@ const updateTipInfo = async (req, res) => {
     const tipId = req.params.tipId;
     const updatedTipData = req.body.updatedData;
 
-    const updatedTip = await Tip.findOneAndUpdate(
-      { _id: tipId },
-      { $set: updatedTipData },
-      { new: true } // Return the updated document
-    );
+    const updatedTip = await Tip.findByIdAndUpdate(tipId, updatedTipData);
 
     if (!updatedTip) {
       console.error(`DB| Update tip | Tip with ID ${tipId} not found.`);
@@ -401,11 +369,7 @@ const updatePetInfo = async (req, res) => {
     const updatedPetData = req.body;
 
     // Use findOneAndUpdate to find the pet by its _id and update the data
-    const updatedPet = await Pet.findOneAndUpdate(
-      { _id: petId },
-      { $set: updatedPetData },
-      { new: true } // Return the updated document
-    );
+    const updatedPet = await Pet.findByIdAndUpdate(petId, updatedPetData);
 
     if (!updatedPet) {
       console.error(`DB| Update Pet | Pet with ID ${petId} not found.`);
@@ -490,7 +454,9 @@ const addAppointmentsByOwner = async (req, res) => {
       petOwnerId: userId,
       vetId: vetId,
       date: date,
+      time: time,
     });
+
     if (isAppointmentExists) {
       console.error("DB | Add appointment by owner ID | Error: Appointment already exists");
       return res.status(409).json({ message: "Appointment already exists" });
@@ -498,7 +464,7 @@ const addAppointmentsByOwner = async (req, res) => {
 
     const newAppointment = await Appointment.create({
       petOwnerId: userId,
-      vetId: new mongoose.Types.ObjectId(vetId), // Convert vetId to a valid ObjectId
+      vetId: vetId,
       date: date,
       time: time,
     });

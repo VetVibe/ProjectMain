@@ -1,27 +1,25 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, Image, ScrollView, Button } from "react-native";
+import React, { useState, useEffect, useContext } from "react";
+import { AuthContext } from "../../auth";
+import { View, Text, ScrollView, Button } from "react-native";
 import { Calendar } from "react-native-calendars";
 import moment from "moment";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StackActions } from "@react-navigation/native";
-import { getTimesNum, appointmentsTime } from "../../utils";
+import { getTimesNum, availableSlotsByDate, fullyBookedDates } from "../../utils";
 import TimeContainer from "../../components/TimeContainer/TimeContainer";
 import { clientServer } from "../../server";
 
 export default function MakeAppointmentScreen({ route, navigation }) {
+  const { authState } = useContext(AuthContext);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
   const [vetAppointments, setVetAppointments] = useState({});
   const [availableTimes, setAvailableTimes] = useState([]);
-  const [vetTimes, setVetTimes] = useState({ start: 8, end: 20 });
-
-  const vetId = route.params?.vetId || (async () => await AsyncStorage.getItem("vetId"));
+  const [timeSlots, setTimeSlots] = useState();
+  const [bookedDays, setBookedDays] = useState([]);
+  const vetId = route.params.vetId;
 
   const today = moment().format("YYYY-MM-DD");
   const oneMonthsLater = moment().add(1, "months").format("YYYY-MM-DD");
-  const allTimes = getTimesNum(vetTimes.start, vetTimes.end);
-
-  const petOwnerId = route.params?.petOwnerId || null;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,7 +28,9 @@ export default function MakeAppointmentScreen({ route, navigation }) {
         setVetAppointments(appointments);
 
         const vetDetails = await clientServer.getVetInfo(vetId);
-        setVetTimes(vetDetails.start, vetDetails.end);
+        const slots = getTimesNum(vetDetails.start, vetDetails.end);
+        setTimeSlots(slots);
+        setBookedDays(fullyBookedDates(appointments, slots));
       } catch (error) {
         console.log(error);
       }
@@ -40,17 +40,9 @@ export default function MakeAppointmentScreen({ route, navigation }) {
 
   const onDateSelect = async (day) => {
     try {
-      if (petOwnerId) {
-        setSelectedDate(day.dateString);
-        const bookedTimes = vetAppointments ? appointmentsTime(vetAppointments, new Date(day)) : null;
-        const availableTimes = bookedTimes ? allTimes.filter((time) => !bookedTimes.includes(time)) : allTimes;
-        setAvailableTimes(availableTimes);
-      } else {
-        navigation.navigate("Appointments", {
-          userId: vetId,
-          day: selectedDate,
-        });
-      }
+      setSelectedDate(day.dateString);
+      const availableSlots = availableSlotsByDate(vetAppointments, new Date(day.dateString), timeSlots);
+      setAvailableTimes(availableSlots);
     } catch (error) {
       console.error(error);
     }
@@ -63,16 +55,29 @@ export default function MakeAppointmentScreen({ route, navigation }) {
         date: new Date(selectedDate),
         time: selectedTime,
       };
-      await clientServer.addAppointmentsByOwner(petOwnerId, appointment);
-      navigation.dispatch(
-        StackActions.replace("Appointments", {
-          petOwnerId: petOwnerId,
-          userType: "petOwner",
-        })
-      );
+      await clientServer.addAppointmentsByOwner(authState.id, appointment);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Pet Owner Appointments" }],
+      });
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const renderAvailableTimes = () => {
+    return (
+      <>
+        {availableTimes.map((time) => (
+          <TimeContainer
+            key={time}
+            time={time}
+            onPress={(time) => setSelectedTime(time)}
+            isSelected={selectedTime === time}
+          />
+        ))}
+      </>
+    );
   };
 
   return (
@@ -85,49 +90,33 @@ export default function MakeAppointmentScreen({ route, navigation }) {
         <Calendar
           onDayPress={onDateSelect}
           markedDates={{
+            ...bookedDays.reduce((obj, date) => {
+              obj[date] = { disabled: true, disableTouchEvent: true };
+              return obj;
+            }, {}),
             [selectedDate]: {
               selected: true,
               disableTouchEvent: true,
               selectedColor: "orange",
               selectedTextColor: "red",
             },
-            [allTimes]: {
-              disableTouchEvent: !petOwnerId && availableTimes == allTimes,
-              customStyles: {
-                container: {
-                  backgroundColor: "white",
-                  borderColor: "black",
-                  borderWidth: 1,
-                },
-                text: {
-                  color: "black",
-                },
-              },
-            },
           }}
           minDate={today}
           maxDate={oneMonthsLater}
         />
-
         {selectedDate && (
+          <>
+            <Text>Available Times:</Text>
+            {renderAvailableTimes()}
+          </>
+        )}
+
+        {selectedTime && (
           <View>
-            <View>
-              <Text>Select time:</Text>
-            </View>
-            <View>
-              {availableTimes.map((time) => (
-                <TimeContainer
-                  key={time}
-                  time={time}
-                  onPress={(time) => setSelectedTime(time)}
-                  isSelected={selectedTime === time}
-                />
-              ))}
-            </View>
+            <Button title={"Book"} onPress={handleAddAppointment} />
           </View>
         )}
       </ScrollView>
-      <View>{petOwnerId && <Button title={"Book"} onPress={handleAddAppointment} />}</View>
     </View>
   );
 }

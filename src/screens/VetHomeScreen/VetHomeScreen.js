@@ -1,65 +1,53 @@
-import React, { useState, useCallback } from "react";
-import { View, Text, Image, TouchableOpacity, SafeAreaView, ScrollView, Switch, StyleSheet } from "react-native";
+import React, { useState, useCallback, useContext } from "react";
+import { AuthContext } from "../../auth";
+import { View, Text, Image, TouchableOpacity, SafeAreaView, ScrollView, StyleSheet, FlatList } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { COLORS, FONTS, SIZES } from "../../constants";
 import { StatusBar } from "expo-status-bar";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { mapVetDetails } from "../../utils";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Rating from "../../components/Rating/Rating";
 import { clientServer } from "../../server";
 
 export default function VetHomeScreen({ route, navigation }) {
-  const [vetId, setVetId] = useState(null);
+  const { authState } = useContext(AuthContext);
   const [vetDetails, setVetDetails] = useState({});
+  const [vetTips, setVetTips] = useState([]);
+  const vetId = authState.userType === "vet" ? authState.id : route.params?.vetId;
 
-  const userType = route.params?.userType || "vet";
-  const petOwnerId = route.params?.petOwnerId || null;
-
-  // Use useFocusEffect to fetch vet details when the screen comes into focus
   useFocusEffect(
     useCallback(() => {
       const fetchVetDetails = async () => {
-        const id = route.params?.vetId || (await AsyncStorage.getItem("vetId"));
-        setVetId(id);
-
         try {
-          const vetDetails = await clientServer.getVetInfo(id);
+          const vetDetails = await clientServer.getVetInfo(vetId);
           const mapedVetDetails = mapVetDetails(vetDetails);
           setVetDetails(mapedVetDetails);
+
+          if (authState.userType === "petOwner") {
+            const vetTipsRaw = await clientServer.getTipsByVetId(vetId);
+            setVetTips(vetTipsRaw);
+          }
         } catch (error) {
           console.log(error);
         }
       };
-
       fetchVetDetails();
     }, [vetId])
   );
-
-  const ShowTips = () => {
-    navigation.navigate("Tips", { vetId: vetId, userType: userType });
-  };
 
   return (
     <SafeAreaView style={styles.safeAreaContainer}>
       <StatusBar backgroundColor={COLORS.gray} />
       <ScrollView>
         <View style={{ alignItems: "center" }}>
-          {userType === "petOwner" ? (
-            <>
-              <TouchableOpacity style={styles.tipsButton} onPress={ShowTips}>
-                <MaterialIcons name="my-library-books" size={24} color={COLORS.white} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.makeAppointmentButton}
-                onPress={() =>
-                  navigation.navigate("Make Appointment", { petOwnerId: petOwnerId, vetId: vetId, userType: userType })
-                }
-              />
-            </>
+          {authState.userType === "petOwner" ? (
+            <TouchableOpacity
+              style={styles.makeAppointmentButton}
+              onPress={() => navigation.navigate("Make Appointment", { vetId: vetId })}
+            />
           ) : (
             <TouchableOpacity onPress={() => navigation.navigate("Edit Vet Profile Screen")}>
-              <Ionicons name="edit" size={24} color="black" />
+              <Ionicons name="pen" size={24} color="black" />
             </TouchableOpacity>
           )}
           <Image source={{ uri: vetDetails.profilePicture }} style={styles.vetProfileImage} />
@@ -93,18 +81,30 @@ export default function VetHomeScreen({ route, navigation }) {
             </View>
           ) : null}
 
-          {userType === "petOwner" ? (
-            <Rating
-              vetDetails={vetDetails}
-              onNewRating={({ newRating, newRatingCount }) =>
-                setVetDetails({
-                  ...vetDetails,
-                  rating: newRating,
-                  ratingCount: newRatingCount,
-                })
-              }
-            />
-          ) : null}
+          {authState.userType === "petOwner" && (
+            <>
+              {vetTips.length > 0 && (
+                <View>
+                  <Text>Vet Tips</Text>
+                  {vetTips.map((tip, index) => (
+                    <View key={index}>
+                      <Text>{tip.content}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+              <Rating
+                vetDetails={vetDetails}
+                onNewRating={({ newRating, newRatingCount }) =>
+                  setVetDetails({
+                    ...vetDetails,
+                    rating: newRating,
+                    ratingCount: newRatingCount,
+                  })
+                }
+              />
+            </>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

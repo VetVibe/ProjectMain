@@ -1,22 +1,18 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useContext } from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AuthContext } from "../../auth";
 import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { clientServer } from "../../server";
 import AppointmentCard from "../../components/AppointmentCard/AppointmentCard";
 
-export default function AppointmentsScreen({ navigation, route }) {
+export default function AppointmentsScreen({ navigation }) {
+  const { authState } = useContext(AuthContext);
   const [appointmentList, setAppointmentList] = useState([]);
-  const [petOwnerId, setPetOwnerId] = useState(route.params?.petOwnerId || null);
-  const [userType, setUserType] = useState(null);
 
-  const vetId = route.params?.vetId || null;
-  const day = route.params?.day || null;
-
-  const fetchAllPetOwnerAppointments = async (petOwnerId) => {
+  const fetchAllPetOwnerAppointments = async () => {
     try {
-      const appointments = await clientServer.getAppointmentsByOwner(petOwnerId);
+      const appointments = await clientServer.getAppointmentsByOwner(authState.id);
       const updatedAppointments = await Promise.all(
         appointments.map(async (appointment) => {
           let { name, phoneNumber } = await clientServer.getVetInfo(appointment.vetId);
@@ -33,33 +29,11 @@ export default function AppointmentsScreen({ navigation, route }) {
     }
   };
 
-  const fetchAllVetAppointments = async (vetId) => {
-    try {
-      const appointments = await clientServer.getAppointmentsByVet(vetId);
-      console.log(day);
-      const appointmentsByDay = appointments.filter((appointment) => appointment.date === day);
-      console.log("Appointments by vet and day:", appointmentsByDay);
-
-      setAppointmentList(appointmentsByDay);
-    } catch (error) {
-      console.log("Error fetching appointments by vet:", error);
-    }
-  };
-
   useFocusEffect(
     useCallback(() => {
       const fetchData = async () => {
         try {
-          const type = await AsyncStorage.getItem("userType");
-          setUserType(type);
-
-          if (type == "vet") {
-            fetchAllVetAppointments(vetId);
-          } else if (type == "petOwner") {
-            const id = petOwnerId || (await AsyncStorage.getItem("userId"));
-            setPetOwnerId(id);
-            fetchAllPetOwnerAppointments(id);
-          }
+          fetchAllPetOwnerAppointments();
         } catch (error) {
           console.log(error);
         }
@@ -70,10 +44,7 @@ export default function AppointmentsScreen({ navigation, route }) {
   );
 
   const handleVetSearch = () => {
-    navigation.navigate("Find Vets", {
-      petOwnerId: petOwnerId,
-      vetId: vetId,
-    });
+    navigation.navigate("Find Vets");
   };
   async function removeAppointment(appointmentId) {
     try {
@@ -87,37 +58,15 @@ export default function AppointmentsScreen({ navigation, route }) {
     }
   }
 
-  const handleCancel = (appointment) => {
-    Alert.alert("Are you sure you want to delete appointment?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Yes",
-        onPress: () => removeAppointment(appointment._id),
-      },
-    ]);
-  };
-
   return (
     <ScrollView>
       <Text style={styles.header_text}>Your appointments</Text>
       <View style={styles.list_container}>
-        {userType === "petOwner" && (
-          <TouchableOpacity onPress={handleVetSearch}>
-            <FontAwesome name="search" size={24} color="black" />
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity onPress={handleVetSearch}>
+          <FontAwesome name="search" size={24} color="black" />
+        </TouchableOpacity>
         {!appointmentList || appointmentList?.length === 0 ? (
-          <>
-            <Text style={styles.emptyViewText}>No appointments.</Text>
-            {userType === "petOwner" && (
-              <TouchableOpacity onPress={handleVetSearch}>
-                <Text style={styles.emptyViewText}>Make an appointment</Text>
-              </TouchableOpacity>
-            )}
-          </>
+          <Text style={styles.emptyViewText}>No appointments.</Text>
         ) : (
           <View>
             {appointmentList.map((appointment) => {
@@ -125,7 +74,7 @@ export default function AppointmentsScreen({ navigation, route }) {
                 <AppointmentCard
                   appointment={appointment}
                   key={appointment._id}
-                  onPressCancel={() => handleCancel(appointment)}
+                  onPressCancel={() => removeAppointment(appointment._id)}
                 />
               );
             })}

@@ -1,4 +1,4 @@
-import HomeScreen from "./HomeScreen/HomeScreen";
+import SignInScreen from "./SignInScreen/SignInScreen";
 import SignUpScreen from "./SignUpScreen/SignUpScreen";
 import PetOwnerHomeScreen from "./PetOwnerHomeScreen/PetOwnerHomeScreen";
 import PetProfileScreen from "./PetProfileScreen/PetProfileScreen";
@@ -10,9 +10,9 @@ import TipsScreen from "./TipsScreen/TipsScreen";
 import VetSearchScreen from "./VetSearchScreen/VetSearchScreen";
 import AppointmentsScreen from "./AppointmentsScreen/AppointmentsScreen";
 import MakeAppointmentScreen from "./MakeAppointmentScreen/MakeAppointmentScreen";
-
+import VetAppointmentsScreen from "./VetAppointmentsScreen/VetAppointmentsScreen";
 export {
-  HomeScreen,
+  SignInScreen,
   SignUpScreen,
   PetOwnerHomeScreen,
   PetProfileScreen,
@@ -24,4 +24,5 @@ export {
   VetSearchScreen,
   AppointmentsScreen,
   MakeAppointmentScreen,
+  VetAppointmentsScreen,
 };

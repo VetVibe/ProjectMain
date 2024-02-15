@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Platform,
   Alert,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AuthContext } from "../../auth";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import { COLORS, FONTS } from "../../constants";
@@ -21,24 +21,20 @@ import { isPasswordValid } from "../../utils";
 import { TITELS } from "../../constants";
 import { clientServer } from "../../server";
 
-export default function PetOwnerProfileScreen({ navigation }) {
-  const [petOwnerId, setPetOwnerId] = useState(null);
+export default function PetOwnerProfileScreen() {
+  const { authState, setAuthState } = useContext(AuthContext);
   const [petOwnerDetails, setPetOwnerDetails] = useState({});
   const [selectedImage, setSelectedImage] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     const fetchPetOwnerDetails = async () => {
-      const id = await AsyncStorage.getItem("userId");
-      setPetOwnerId(id || null);
-      if (id) {
-        const data = await clientServer.getPetOwnerInfo(id);
-        setPetOwnerDetails(data);
-        setSelectedImage(data.profilePicture);
-      }
+      const data = await clientServer.getPetOwnerInfo(authState.id);
+      setPetOwnerDetails(data);
+      setSelectedImage(data.profilePicture);
     };
     fetchPetOwnerDetails();
-  }, [petOwnerId]);
+  }, []);
 
   const handleChange = (inputIdentifier, newValue) => {
     setPetOwnerDetails((prevUserInput) => {
@@ -50,10 +46,8 @@ export default function PetOwnerProfileScreen({ navigation }) {
   };
 
   const handleLogout = async () => {
-    await AsyncStorage.removeItem("userId");
-    await AsyncStorage.removeItem("userType");
-    console.log("Pet owner logged out: cleared auth token.");
-    navigation.replace("Home");
+    setAuthState({ id: "", signedIn: false, userType: "" });
+    console.log("Pet owner logged out: cleared auth.");
   };
 
   const LogoutClick = async () => {
@@ -87,9 +81,7 @@ export default function PetOwnerProfileScreen({ navigation }) {
       name: petOwnerDetails.name,
       profilePicture: selectedImage,
     };
-    await clientServer.updatePetOwnerInfo(petOwnerId, updatedData);
-
-    navigation.goBack();
+    await clientServer.updatePetOwnerInfo(authState.id, updatedData);
   };
 
   const handleImagePicker = async () => {

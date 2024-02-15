@@ -1,14 +1,16 @@
-import React, { useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import TabsContainer from "../../components/TabsContainer/TabsContainer";
+import React, { useState, useContext } from "react";
+import { AuthContext } from "../../auth";
 import { StyleSheet, View, TextInput, Text, Button } from "react-native";
+import TabsContainer from "../../components/TabsContainer/TabsContainer";
 import { ROLES_TABS, TITELS } from "../../constants";
 import Header from "../../components/Header/Header";
 import PawImage from "../../assets/paw.jpg";
 import { clientServer } from "../../server";
-import { StackActions } from "@react-navigation/native";
 
-const HomeScreen = ({ navigation }) => {
+export default function SignInScreen({ navigation }) {
+  const { authState, setAuthState } = useContext(AuthContext);
+  const [activeTab, setActiveTab] = useState("petOwner");
+
   const [form, setValues] = useState({
     email: "",
     password: "",
@@ -17,7 +19,6 @@ const HomeScreen = ({ navigation }) => {
     incorrectEmail: false,
     incorrectPassword: false,
   });
-  const [activeTab, setActiveTab] = useState("petOwner");
 
   const handleTabPress = (tab) => {
     setActiveTab(tab);
@@ -35,13 +36,12 @@ const HomeScreen = ({ navigation }) => {
 
   const onSignInPress = async () => {
     try {
-      if (activeTab === "vet") {
-        await clientServer.loginVet(form);
-        navigation.dispatch(StackActions.replace("Vet Tabs"));
-      } else {
-        await clientServer.loginPetOwner(form);
-        navigation.dispatch(StackActions.replace("Pet Owner Tabs"));
-      }
+      const id = activeTab === "petOwner" ? await clientServer.loginPetOwner(form) : await clientServer.loginVet(form);
+      setAuthState({ id: id, signedIn: true, userType: activeTab });
+      // navigation.dispatch(StackActions.replace("Vet Tabs"));
+
+      // await clientServer.loginPetOwner(form);
+      // navigation.dispatch(StackActions.replace("Pet Owner Tabs"));
     } catch (error) {
       if (error.response && error.response.status === 404) {
         setIncorrectInput((prevState) => ({ ...prevState, incorrectEmail: true }));
@@ -100,7 +100,7 @@ const HomeScreen = ({ navigation }) => {
       />
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -153,5 +153,3 @@ const styles = StyleSheet.create({
     margin: 4,
   },
 });
-
-export default HomeScreen;

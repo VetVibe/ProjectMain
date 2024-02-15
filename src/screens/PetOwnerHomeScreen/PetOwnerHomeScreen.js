@@ -1,38 +1,33 @@
-import React, { useState, useCallback } from "react";
-import { useFocusEffect } from "@react-navigation/native";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, FlatList } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useState, useCallback, useContext } from "react";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { AuthContext } from "../../auth";
+import { View, Text, TouchableOpacity, StyleSheet, Image, FlatList } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { COLORS } from "../../constants";
 import { clientServer } from "../../server";
 
-export default function PetOwnerHomeScreen({ navigation }) {
+export default function PetOwnerHomeScreen() {
+  const navigation = useNavigation();
+  const { authState } = useContext(AuthContext);
   const [userPets, setUserPets] = useState([]);
-  const [petOwnerId, setPetOwnerId] = useState(null);
 
   useFocusEffect(
     useCallback(() => {
       const fetchUserPetDetails = async () => {
         try {
-          const id = petOwnerId || (await AsyncStorage.getItem("userId"));
-          setPetOwnerId(id);
-
-          if (id) {
-            const petsInfo = await clientServer.getPetsByOwnerId(id);
-            setUserPets(petsInfo?.pets || []);
-          }
+          const petsInfo = await clientServer.getPetsByOwnerId(authState.id);
+          setUserPets(petsInfo?.pets || []);
         } catch (error) {
           console.error("Error fetching data:", error);
         }
       };
 
       fetchUserPetDetails();
-    }, [petOwnerId])
+    }, [authState.id])
   );
-  // demo0@gmail.com Vetvibe123!
 
   const handleNavigateToEditProfile = () => {
-    navigation.navigate("Edit Pet Profile", { petOwnerId: petOwnerId });
+    navigation.navigate("Edit Pet Profile");
   };
 
   const handlePetSelect = (pet) => {
@@ -40,7 +35,7 @@ export default function PetOwnerHomeScreen({ navigation }) {
   };
 
   return (
-    <ScrollView>
+    <>
       <View style={styles.addButton}>
         <TouchableOpacity onPress={handleNavigateToEditProfile}>
           <Icon name="plus" size={20} color="black" />
@@ -63,7 +58,7 @@ export default function PetOwnerHomeScreen({ navigation }) {
           <Text>No pets in your collection</Text>
         )}
       </View>
-    </ScrollView>
+    </>
   );
 }
 

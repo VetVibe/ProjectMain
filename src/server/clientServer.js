@@ -6,9 +6,8 @@ import {
   PET_ENDPOINTS,
   TIP_ENDPOINTS,
   APPOINTMENT_ENDPOINTS,
-} from "../constants";
+} from "./endpoints";
 import { Alert } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const clientServer = {
   server: axios.create({ baseURL: BASE_URL }),
@@ -16,8 +15,9 @@ export const clientServer = {
   // -------------------- Pet Owner --------------------
   registerPetOwner: async (userData) => {
     try {
-      await clientServer.server.post(PET_OWNER_ENDPOINTS.REGISTER, userData);
+      const responce = await clientServer.server.post(PET_OWNER_ENDPOINTS.REGISTER, userData);
       console.log("Client | Register Pet Owner: Success");
+      return responce.data?.id;
     } catch (error) {
       if (error && error.response && error.response.status === 409) {
         console.log("Client | Register Pet Owner | Error: User already exists.");
@@ -31,9 +31,8 @@ export const clientServer = {
   loginPetOwner: async (credentials) => {
     try {
       const response = await clientServer.server.post(PET_OWNER_ENDPOINTS.LOGIN, credentials);
-      await AsyncStorage.setItem("userId", response.data.userId);
-      await AsyncStorage.setItem("userType", "petOwner");
       console.log("Client | Login Pet Owner: Success");
+      return response.data?.id;
     } catch (error) {
       if (error.response.status === 404) {
         console.log("Client | Login Pet Owner: User not found.");
@@ -116,7 +115,7 @@ export const clientServer = {
   registerVet: async (userData) => {
     try {
       const response = await clientServer.server.post(VET_ENDPOINTS.REGISTER, userData);
-      return response.data;
+      return response.data?.id;
     } catch (error) {
       console.error("Error registering new user", error);
       throw error;
@@ -126,9 +125,8 @@ export const clientServer = {
   loginVet: async (credentials) => {
     try {
       const response = await clientServer.server.post(VET_ENDPOINTS.LOGIN, credentials);
-      await AsyncStorage.setItem("vetId", response.data.userId);
-      await AsyncStorage.setItem("userType", "vet");
       console.log("Client | Login Vet: Success");
+      return response.data?.id;
     } catch (error) {
       if (error.response) {
         // The request was made and the server responded with a status code

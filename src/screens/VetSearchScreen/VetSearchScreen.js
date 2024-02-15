@@ -1,23 +1,13 @@
-import React, { useState, useEffect } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import VetSearchForm from "../../components/VetSearchForm/VetSearchForm";
 import { COLORS } from "../../constants";
 import { clientServer } from "../../server";
 
 export default function VetSearchScreen({ navigation }) {
-  const [petOwnerId, setPetOwnerId] = useState(null);
   const [veterinarians, setVeterinarians] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState("");
   const [selectedSpecialization, setSelectedSpecialization] = useState("");
-
-  useEffect(() => {
-    const fetchPetOwnerId = async () => {
-      const id = await AsyncStorage.getItem("userId");
-      setPetOwnerId(id);
-    };
-    fetchPetOwnerId();
-  }, [petOwnerId]);
 
   const handleSearch = async () => {
     const queryParams = new URLSearchParams();
@@ -28,11 +18,8 @@ export default function VetSearchScreen({ navigation }) {
   };
 
   const handleVetPress = (vet) => {
-    // Navigate to VetHomeScreen with the selected vet's ID and pet owner's ID
     navigation.navigate("Vet Home Screen", {
       vetId: vet._id,
-      userType: "petOwner", // ID of the pet owner
-      petOwnerId: petOwnerId,
     });
   };
 

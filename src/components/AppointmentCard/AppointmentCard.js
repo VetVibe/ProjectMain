@@ -1,11 +1,24 @@
-import { TouchableOpacity, Text, View, StyleSheet } from "react-native";
+import { TouchableOpacity, Text, View, StyleSheet, Alert } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
 export default function AppointmentCard({ appointment, onPressCancel }) {
-  const { _id, vetId, petOwnerId, date, time, name, phoneNumber } = appointment;
+  const { date, time, name, phoneNumber } = appointment;
   const formattedDate = new Date(date);
   const day = formattedDate.getDate();
   const month = formattedDate.toLocaleString("default", { month: "short" });
+
+  const cancelAppointment = () => {
+    Alert.alert("Cancel appointment", "Are you sure you want to cancel the appointment?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Yes",
+        onPress: () => onPressCancel(),
+      },
+    ]);
+  };
 
   return (
     <View>
@@ -29,7 +42,7 @@ export default function AppointmentCard({ appointment, onPressCancel }) {
             </View>
           </View>
         </View>
-        <TouchableOpacity onPress={onPressCancel}>
+        <TouchableOpacity onPress={cancelAppointment}>
           <MaterialIcons name="delete" size={24} color="black" />
         </TouchableOpacity>
       </View>

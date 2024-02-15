@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { AuthContext } from "../../auth";
 import {
   View,
   Text,
@@ -10,7 +11,6 @@ import {
   Platform,
   Alert,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import { COLORS, FONTS } from "../../constants";
@@ -20,17 +20,15 @@ import { mapVetDetailsToSchema, mapVetDetails } from "../../utils";
 import { clientServer } from "../../server";
 import { encodeImageAsBase64 } from "../../../imageUtils";
 
-export default function EditVetProfileScreen({ route, navigation }) {
-  const [vetId, setVetId] = useState(null);
+export default function EditVetProfileScreen({ navigation }) {
+  const { authState, setAuthState } = useContext(AuthContext);
   const [vetDetails, setVetDetails] = useState({});
   const [selectedImage, setSelectedImage] = useState();
 
   useEffect(() => {
     const fetchVetDetails = async () => {
       try {
-        const id = await AsyncStorage.getItem("vetId");
-        setVetId(id);
-        const data = await clientServer.getVetInfo(id);
+        const data = await clientServer.getVetInfo(authState.id);
         const mapedVetDetails = mapVetDetails(data);
         setVetDetails(mapedVetDetails);
         setSelectedImage(mapedVetDetails.profilePicture);
@@ -39,13 +37,11 @@ export default function EditVetProfileScreen({ route, navigation }) {
       }
     };
     fetchVetDetails();
-  }, [vetId]);
+  }, []);
 
   const handleLogout = async () => {
-    await AsyncStorage.removeItem("vetId");
-    await AsyncStorage.removeItem("userType");
+    setAuthState({ signedIn: false, userType: "", id: "" });
     console.log("Vet logged out: cleared storage.");
-    navigation.replace("Home");
   };
 
   const LogoutClick = async () => {
@@ -73,8 +69,12 @@ export default function EditVetProfileScreen({ route, navigation }) {
       profilePicture: selectedImage,
     };
     const vetDetailsSchema = mapVetDetailsToSchema(updatedData);
-
-    await clientServer.updateVetInfo(vetId, vetDetailsSchema);
+    try {
+      await clientServer.updateVetInfo(authState.id, vetDetailsSchema);
+    } catch (error) {
+      console.log(error);
+    }
+    navigation.goBack();
   };
 
   const handleImagePicker = async () => {

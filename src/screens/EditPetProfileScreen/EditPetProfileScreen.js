@@ -1,8 +1,8 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useContext } from "react";
 import { useFocusEffect } from "@react-navigation/native";
+import { AuthContext } from "../../auth";
 import { View, Button, Image, StyleSheet, TouchableOpacity, ScrollView, Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { StackActions } from "@react-navigation/native";
 import TabsContainer from "../../components/TabsContainer/TabsContainer";
 import { mapPetDetails, mapPetDetailsToSchema } from "../../utils";
 import { PET_PROFILE_TABS } from "../../constants";
@@ -12,6 +12,7 @@ import { clientServer } from "../../server";
 import { encodeImageAsBase64 } from "../../../imageUtils";
 
 const EditPetProfileScreen = ({ route, navigation }) => {
+  const { authState } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState("petInfo"); // petInfo or medicalHistory
   const [petBasicInfoInput, setPetBasicInfoInput] = useState({});
   const [petMedicalInfoInput, setMedicalInfoInput] = useState({});
@@ -19,10 +20,9 @@ const EditPetProfileScreen = ({ route, navigation }) => {
     "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/65761296352685.5eac4787a4720.jpg"
   );
 
-  const petId = route.params.petId;
-  const petOwnerId = route.params.petOwnerId;
+  const petId = route.params?.petId;
 
-  useFocusEffect(() => {
+  useFocusEffect(
     useCallback(() => {
       const fetchPetDetails = async () => {
         try {
@@ -41,8 +41,8 @@ const EditPetProfileScreen = ({ route, navigation }) => {
         setMedicalInfoInput({});
         setPetImage("https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/65761296352685.5eac4787a4720.jpg");
       };
-    }, [petId]);
-  });
+    }, [petId])
+  );
 
   const handleTabPress = (tab) => {
     setActiveTab(tab);
@@ -76,8 +76,8 @@ const EditPetProfileScreen = ({ route, navigation }) => {
     try {
       if (petId) {
         await clientServer.updatePetInfo(petId, petDetailsSchema);
-      } else if (petOwnerId) {
-        await clientServer.registerPet(petOwnerId, petDetailsSchema);
+      } else if (authState.id) {
+        await clientServer.registerPet(authState.id, petDetailsSchema);
       }
       navigation.goBack();
     } catch (error) {
@@ -116,7 +116,7 @@ const EditPetProfileScreen = ({ route, navigation }) => {
     <View style={styles.container}>
       <TabsContainer tabs={PET_PROFILE_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
 
-      <ScrollView style={{ flexGrow: 1 }}>
+      <ScrollView>
         {activeTab === "petInfo" ? (
           <View>
             <TouchableOpacity onPress={handleImagePicker}>

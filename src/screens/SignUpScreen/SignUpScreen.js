@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { AuthContext } from "../../auth";
 import { View, Text, TextInput, Button, Image, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import TabsContainer from "../../components/TabsContainer/TabsContainer";
 import WorkingTimePicker from "../../components/WorkingTimePicker/WorkingTimePicker";
@@ -10,6 +11,7 @@ import { isEmailValid, isPasswordValid } from "../../utils";
 import VetSearchForm from "../../components/VetSearchForm/VetSearchForm";
 
 export default function SignUpScreen({ navigation }) {
+  const { authState, setAuthState } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState("petOwner");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -68,16 +70,12 @@ export default function SignUpScreen({ navigation }) {
       }),
     };
     try {
-      if (activeTab === "vet") {
-        await clientServer.registerVet(newUser);
-      } else {
-        await clientServer.registerPetOwner(newUser);
-      }
-      navigation.goBack();
+      const id =
+        activeTab === "vet" ? await clientServer.registerVet(newUser) : await clientServer.registerPetOwner(newUser);
+      setAuthState({ id: id, signedIn: true, userType: activeTab });
     } catch (error) {
       console.error("Error registering user:", error);
 
-      // Check if the error is a 409 error indicating that the user is already registered
       if (error.response && error.response.status === 409) {
         Alert.alert("Registration failed", "This user is already registered.");
       } else {

@@ -20,12 +20,12 @@ export default function TimeContainer({ time, onPress, isSelected }) {
 
   return (
     <TouchableOpacity
-      style={[isSelected && { backgroundColor: "#f0f0f0" }, { transform: [{ scale: scaleValue }] }]}
+      style={[isSelected && { backgroundColor: "#FFA500" }, { transform: [{ scale: scaleValue }] }]}
       onPress={() => onPress(time)}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
     >
-      <Animated.Text style={[isSelected && { backgroundColor: "#f0f0f0" }]}>{`${String(time).padStart(
+      <Animated.Text style={[isSelected && { backgroundColor: "#FFA500" }]}>{`${String(time).padStart(
         2,
         "0"
       )}:00 - ${String(time + 1).padStart(2, "0")}:00`}</Animated.Text>
