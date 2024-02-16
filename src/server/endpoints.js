@@ -19,7 +19,6 @@ export const VET_ENDPOINTS = {
   LOGIN: `/veterinarian/login`,
   VET_INFO: (vetId) => `/veterinarian/${vetId}`,
   UPDATE_VET_INFO: (vetId) => `/veterinarian/update-info/${vetId}`,
-  RATE: `/veterinarian/rate`,
   VETERINARIANS: (query) => `/veterinarian?${query}`,
   TIPS: (vetId) => `/veterinarian/${vetId}/tips`,
 };
@@ -37,4 +36,13 @@ export const APPOINTMENT_ENDPOINTS = {
   DELETE: (appointmentId) => `/appointment/delete/${appointmentId}`,
   BY_OWNER: (petOwnerId) => `/appointment/owner/${petOwnerId}`,
   BY_VET: (vetId) => `/appointment/vet/${vetId}`,
+};
+
+export const RATE_ENDPOINTS = {
+  ADD: (petOwnerId, vetId) => `/rate/addRate/${petOwnerId}/${vetId}`,
+  GET_BY_VET_OWNER: (petOwnerId, vetId) => `/rate/vet-owner/${petOwnerId}/${vetId}`,
+  GET_BY_VET: (vetId) => `/rate/vet/${vetId}`,
+  DETAILS: (rateId) => `/rate/rate-details/${rateId}`,
+  UPDATE_INFO: (rateId) => `/rate/update-info/${rateId}`,
+  DELETE: (rateId) => `/rate/delete/${rateId}`,
 };

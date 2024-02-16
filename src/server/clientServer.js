@@ -6,6 +6,7 @@ import {
   PET_ENDPOINTS,
   TIP_ENDPOINTS,
   APPOINTMENT_ENDPOINTS,
+  RATE_ENDPOINTS,
 } from "./endpoints";
 import { Alert } from "react-native";
 
@@ -272,6 +273,67 @@ export const clientServer = {
       return response.data;
     } catch (error) {
       console.error("Client | Error fetching appointments by vet:", error.response);
+    }
+  },
+
+  //  -------------------- Rates --------------------
+  addRate: async (petOwnerId, vetId, rate) => {
+    try {
+      const responce = await clientServer.server.post(RATE_ENDPOINTS.ADD(petOwnerId, vetId), { rate: rate });
+      return responce.data;
+    } catch (error) {
+      console.error("Error adding rate:", error.response);
+    }
+  },
+
+  getRateByVetOwner: async (petOwnerId, vetId) => {
+    try {
+      const response = await clientServer.server.get(RATE_ENDPOINTS.GET_BY_VET_OWNER(petOwnerId, vetId));
+      return response.data;
+    } catch (error) {
+      if (error && error.response && error.response.status === 404) {
+        return null;
+      }
+      console.error("Error fetching rate by vet and owner:", error.response);
+    }
+  },
+
+  getRateByVetId: async (vetId) => {
+    try {
+      const response = await clientServer.server.get(RATE_ENDPOINTS.GET_BY_VET(vetId));
+      return response.data;
+    } catch (error) {
+      if (error && error.response && error.response.status === 404) {
+        return null;
+      }
+      console.error("Error fetching rate by vet:", error.response);
+    }
+  },
+
+  getRateDetails: async (rateId) => {
+    try {
+      const response = await clientServer.server.get(RATE_ENDPOINTS.DETAILS(rateId));
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching rate details:", error.response);
+    }
+  },
+
+  updateRate: async (rateId, updatedData) => {
+    try {
+      const response = await clientServer.server.put(RATE_ENDPOINTS.UPDATE_INFO(rateId), updatedData);
+      return response.data;
+    } catch (error) {
+      console.error(`Error during updating rate ${rateId} details:`, error.response);
+    }
+  },
+
+  deleteRate: async (rateId) => {
+    try {
+      const response = await clientServer.server.delete(RATE_ENDPOINTS.DELETE(rateId));
+      return response.data;
+    } catch (error) {
+      console.error(`Error during deleting rate ${rateId} details:`, error.response);
     }
   },
 };

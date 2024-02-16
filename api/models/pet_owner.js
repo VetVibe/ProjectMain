@@ -20,7 +20,6 @@ const PetOwnerSchema = new Schema({
   profilePicture: {
     type: String,
   },
-  ratings: { type: [String], default: [] },
 });
 
 const PetOwner = model("Pet Owner", PetOwnerSchema);

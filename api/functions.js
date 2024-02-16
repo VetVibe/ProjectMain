@@ -3,6 +3,7 @@ import PetOwner from "./models/pet_owner.js";
 import Pet from "./models/pet.js";
 import Tip from "./models/tip.js";
 import Appointment from "./models/appointment.js";
+import Rate from "./models/rate.js";
 
 // ----------- Pet Owner -----------
 const registerPetOwner = async (req, res) => {
@@ -122,38 +123,6 @@ const loginVeterinarian = async (req, res) => {
     console.log("DB| Veterinarian login | Veterinarian logged in successfully.");
   } catch (error) {
     console.error("DB| Veterinarian login | Error:", error);
-    res.status(500).json({ message: "Login failed" });
-  }
-};
-
-const rateVeterinarian = async (req, res) => {
-  try {
-    let token = req.headers["authorization"] || req.headers["Authorization"];
-    token = token.split("Bearer ")[1];
-    const { userId } = jsonwebtoken.decode(token);
-    const { email, rating } = req.body;
-    const veterinarian = await Veterinarian.findOne({ email });
-    const petOwner = await PetOwner.findById(userId);
-
-    if (!petOwner || !veterinarian) {
-      return res.status(404).json({ message: "Vet/Pet owner email not found" });
-    }
-
-    if (veterinarian && petOwner.ratings.includes(email)) {
-      return res.status(400).json({ message: "You have already rated this vert" });
-    }
-    petOwner.ratings.push(email);
-    veterinarian.rate += rating;
-    veterinarian.clientsCount++;
-
-    await petOwner.save();
-    await veterinarian.save();
-
-    res.status(200).json({
-      newRating: veterinarian.rate,
-      newClientCount: veterinarian.clientsCount,
-    });
-  } catch (error) {
     res.status(500).json({ message: "Login failed" });
   }
 };
@@ -388,7 +357,6 @@ const deletePet = async (req, res) => {
   try {
     const petId = req.params.petId;
 
-    // Find and delete the pet
     const pet = await Pet.findByIdAndDelete(petId);
     if (!pet) {
       console.error(`DB| Delete Pet | Pet with ID ${petId} not found.`);
@@ -489,6 +457,119 @@ const getAppointmentsByVet = async (req, res) => {
   }
 };
 
+// ----------- Rate -----------
+const addRate = async (req, res) => {
+  try {
+    const vetId = req.params.vetId;
+    const petOwnerId = req.params.petOwnerId;
+    const { rate } = req.body;
+    const newRate = new Rate({ vetId, petOwnerId, rate });
+    await newRate.save();
+
+    res.status(201).json(newRate);
+    console.log(`DB | Add rate | Rate added successfully.`);
+  } catch (error) {
+    console.error("DB | Add rate | Error:", error);
+    res.status(500).json({ message: "Error adding a rate" });
+  }
+};
+
+const getRateByVetOwnerId = async (req, res) => {
+  try {
+    const vetId = req.params.vetId;
+    const petOwnerId = req.params.petOwnerId;
+    const rate = await Rate.findOne({ vetId: vetId, petOwnerId: petOwnerId });
+
+    if (!rate) {
+      console.error(`DB | Get rate by vet and owner ids | Rate for vet with ID ${vetId} not found.`);
+      return res.status(404).json({ message: "Rate not found" });
+    }
+
+    res.status(200).json(rate);
+    console.log(
+      `DB | Get rate by vet and owner ids | Rate for vet with ID ${vetId} by ${petOwnerId} fetched successfully.`
+    );
+  } catch (error) {
+    console.error(`DB | Get rate by vet and owner ids | Error:`, error);
+    res.status(500).json({ error: "Error fetching rate" });
+  }
+};
+
+const getRateByVetId = async (req, res) => {
+  try {
+    const vetId = req.params.vetId;
+    const rates = await Rate.find({ vetId: vetId });
+
+    if (!rates) {
+      console.error(`DB | Get rate by vet id | Rates for vet with ID ${vetId} not found.`);
+      return res.status(404).json({ message: "Rates not found" });
+    }
+
+    res.status(200).json(rates);
+    console.log(`DB | Get rate by vet id | Rates for vet with ID ${vetId} fetched successfully.`);
+  } catch (error) {
+    console.error(`DB | Get rate by vet id | Error:`, error);
+    res.status(500).json({ error: "Error fetching rates" });
+  }
+};
+
+const getRate = async (req, res) => {
+  try {
+    const rateId = req.params.rateId;
+    const rate = await Rate.findById(rateId);
+
+    if (!rate) {
+      console.error(`DB | Get rate | Rate with ID ${rateId} not found.`);
+      return res.status(404).json({ message: "Rate not found" });
+    }
+
+    res.status(200).json(rate);
+    console.log(`DB | Get rate | Rate with ID ${rateId} fetched successfully.`);
+  } catch (error) {
+    console.error(`DB | Get rate | Error:`, error);
+    res.status(500).json({ error: "Error fetching rate" });
+  }
+};
+
+const updateRate = async (req, res) => {
+  try {
+    const rateId = req.params.rateId;
+    const updatedRateData = req.body.updatedData;
+
+    const updatedRate = await Rate.findByIdAndUpdate(rateId, updatedRateData);
+
+    if (!updatedRate) {
+      console.error(`DB | Update rate | Rate with ID ${rateId} not found.`);
+      return res.status(404).json({ message: "Rate not found" });
+    }
+
+    res.status(200).json({ message: `Rate with ID ${rateId} updated successfully.` });
+    console.log(`DB | Update rate | Rate with ID ${rateId} updated successfully.`);
+  } catch (error) {
+    console.error(`DB | Update rate | Error:`, error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const deleteRate = async (req, res) => {
+  try {
+    const rateId = req.params.rateId;
+    const rate = await Rate.findByIdAndDelete(rateId);
+
+    if (!rate) {
+      console.error(`DB | Delete rate | Rate with ID ${rateId} not found.`);
+      return res.status(404).json({ message: "Rate not found" });
+    }
+
+    res.status(200).json({ message: "Rate deleted successfully" });
+    console.log(`DB | Delete rate | Rate with ID ${rateId} deleted successfully.`);
+  } catch (error) {
+    console.error(`DB | Delete rate | Error:`, error);
+    res.status(500).json({ message: "Error deleting rate" });
+  }
+};
+
+// ----------- Export Functions -----------
 export {
   registerPetOwner,
   loginPetOwner,
@@ -496,7 +577,6 @@ export {
   getPetOwnerDetails,
   registerVeterinarian,
   loginVeterinarian,
-  rateVeterinarian,
   getVeterinarians,
   getVeterinarianInfo,
   updateVeterinarianInfo,
@@ -516,4 +596,10 @@ export {
   getAppointmentsByOwner,
   addAppointmentsByOwner,
   getAppointmentsByVet,
+  addRate,
+  getRateByVetOwnerId,
+  getRateByVetId,
+  getRate,
+  updateRate,
+  deleteRate,
 };

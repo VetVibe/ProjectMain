@@ -1,19 +1,40 @@
 import React, { useState, useCallback, useContext } from "react";
 import { AuthContext } from "../../auth";
-import { View, Text, Image, TouchableOpacity, SafeAreaView, ScrollView, StyleSheet, FlatList } from "react-native";
+import { View, Text, Image, TouchableOpacity, SafeAreaView, ScrollView, StyleSheet } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { COLORS, FONTS, SIZES } from "../../constants";
 import { StatusBar } from "expo-status-bar";
-import { MaterialIcons, Ionicons } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import { mapVetDetails } from "../../utils";
-import Rating from "../../components/Rating/Rating";
+import RateVet from "../../components/RateVet/RateVet";
 import { clientServer } from "../../server";
 
 export default function VetHomeScreen({ route, navigation }) {
   const { authState } = useContext(AuthContext);
   const [vetDetails, setVetDetails] = useState({});
   const [vetTips, setVetTips] = useState([]);
+  const [vetRating, setVetRating] = useState(null);
+  const [petOwnerRate, setPetOwnerRate] = useState(null);
   const vetId = authState.userType === "vet" ? authState.id : route.params?.vetId;
+
+  const fetchVetRating = async () => {
+    try {
+      const vetRating = await clientServer.getRateByVetId(vetId);
+      if (vetRating) {
+        const rate = vetRating.map((rate) => rate.rate).reduce((a, b) => a + b, 0) / vetRating.length;
+        setVetRating(rate);
+
+        if (authState.userType === "petOwner") {
+          const petOwnerRate = await clientServer.getRateByVetOwner(authState.id, vetId);
+          if (petOwnerRate) {
+            setPetOwnerRate(petOwnerRate);
+          }
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -22,6 +43,8 @@ export default function VetHomeScreen({ route, navigation }) {
           const vetDetails = await clientServer.getVetInfo(vetId);
           const mapedVetDetails = mapVetDetails(vetDetails);
           setVetDetails(mapedVetDetails);
+
+          await fetchVetRating();
 
           if (authState.userType === "petOwner") {
             const vetTipsRaw = await clientServer.getTipsByVetId(vetId);
@@ -35,6 +58,20 @@ export default function VetHomeScreen({ route, navigation }) {
     }, [vetId])
   );
 
+  const onNewRating = async (newRating) => {
+    try {
+      if (petOwnerRate) {
+        await clientServer.updateRate(petOwnerRate._id, newRating);
+      } else {
+        const responce = await clientServer.addRate(authState.id, vetId, newRating);
+        setPetOwnerRate(responce);
+      }
+      fetchVetRating();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeAreaContainer}>
       <StatusBar backgroundColor={COLORS.gray} />
@@ -47,7 +84,7 @@ export default function VetHomeScreen({ route, navigation }) {
             />
           ) : (
             <TouchableOpacity onPress={() => navigation.navigate("Edit Vet Profile Screen")}>
-              <Ionicons name="pen" size={24} color="black" />
+              <MaterialIcons name="edit" size={24} color={COLORS.black} />
             </TouchableOpacity>
           )}
           <Image source={{ uri: vetDetails.profilePicture }} style={styles.vetProfileImage} />
@@ -67,9 +104,7 @@ export default function VetHomeScreen({ route, navigation }) {
 
           <View style={{ paddingVertical: 8, flexDirection: "row" }}>
             <View style={styles.infoBox}>
-              <Text style={{ ...FONTS.h3, color: "black" }}>
-                {+vetDetails.clientsCount > 0 ? (+vetDetails.rate / +vetDetails.clientsCount).toFixed(1) : 0}
-              </Text>
+              <Text style={{ ...FONTS.h3, color: "black" }}>{vetRating ? vetRating.toFixed(1) : 0}</Text>
               <Text style={{ ...FONTS.body4, color: "black" }}>Rating</Text>
             </View>
           </View>
@@ -83,7 +118,7 @@ export default function VetHomeScreen({ route, navigation }) {
 
           {authState.userType === "petOwner" && (
             <>
-              {vetTips.length > 0 && (
+              {vetTips?.length > 0 && (
                 <View>
                   <Text>Vet Tips</Text>
                   {vetTips.map((tip, index) => (
@@ -93,16 +128,7 @@ export default function VetHomeScreen({ route, navigation }) {
                   ))}
                 </View>
               )}
-              <Rating
-                vetDetails={vetDetails}
-                onNewRating={({ newRating, newRatingCount }) =>
-                  setVetDetails({
-                    ...vetDetails,
-                    rating: newRating,
-                    ratingCount: newRatingCount,
-                  })
-                }
-              />
+              <RateVet petOwnerRate={petOwnerRate?.rate} onNewRating={onNewRating} />
             </>
           )}
         </View>

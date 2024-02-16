@@ -27,14 +27,6 @@ const veterinarianSchema = new Schema({
   profilePicture: {
     type: String,
   },
-  rate: {
-    type: Number,
-    default: 0,
-  },
-  clientsCount: {
-    type: Number,
-    default: 0,
-  },
   about: {
     type: String,
   },
