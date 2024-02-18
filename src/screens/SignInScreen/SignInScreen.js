@@ -1,9 +1,8 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../../auth";
-import { StyleSheet, View, TextInput, Text, Button } from "react-native";
-import TabsContainer from "../../components/TabsContainer/TabsContainer";
-import { ROLES_TABS, TITELS } from "../../constants";
-import Header from "../../components/Header/Header";
+import { StyleSheet, View, Text, TouchableOpacity, Image, KeyboardAvoidingView } from "react-native";
+import { TabsContainer, Input, Button } from "../../components";
+import { ROLES_TABS, colors, sizes } from "../../constants";
 import PawImage from "../../assets/paw.jpg";
 import { clientServer } from "../../server";
 
@@ -38,10 +37,6 @@ export default function SignInScreen({ navigation }) {
     try {
       const id = activeTab === "petOwner" ? await clientServer.loginPetOwner(form) : await clientServer.loginVet(form);
       setAuthState({ id: id, signedIn: true, userType: activeTab });
-      // navigation.dispatch(StackActions.replace("Vet Tabs"));
-
-      // await clientServer.loginPetOwner(form);
-      // navigation.dispatch(StackActions.replace("Pet Owner Tabs"));
     } catch (error) {
       if (error.response && error.response.status === 404) {
         setIncorrectInput((prevState) => ({ ...prevState, incorrectEmail: true }));
@@ -56,100 +51,114 @@ export default function SignInScreen({ navigation }) {
   };
 
   return (
-    <View scrollable style={styles.container}>
-      <View style={styles.imageContainer}>
-        <Header headerText={"Vet Vibe"} imgSrc={PawImage} />
+    <KeyboardAvoidingView style={styles.container} behavior="padding">
+      <View style={styles.header_container}>
+        <Image style={styles.image_container} source={PawImage} resizeMode="contain" />
+        <Text style={styles.title}>Welcome to Vet Vibe</Text>
+        <Text style={styles.subTitle}>Enter your credential to login</Text>
       </View>
 
-      <TabsContainer tabs={ROLES_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
-      <Text style={styles.label}>{TITELS["email"]}</Text>
-      <TextInput
-        placeholder={"Email"}
-        keyboardType="email-address"
-        autoCorrect={false}
-        autoCapitalize="none"
-        onChangeText={(value) => handleChangeText("email", value)}
-      />
-      {incorrectInput.incorrectEmail ? (
-        <Text style={styles.error}>{`User with email: ${form.email} wasn't found.`}</Text>
-      ) : null}
+      <View style={styles.input_container}>
+        <TabsContainer tabs={ROLES_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
+        <Input
+          autoComplete="email"
+          autoCorrect={false}
+          autoCapitalize={"none"}
+          placeholder="Email"
+          onChangeText={(value) => handleChangeText("email", value)}
+          keyboardType="email-address"
+          error={incorrectInput.incorrectEmail}
+          errorMessage={form.email ? `User with email: ${form.email} wasn't found.` : "Enter your email"}
+        />
 
-      <Text style={styles.label}>{TITELS["password"]}</Text>
-      <TextInput
-        autoCapitalize="none"
-        textContentType="password"
-        placeholder={"Password"}
-        autoCorrect={false}
-        containerStyle={styles.defaultMargin}
-        onChangeText={(value) => handleChangeText("password", value)}
-        secureTextEntry
-      />
-      {incorrectInput.incorrectPassword ? <Text style={styles.error}>{"The password is incorrect."}</Text> : null}
-      <Button
-        title={"Login"}
-        titleStyle={styles.loginButtonText}
-        style={styles.defaultMargin}
-        onPress={onSignInPress}
-      />
-      <Button
-        type="clear"
-        title={"Need an account? Sign up now"}
-        onPress={() => {
-          navigation.navigate("Sign up");
-        }}
-      />
-    </View>
+        <Input
+          placeholder="Password"
+          onChangeText={(value) => handleChangeText("password", value)}
+          autoCorrect={false}
+          error={incorrectInput.incorrectPassword}
+          errorMessage={form.password ? "The password is incorrect." : "Enter password"}
+          secure
+        />
+      </View>
+      <View style={styles.button_container}>
+        <Button text={"Login"} onPress={onSignInPress} style={styles.login} />
+        <Button
+          text={"Don't have an account? Sign Up"}
+          onPress={() => navigation.navigate("Sign up")}
+          style={styles.signIn}
+        />
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    flex: 1,
+    paddingHorizontal: 24,
+    backgroundColor: colors.white,
   },
-  tabsContainer: {
-    flexDirection: "row",
+  header_container: {
+    alignItems: "center",
+    marginVertical: 12,
+    padding: 16,
+    borderRadius: 20,
+  },
+  image_container: {
+    width: 100,
+    height: 100,
+  },
+  title: {
+    fontSize: sizes.h1,
+    marginTop: 20,
+    marginBottom: 10,
+    color: colors.primary,
+    fontWeight: "bold",
+    shadowColor: colors.gray,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+  },
+  subTitle: {
+    fontSize: sizes.h4,
+    color: colors.secondary,
     marginBottom: 20,
   },
-  imageContainer: {
-    alignItems: "center",
-    justifyContent: "center",
+  input_container: {
+    marginHorizontal: 30,
   },
-  defaultMargin: {
-    marginTop: 16,
-  },
-  loginButtonText: {
-    textTransform: "uppercase",
-  },
-  iconPadding: {
-    padding: 8,
-  },
-  label: {
-    marginBottom: 4,
-    color: "#ced2d9",
-    fontSize: 12,
-    fontStyle: "normal",
-    fontWeight: "normal",
-  },
-  inputContainer: {
-    flexDirection: "row",
-    backgroundColor: "white",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 2,
-    alignItems: "center",
-    borderColor: "#ced2d9",
-    minHeight: 40,
-  },
-  input: {
-    fontSize: 16,
-    color: "#e0e0e0",
-    backgroundColor: "transparent",
+  button_container: {
+    marginTop: 20,
+    marginHorizontal: 30,
     paddingVertical: 8,
-    paddingHorizontal: 12,
-    flex: 1,
+    alignItems: "center",
   },
-  error: {
-    fontSize: 13,
-    color: "#CC0000",
-    margin: 4,
+  login: {
+    container: {
+      borderRadius: 20,
+      padding: 8,
+      shadowColor: colors.gray,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      width: "100%",
+      backgroundColor: colors.primary,
+    },
+    text: {
+      textAlign: "center",
+      fontSize: sizes.h3,
+      padding: 10,
+      color: colors.white,
+      fontWeight: "bold",
+    },
+  },
+  signIn: {
+    container: {
+      padding: 8,
+    },
+    text: {
+      textAlign: "center",
+      fontSize: sizes.h4,
+      padding: 10,
+      color: colors.light_gray,
+    },
   },
 });

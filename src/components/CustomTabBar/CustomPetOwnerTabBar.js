@@ -11,18 +11,18 @@ export default function CustomPetOwnerTabBar() {
     <View>
       <View style={styles.container}>
         <TouchableOpacity onPress={() => navigation.navigate("Pet Owner Home") && setFocused(1)}>
-          <Entypo name="home" size={24} color="black" />
+          <Entypo name="home" size={24} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Tips Screen") && setFocused(2)}>
-          <MaterialIcons name="my-library-books" size={24} color="black" />
+          <MaterialIcons name="my-library-books" size={24} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => navigation.navigate("Pet Owner Tabs", { screen: "Pet Owner Appointments" }) && setFocused(3)}
         >
-          <AntDesign name="calendar" size={24} color="black" />
+          <AntDesign name="calendar" size={24} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Pet Owner Profile") && setFocused(4)}>
-          <Ionicons name="person" size={24} color="black" />
+          <Ionicons name="person" size={24} />
         </TouchableOpacity>
       </View>
     </View>

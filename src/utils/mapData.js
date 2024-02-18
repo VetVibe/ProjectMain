@@ -41,11 +41,9 @@ export const mapVetDetails = (vetData) => {
     profilePicture:
       vetData?.profilePicture ||
       "https://mir-s3-cdn-cf.behance.net/projects/max_808_webp/3c6f95189614555.Y3JvcCwxMDI0LDgwMCwwLDExMQ.jpg",
-    rate: vetData?.rate || 0,
-    clientsCount: vetData?.clientsCount || 0,
     about: vetData?.about || "",
     location: vetData?.location || "",
-    specialization: vetData?.specialization || "",
+    specialization: vetData?.specialization || [],
     start: vetData?.start || 8,
     end: vetData?.end || 20,
   };
@@ -59,8 +57,6 @@ export const mapVetDetailsToSchema = (vetDetails) => {
     password: vetDetails.password,
     phoneNumber: vetDetails.phoneNumber,
     profilePicture: vetDetails.profilePicture,
-    rate: vetDetails.rate,
-    clientsCount: vetDetails.clientsCount,
     about: vetDetails.about,
     location: vetDetails.location,
     specialization: vetDetails.specialization,

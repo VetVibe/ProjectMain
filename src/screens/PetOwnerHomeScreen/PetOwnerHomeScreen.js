@@ -1,28 +1,61 @@
 import React, { useState, useCallback, useContext } from "react";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { AuthContext } from "../../auth";
-import { View, Text, TouchableOpacity, StyleSheet, Image, FlatList } from "react-native";
+import { colors, sizes } from "../../constants";
+import { PetCard, TipCard } from "../../components";
+import { calculateAge } from "../../utils";
+import { View, Text, StyleSheet, FlatList } from "react-native";
+import { MaterialIcons, AntDesign } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome";
-import { COLORS } from "../../constants";
 import { clientServer } from "../../server";
+
+const CARD_WIDTH = sizes.width - 100;
 
 export default function PetOwnerHomeScreen() {
   const navigation = useNavigation();
   const { authState } = useContext(AuthContext);
   const [userPets, setUserPets] = useState([]);
+  const [allTips, setAllTips] = useState([]);
+
+  const fetchAllTips = async () => {
+    try {
+      const allTips = await clientServer.getAllTips();
+      let filteredTips = allTips;
+
+      const tipsWithVetInfo = await Promise.all(
+        filteredTips.map(async (tip) => {
+          const vetDetails = await clientServer.getVetInfo(tip.vetId);
+          return {
+            ...tip,
+            vetName: vetDetails.name,
+            vetImage: vetDetails.profilePicture,
+          };
+        })
+      );
+
+      setAllTips(tipsWithVetInfo);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
       const fetchUserPetDetails = async () => {
         try {
           const petsInfo = await clientServer.getPetsByOwnerId(authState.id);
-          setUserPets(petsInfo?.pets || []);
+          const mappedPets = petsInfo?.pets.map((pet) => ({
+            ...pet,
+            age: calculateAge(pet.age),
+          }));
+          setUserPets(mappedPets || []);
         } catch (error) {
           console.error("Error fetching data:", error);
         }
       };
 
       fetchUserPetDetails();
+      fetchAllTips();
     }, [authState.id])
   );
 
@@ -34,122 +67,96 @@ export default function PetOwnerHomeScreen() {
     navigation.navigate("Pet Profile", { petId: pet._id });
   };
 
+  const handleTipSelect = (tip) => {
+    navigation.navigate("Pet Owner Appointments Tab", { screen: "Vet Home Screen", params: { vetId: tip.vetId } });
+  };
+
   return (
-    <>
-      <View style={styles.addButton}>
-        <TouchableOpacity onPress={handleNavigateToEditProfile}>
-          <Icon name="plus" size={20} color="black" />
-        </TouchableOpacity>
+    <View style={styles.container}>
+      <View style={styles.header_container}>
+        <Text style={styles.header_text}>Vet Vibe</Text>
+        <MaterialIcons name="pets" size={24} color={colors.primary} />
       </View>
 
-      <View style={styles.petsContainer}>
+      <View style={styles.segment_container}>
+        <View style={styles.segment_header_container}>
+          <Text style={styles.text}>Your Pets</Text>
+          <AntDesign name="pluscircleo" size={24} style={styles.icon} onPress={handleNavigateToEditProfile} />
+        </View>
         {userPets?.length > 0 ? (
-          <FlatList
-            data={userPets}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => handlePetSelect(item)} style={styles.petItem}>
-                <Image source={{ uri: item.imgSrc }} style={styles.petImage} />
-                <Text style={styles.petName}>{item.name}</Text>
-              </TouchableOpacity>
-            )}
-          />
+          <View>
+            <FlatList
+              horizontal
+              snapToInterval={CARD_WIDTH + 24}
+              decelerationRate={"fast"}
+              showsHorizontalScrollIndicator={false}
+              initialNumToRender={2}
+              data={userPets}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item }) => <PetCard pet={item} onSelect={() => handlePetSelect(item)} />}
+            />
+          </View>
         ) : (
-          <Text>No pets in your collection</Text>
+          <Text>No pets in your collection, add now!</Text>
         )}
       </View>
-    </>
+
+      <View>
+        {allTips?.length > 0 && (
+          <View style={styles.segment_container}>
+            <View style={styles.segment_header_container}>
+              <Text style={styles.text}>Vet Tips</Text>
+            </View>
+            <View>
+              <FlatList
+                horizontal
+                snapToInterval={CARD_WIDTH + 24}
+                decelerationRate={"fast"}
+                showsHorizontalScrollIndicator={false}
+                initialNumToRender={2}
+                data={allTips}
+                keyExtractor={(item) => item._id}
+                renderItem={({ item }) => <TipCard tip={item} onSelect={() => handleTipSelect(item)} />}
+              />
+            </View>
+          </View>
+        )}
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  addButton: {
-    marginTop: 20, // Add margin top to move the button down
-  },
   container: {
     flex: 1,
-    padding: 20,
-    alignItems: "center",
-    justifyContent: "center",
+    marginBottom: 120,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  searchInput: {
-    height: 40,
-    width: "80%",
-    borderColor: "gray",
-    borderWidth: 1,
-    marginBottom: 20,
-    paddingLeft: 10,
-  },
-  searchButton: {
-    backgroundColor: "#FFA500",
-    padding: 10,
-    borderRadius: 5,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  profileButton: {
-    backgroundColor: "#FFA500",
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 20,
-  },
-  searchSection: {
-    paddingTop: 10, // Added top padding to push the entire section down
-  },
-  vetItem: {
+  header_container: {
+    marginVertical: 16,
+    paddingHorizontal: 24,
     flexDirection: "row",
     alignItems: "center",
+  },
+  header_text: {
+    fontSize: sizes.h1,
+    color: colors.primary,
+    fontWeight: "bold",
+    flex: 1,
+  },
+  segment_container: {
+    paddingHorizontal: 24,
+    marginBottom: 24,
+  },
+  segment_header_container: {
+    marginVertical: 8,
+    flexDirection: "row",
     justifyContent: "space-between",
   },
-  viewTipsButton: {
-    backgroundColor: "#FFA500",
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 20,
-    marginBottom: 20,
+  text: {
+    fontSize: sizes.h2,
+    fontWeight: "bold",
   },
-  tipsButton: {
-    position: "absolute",
-    right: 20,
-    top: 60,
-    zIndex: 2,
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
-  },
-  profileImage: {
-    height: 60, // Adjust the size as needed
-    width: 60, // Adjust the size as needed
-    borderRadius: 20, // Make it round
-    marginRight: 15, // Add some spacing between the image and the text
-  },
-  petsContainer: {
-    height: 150, // Adjust as needed
-    alignItems: "center",
-    padding: 10,
-  },
-  petItem: {
-    marginHorizontal: 10,
-    alignItems: "center",
-  },
-  petImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
-  petName: {
-    textAlign: "center",
-    marginTop: 5,
+  icon: {
+    color: colors.primary,
   },
 });

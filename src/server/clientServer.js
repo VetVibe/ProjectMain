@@ -279,7 +279,7 @@ export const clientServer = {
   //  -------------------- Rates --------------------
   addRate: async (petOwnerId, vetId, rate) => {
     try {
-      const responce = await clientServer.server.post(RATE_ENDPOINTS.ADD(petOwnerId, vetId), { rate: rate });
+      const responce = await clientServer.server.post(RATE_ENDPOINTS.ADD(petOwnerId, vetId), { rating: rate });
       return responce.data;
     } catch (error) {
       console.error("Error adding rate:", error.response);

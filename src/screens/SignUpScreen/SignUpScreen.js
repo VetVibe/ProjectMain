@@ -1,28 +1,27 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../../auth";
-import { View, Text, TextInput, Button, Image, TouchableOpacity, StyleSheet, Alert } from "react-native";
-import TabsContainer from "../../components/TabsContainer/TabsContainer";
-import WorkingTimePicker from "../../components/WorkingTimePicker/WorkingTimePicker";
-import { ROLES_TABS } from "../../constants";
-import * as ImagePicker from "expo-image-picker";
-import { encodeImageAsBase64 } from "../../../imageUtils";
+import { View, Text, Alert, StyleSheet, KeyboardAvoidingView } from "react-native";
+import { TabsContainer, Input, Button } from "../../components";
+import { ROLES_TABS, colors, sizes } from "../../constants";
 import { clientServer } from "../../server";
 import { isEmailValid, isPasswordValid } from "../../utils";
-import VetSearchForm from "../../components/VetSearchForm/VetSearchForm";
 
 export default function SignUpScreen({ navigation }) {
   const { authState, setAuthState } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState("petOwner");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [name, setName] = useState();
+  const [email, setEmail] = useState();
+  const [password, setPassword] = useState();
+  const [passwordAgain, setPasswordAgain] = useState();
   const [id, setId] = useState("VET-");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [profilePicture, setProfilePicture] = useState(null);
-  const [selectedCity, setSelectedCity] = useState("");
-  const [selectedSpecialization, setSelectedSpecialization] = useState("");
-  const [start, setStart] = useState();
-  const [end, setEnd] = useState();
+  const [phoneNumber, setPhoneNumber] = useState();
+  const [invalidInput, setInvalidInput] = useState({
+    name: false,
+    email: false,
+    password: false,
+    passwordAgain: false,
+    phoneNumber: false,
+  });
 
   const handleTabPress = (tab) => {
     setActiveTab(tab);
@@ -40,33 +39,38 @@ export default function SignUpScreen({ navigation }) {
     if (isEmailValid(email)) {
       setEmail(email);
     } else {
-      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      setInvalidInput((prevState) => ({ ...prevState, email: true }));
       return;
     }
     if (isPasswordValid(password)) {
+      if (password !== passwordAgain) {
+        setInvalidInput((prevState) => ({ ...prevState, passwordAgain: true }));
+        return;
+      }
       setPassword(password);
     } else {
-      Alert.alert(
-        "Invalid Password",
-        "Please enter a valid password: Atlest 8 characters, 1 uppercase and 1 lowercase 1 digit, 1 special chacater"
-      );
+      setInvalidInput((prevState) => ({ ...prevState, password: true }));
       return;
     }
-    if (!name || !email || !password) {
-      Alert.alert("Incomplete Information", "Please fill in all required fields");
+    if (!name) {
+      setInvalidInput((prevState) => ({ ...prevState, name: true }));
       return;
     }
-    // TODO: handle end time < start time for vet
+    if (!phoneNumber) {
+      setInvalidInput((prevState) => ({ ...prevState, phoneNumber: true }));
+      return;
+    }
+    if (activeTab === "vet" && !id) {
+      setInvalidInput((prevState) => ({ ...prevState, id: true }));
+      return;
+    }
     const newUser = {
       name,
       email,
       password,
       phoneNumber,
-      profilePicture: profilePicture,
       ...(activeTab === "vet" && {
-        location: selectedCity,
         vetId: id,
-        specialization: selectedSpecialization,
       }),
     };
     try {
@@ -84,147 +88,152 @@ export default function SignUpScreen({ navigation }) {
     }
   };
 
-  const handleImagePick = async () => {
-    // Request permission to access the device's photo library
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (status === "granted") {
-      // Launch the image picker
-      let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
-
-      if (!result.canceled) {
-        // Encode the selected image as Base64
-        if (result.assets && result.assets.length > 0) {
-          const selectedAsset = result.assets[0];
-          try {
-            const base64Image = await encodeImageAsBase64(selectedAsset.uri);
-
-            // Set the Base64 encoded image to the profile picture state
-            setProfilePicture(`data:image/jpeg;base64,${base64Image}`);
-          } catch (error) {
-            Alert.alert("Error", "Failed to encode image as Base64");
-          }
-        }
-      }
-    } else {
-      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
-    }
-  };
-
   return (
-    <View style={styles.container}>
-      <TabsContainer tabs={ROLES_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
+    <KeyboardAvoidingView style={styles.container} behavior="padding">
+      <View style={styles.header_container}>
+        <Text style={styles.title}>Sign Up</Text>
+        <Text style={styles.subTitle}>Create your account</Text>
+      </View>
 
-      <TextInput autoCorrect={false} style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
+      <View style={styles.input_container}>
+        <TabsContainer tabs={ROLES_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
+        <Input
+          autoCapitalize="words"
+          autoComplete="name"
+          placeholder="Name"
+          onChangeText={setName}
+          error={invalidInput.name}
+          errorMessage={"Required field"}
+        />
+        {activeTab === "vet" && (
+          <Input
+            placeholder="Veterinarian ID"
+            value={id}
+            onChangeText={(value) => handleChangeID(value)}
+            keyboardType="numeric"
+            error={invalidInput.id}
+            errorMessage={"Required field"}
+          />
+        )}
+        <Input
+          autoComplete="email"
+          autoCorrect={false}
+          autoCapitalize={"none"}
+          placeholder="Email"
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          error={invalidInput.email}
+          errorMessage={email ? "Invalid email" : "Required field"}
+        />
+        <Input
+          placeholder="Password"
+          onChangeText={setPassword}
+          autoCorrect={false}
+          autoCapitalize={"none"}
+          error={invalidInput.password}
+          errorMessage={
+            password ? "Atlest 8 characters, 1 uppercase and 1 lowercase 1 digit, 1 special chacater" : "Required field"
+          }
+          secure
+        />
+        <Input
+          autoCorrect={false}
+          autoCapitalize={"none"}
+          placeholder="Password (Again)"
+          onChangeText={setPasswordAgain}
+          error={invalidInput.passwordAgain}
+          errorMessage={passwordAgain ? "Must match password" : "Required field"}
+          secure
+        />
+        <Input
+          placeholder="Phone Number"
+          onChangeText={setPhoneNumber}
+          keyboardType="phone-pad"
+          error={invalidInput.phoneNumber}
+          errorMessage={"Required field"}
+        />
+      </View>
 
-      <TextInput
-        autoCorrect={false}
-        autoCapitalize="none"
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-
-      <TextInput
-        autoCorrect={false}
-        autoCapitalize="none"
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Phone Number"
-        value={phoneNumber}
-        onChangeText={setPhoneNumber}
-        keyboardType="phone-pad"
-      />
-
-      {activeTab === "vet" ? (
-        <>
-          <TextInput style={styles.input} placeholder="Veterinarian ID" value={id} onChangeText={handleChangeID} />
-          <VetSearchForm setSelectedLocation={setSelectedCity} setSelectedSpecialization={setSelectedSpecialization} />
-          <WorkingTimePicker start={start} end={end} setStart={setStart} setEnd={setEnd} />
-        </>
-      ) : null}
-
-      <TouchableOpacity style={styles.button} onPress={handleImagePick}>
-        <Text style={styles.buttonText}>Choose Profile Picture</Text>
-      </TouchableOpacity>
-      {profilePicture && <Image source={{ uri: profilePicture }} style={styles.profileImage} />}
-
-      <Button title="Register" onPress={handleRegistration} />
-    </View>
+      <View style={styles.button_container}>
+        <Button text="Sign In" onPress={handleRegistration} style={styles.login} />
+        <Button
+          text={"Already have an account?"}
+          onPress={() => navigation.navigate("Sign In")}
+          style={styles.signIn}
+        />
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    paddingHorizontal: 24,
+    backgroundColor: colors.white,
+  },
+  header_container: {
     alignItems: "center",
-    padding: 20,
+    marginVertical: 12,
+    padding: 16,
+    borderRadius: 20,
   },
-  input: {
-    height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
+  title: {
+    fontSize: sizes.h1,
     marginBottom: 10,
-    paddingLeft: 10,
-    borderRadius: 5,
-    width: "100%",
+    color: colors.primary,
+    fontWeight: "bold",
+    shadowColor: colors.gray,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
   },
-  pickerButton: {
-    height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
-    borderRadius: 5,
-    justifyContent: "center",
-    paddingLeft: 0,
+  subTitle: {
+    fontSize: sizes.h4,
+    color: colors.secondary,
     marginBottom: 10,
-    width: "100%",
   },
-  modalContainer: {
-    flex: 5,
-    justifyContent: "center",
+  input_container: {
+    marginHorizontal: 30,
+  },
+  button_container: {
+    marginTop: 20,
+    marginHorizontal: 30,
+    paddingVertical: 8,
     alignItems: "center",
-    marginTop: 22,
   },
-  picker: {
-    height: 200, // Adjust the height as needed
-    width: "100%",
+  login: {
+    container: {
+      borderRadius: 20,
+      padding: 8,
+      shadowColor: colors.gray,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      width: "100%",
+      backgroundColor: colors.primary,
+    },
+    text: {
+      textAlign: "center",
+      fontSize: sizes.h3,
+      padding: 10,
+      color: colors.white,
+      fontWeight: "bold",
+    },
   },
-
-  button: {
-    backgroundColor: "blue",
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-    width: "80%",
+  signIn: {
+    container: {
+      padding: 8,
+    },
+    text: {
+      textAlign: "center",
+      fontSize: sizes.h4,
+      padding: 10,
+      color: colors.light_gray,
+    },
   },
-  buttonText: {
-    color: "white",
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    marginTop: 10,
-    borderRadius: 5, // Adjusted border radius
-  },
-  backButton: {
-    position: "absolute",
-    top: 20,
-    left: 20,
-    zIndex: 1,
+  error: {
+    color: colors.error,
+    fontSize: sizes.body2,
+    paddingLeft: 20,
+    marginBottom: 10,
   },
 });

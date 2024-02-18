@@ -15,6 +15,16 @@ const RateSchema = new Schema({
     type: Number,
     required: true,
   },
+  title: {
+    type: String,
+  },
+  content: {
+    type: String,
+  },
+  when: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const Rate = model("Rate", RateSchema);

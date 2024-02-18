@@ -1,15 +1,25 @@
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../auth";
 import { View, StyleSheet, Text, TouchableOpacity, Alert } from "react-native";
-import { Agenda } from "react-native-calendars";
+import { Agenda, Timeline } from "react-native-calendars";
 import moment from "moment";
 import { clientServer } from "../../server";
 
 export default function VetAppointmentsScreen() {
   const { authState } = useContext(AuthContext);
   const [vetAppointments, setVetAppointments] = useState([]);
+  const [isOpenForBooking, setIsOpenForBooking] = useState(false);
 
   useEffect(() => {
+    const checkVetAvailability = async () => {
+      try {
+        const vetDetails = await clientServer.getVetInfo(authState.id);
+        setIsOpenForBooking(vetDetails.start && vetDetails.end);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    checkVetAvailability();
     fetchAppointments();
   }, []);
 
@@ -98,15 +108,28 @@ export default function VetAppointmentsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Vet Appointments</Text>
-      <Agenda
-        items={vetAppointments}
-        renderItem={renderItem}
-        rowHasChanged={(r1, r2) => r1.name !== r2.name}
-        renderEmptyDate={renderEmptyDate}
-        renderDay={(date, item) => renderDay(item.time)}
-        showOnlySelectedDayItems
-      />
+      {isOpenForBooking ? (
+        <View>
+          <Text style={styles.title}>Vet Appointments</Text>
+          {vetAppointments && vetAppointments.length > 0 ? (
+            <Agenda
+              items={vetAppointments}
+              renderItem={renderItem}
+              rowHasChanged={(r1, r2) => r1.name !== r2.name}
+              renderEmptyDate={renderEmptyDate}
+              renderDay={(date, item) => renderDay(item.time)}
+              showOnlySelectedDayItems
+            />
+          ) : (
+            <Text>No appointments</Text>
+          )}
+        </View>
+      ) : (
+        <View>
+          <Text style={styles.title}>Appointment manager isn't available.</Text>
+          <Text>Set your working hours to enable it.</Text>
+        </View>
+      )}
     </View>
   );
 }

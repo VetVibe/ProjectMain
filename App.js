@@ -47,7 +47,6 @@ function PetOwnerTabs() {
   return (
     <Tab.Navigator>
       <Tab.Screen name="Pet Owner Home Tab" component={PetOwnerHomeTab} />
-      <Tab.Screen name="Tips Screen" component={TipsScreen} />
       <Tab.Screen name="Pet Owner Appointments Tab" component={PetOwnerAppointments} />
       <Tab.Screen name="Pet Owner Profile" component={PetOwnerProfileScreen} />
     </Tab.Navigator>
@@ -58,7 +57,7 @@ function VetHome() {
   return (
     <Stack.Navigator>
       <Stack.Screen name="Vet Home Screen" component={VetHomeScreen} />
-      <Stack.Screen name="Edit Vet Profile Screen" component={EditVetProfileScreen} />
+      <Stack.Screen name="Edit Vet Profile" component={EditVetProfileScreen} />
     </Stack.Navigator>
   );
 }
@@ -66,7 +65,7 @@ function VetHome() {
 function VetTabs() {
   return (
     <Tab.Navigator>
-      <Tab.Screen name="Vet Home Screen" component={VetHome} />
+      <Tab.Screen name="Vet Home Tab" component={VetHome} />
       <Tab.Screen name="Tips Screen" component={TipsScreen} />
       <Tab.Screen name="Vet Appointments" component={VetAppointmentsScreen} />
     </Tab.Navigator>

@@ -16,6 +16,7 @@ const PetOwnerSchema = new Schema({
   },
   phoneNumber: {
     type: String,
+    required: true,
   },
   profilePicture: {
     type: String,

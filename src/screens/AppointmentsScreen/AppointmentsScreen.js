@@ -2,7 +2,8 @@ import React, { useState, useCallback, useContext } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { AuthContext } from "../../auth";
 import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
+import Icon from "react-native-vector-icons/FontAwesome";
+import { colors, sizes } from "../../constants";
 import { clientServer } from "../../server";
 import AppointmentCard from "../../components/AppointmentCard/AppointmentCard";
 
@@ -60,11 +61,11 @@ export default function AppointmentsScreen({ navigation }) {
 
   return (
     <ScrollView>
-      <Text style={styles.header_text}>Your appointments</Text>
+      <View style={styles.header_container}>
+        <Text style={styles.header_text}>Your appointments</Text>
+        <Icon name="plus" size={20} style={styles.icon} onPress={handleVetSearch} />
+      </View>
       <View style={styles.list_container}>
-        <TouchableOpacity onPress={handleVetSearch}>
-          <FontAwesome name="search" size={24} color="black" />
-        </TouchableOpacity>
         {!appointmentList || appointmentList?.length === 0 ? (
           <Text style={styles.emptyViewText}>No appointments.</Text>
         ) : (
@@ -88,12 +89,19 @@ export default function AppointmentsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 48,
+    marginTop: 36,
+  },
+  header_container: {
+    marginHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   header_text: {
-    marginHorizontal: 24,
+    fontSize: sizes.h1,
+    color: colors.primary,
     marginVertical: 16,
-    fontSize: 30,
+    paddingHorizontal: 24,
   },
   list_container: {
     flex: 1,
@@ -106,5 +114,8 @@ const styles = StyleSheet.create({
   },
   loading_container: {
     position: "absolute",
+  },
+  icon: {
+    color: colors.primary,
   },
 });

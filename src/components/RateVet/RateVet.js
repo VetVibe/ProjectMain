@@ -1,77 +1,171 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
-import { COLORS } from "../../constants";
+import { View, Text, StyleSheet } from "react-native";
 import { Rating } from "react-native-ratings";
+import { colors, sizes } from "../../constants";
+import Input from "../Input/Input";
+import Button from "../Button/Button";
+
+const CARD_WIDTH = sizes.width - 100;
+const CARD_HEIGHT = 110;
 
 export default function RateVet({ petOwnerRate, onNewRating }) {
-  const [rating, setRating] = useState(petOwnerRate || 0);
-  const [isEditing, setIsEditing] = useState(false);
+  const [rating, setRating] = useState(petOwnerRate?.rate);
+  const [isAdding, setIsAdding] = useState(false);
+  const [title, setTitle] = useState();
+  const [content, setContent] = useState();
+  const [isSubmitedEmpy, setIsSubmitedEmpy] = useState(false);
 
-  const saveRating = async () => {
-    setIsEditing(false);
-    console.log("Rating saved:", rating);
-    onNewRating(rating);
+  const saveRating = async (newRating) => {
+    setRating(newRating);
+    onNewRating({ rate: rating });
+  };
+
+  const saveReview = async () => {
+    if (!title) {
+      setIsSubmitedEmpy(true);
+      return;
+    }
+    const newReview = {
+      rate: rating,
+      title,
+      content,
+    };
+    onNewRating(newReview);
+  };
+
+  const onChangeTitle = (text) => {
+    setTitle(text);
+    setIsSubmitedEmpy(false);
   };
 
   return (
     <View style={styles.container}>
-      {petOwnerRate ? <Text style={styles.subtitle}>Your rate</Text> : <Text style={styles.subtitle}>Rate</Text>}
-      <Rating
-        startingValue={rating}
-        onSwipeRating={() => setIsEditing(true)}
-        onFinishRating={setRating}
-        style={styles.rating}
-        imageSize={40}
-        isDisabled={!isEditing}
-        fractions={1}
-        minValue={0}
-        showRating
-      />
-      {isEditing && (
-        <>
-          <TouchableOpacity style={styles.button} onPress={saveRating}>
-            <Text style={styles.buttonText}>Save</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => setIsEditing(false)}>
-            <Text style={styles.buttonText}>Cancel</Text>
-          </TouchableOpacity>
-        </>
-      )}
-      {petOwnerRate && !isEditing && (
-        <TouchableOpacity onPress={() => setIsEditing(true)}>
-          <MaterialIcons name="edit" size={24} color={COLORS.black} />
-        </TouchableOpacity>
-      )}
+      <View style={styles.header_container}>
+        <Text style={styles.text}>Click to Rate:</Text>
+        <Rating startingValue={rating} onFinishRating={saveRating} imageSize={25} fractions={1} minValue={0} />
+      </View>
+      <View style={styles.add_review_container}>
+        {isAdding ? (
+          <View>
+            <Input
+              placeholder="Title"
+              style={styles.add_title_input}
+              autoCorrect={true}
+              value={petOwnerRate?.title || title}
+              onChangeText={onChangeTitle}
+              maxLength={60}
+              error={isSubmitedEmpy}
+              errorMessage={"Title is required"}
+            />
+            <Text style={styles.content_length}>{title?.length || 0}/60</Text>
+
+            <Input
+              placeholder="Review (optional)"
+              style={styles.add_content_input}
+              autoCorrect={true}
+              value={petOwnerRate?.content || content}
+              onChangeText={setContent}
+              maxLength={200}
+              multiline={true}
+            />
+            <Text style={styles.content_length}>{content?.length || 0}/200</Text>
+            <View style={styles.buttons_container}>
+              <Button text={"Cancel"} style={styles.cancel_button} onPress={() => setIsAdding(false)} />
+              <Button text={"Submit"} style={styles.submit_button} onPress={saveReview} />
+            </View>
+          </View>
+        ) : (
+          <Button
+            text={petOwnerRate?.title ? "Edit Review" : "Add Review"}
+            style={styles.add_review_text}
+            onPress={() => setIsAdding(true)}
+          />
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-    backgroundColor: "white",
+    flex: 1,
+    width: CARD_WIDTH,
   },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: 20,
+  header_container: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 12,
   },
-  rating: {
-    paddingVertical: 10,
+  text: {
+    fontSize: sizes.h3,
+    color: colors.grey,
   },
-  button: {
-    marginTop: 20,
-    backgroundColor: "orange",
-    padding: 10,
-    borderRadius: 5,
+  add_review_container: {
+    flex: 1,
   },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
+  add_title_input: {
+    marginHorizontal: 30,
+  },
+  add_content_input: {
+    marginHorizontal: 30,
+    height: CARD_HEIGHT,
+  },
+  content_length: {
+    fontSize: sizes.body2,
+    color: colors.grey,
+  },
+  buttons_container: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
+  },
+  add_review_text: {
+    container: {
+      padding: 8,
+      justifyContent: "flex-start",
+    },
+    text: {
+      textAlign: "center",
+      fontSize: sizes.body1,
+      padding: 10,
+      color: colors.primary,
+      fontWeight: "bold",
+    },
+  },
+  cancel_button: {
+    container: {
+      marginRight: 8,
+      borderRadius: 20,
+      padding: 4,
+      shadowColor: colors.gray,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      width: "50%",
+      backgroundColor: colors.white,
+    },
+    text: {
+      textAlign: "center",
+      fontSize: sizes.body1,
+      padding: 10,
+      fontWeight: "bold",
+    },
+  },
+  submit_button: {
+    container: {
+      borderRadius: 20,
+      padding: 4,
+      shadowColor: colors.gray,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      width: "50%",
+      backgroundColor: colors.primary,
+    },
+    text: {
+      textAlign: "center",
+      fontSize: sizes.body1,
+      padding: 10,
+      color: colors.white,
+      fontWeight: "bold",
+    },
   },
 });

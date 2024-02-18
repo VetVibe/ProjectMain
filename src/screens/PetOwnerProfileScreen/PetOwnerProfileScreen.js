@@ -13,7 +13,6 @@ import {
 import { AuthContext } from "../../auth";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
-import { COLORS, FONTS } from "../../constants";
 import { MaterialIcons } from "@expo/vector-icons";
 import { TextInput } from "react-native";
 import { encodeImageAsBase64 } from "../../../imageUtils";
@@ -110,63 +109,55 @@ export default function PetOwnerProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
+    <SafeAreaView>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
         {!isEditing ? (
-          <TouchableOpacity style={styles.editProfileButton} onPress={() => setIsEditing(true)}>
-            <MaterialIcons name="edit" size={24} color={COLORS.white} />
+          <TouchableOpacity onPress={() => setIsEditing(true)}>
+            <MaterialIcons name="edit" size={24} />
           </TouchableOpacity>
         ) : null}
-        <View style={styles.imageContainer}>
+        <View>
           <TouchableOpacity onPress={handleImagePicker}>
             {selectedImage !== null && selectedImage !== "" ? (
-              <Image source={{ uri: selectedImage }} style={styles.profileImage} />
+              <Image source={{ uri: selectedImage }} />
             ) : (
-              <View style={styles.profileImagePlaceholder}>
-                <Text style={styles.placeholderText}>Select an Image</Text>
+              <View>
+                <Text>Select an Image</Text>
               </View>
             )}
-            <View style={styles.cameraIcon}>
-              <MaterialIcons name="photo-camera" size={32} color={COLORS.primary} />
+            <View>
+              <MaterialIcons name="photo-camera" size={32} />
             </View>
           </TouchableOpacity>
         </View>
 
         <ScrollView>
-          <View style={styles.inputContainer}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>{TITELS["name"]}</Text>
+          <View>
+            <View>
+              <Text>{TITELS["name"]}</Text>
               <TextInput
-                style={styles.textInput}
                 value={petOwnerDetails.name}
                 editable={isEditing}
                 selectTextOnFocus={isEditing}
                 onChangeText={(text) => handleChange("name", text)}
               />
             </View>
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>{TITELS["email"]}</Text>
-              <TextInput
-                style={styles.textInput}
-                value={petOwnerDetails.email}
-                editable={false}
-                selectTextOnFocus={false}
-              />
+            <View>
+              <Text>{TITELS["email"]}</Text>
+              <TextInput value={petOwnerDetails.email} editable={false} selectTextOnFocus={false} />
             </View>
-            <Text style={styles.label}>{TITELS["password"]}</Text>
+            <Text>{TITELS["password"]}</Text>
             <TextInput
               autoCorrect={false}
               autoCapitalize="none"
-              style={styles.textInput}
               placeholder={TITELS["password"]}
               value={petOwnerDetails.password}
               editable={isEditing}
               selectTextOnFocus={isEditing}
               onChangeText={(text) => handleChange("password", text)}
             />
-            <Text style={styles.label}>{TITELS["phoneNumber"]}</Text>
+            <Text>{TITELS["phoneNumber"]}</Text>
             <TextInput
-              style={styles.textInput}
               placeholder={TITELS["phoneNumber"]}
               value={petOwnerDetails.phoneNumber || ""}
               editable={isEditing}
@@ -178,16 +169,16 @@ export default function PetOwnerProfileScreen() {
 
           {isEditing ? (
             <>
-              <TouchableOpacity style={styles.saveButton} onPress={saveChanges}>
-                <Text style={styles.saveButtonText}>Save Changes</Text>
+              <TouchableOpacity onPress={saveChanges}>
+                <Text>Save Changes</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={() => setIsEditing(false)}>
-                <Text style={styles.saveButtonText}>Cancel</Text>
+              <TouchableOpacity onPress={() => setIsEditing(false)}>
+                <Text>Cancel</Text>
               </TouchableOpacity>
             </>
           ) : (
-            <TouchableOpacity style={styles.saveButton} onPress={LogoutClick}>
-              <Text style={styles.saveButtonText}>Log out</Text>
+            <TouchableOpacity onPress={LogoutClick}>
+              <Text>Log out</Text>
             </TouchableOpacity>
           )}
         </ScrollView>
@@ -195,90 +186,3 @@ export default function PetOwnerProfileScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 18,
-  },
-  imageContainer: {
-    alignItems: "center",
-    marginVertical: 10,
-  },
-  profileImage: {
-    height: 170,
-    width: 170,
-    borderRadius: 5,
-    borderWidth: 3,
-    borderColor: COLORS.primary,
-  },
-  cameraIcon: {
-    position: "absolute",
-    bottom: 0,
-    right: 10,
-    zIndex: 9999,
-  },
-  inputContainer: {
-    flexDirection: "column",
-    marginBottom: 6,
-  },
-  label: {
-    ...FONTS.body4,
-    color: "#CCCCCC",
-    marginBottom: 4,
-  },
-  value: {
-    ...FONTS.body3,
-    marginBottom: 8,
-  },
-  textInput: {
-    height: 44,
-    width: "100%",
-    borderColor: COLORS.secondaryGray,
-    borderWidth: 1,
-    borderRadius: 4,
-    marginBottom: 6,
-    justifyContent: "center",
-    paddingLeft: 8,
-  },
-  saveButton: {
-    backgroundColor: COLORS.primary,
-    height: 44,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
-  saveButtonText: {
-    ...FONTS.body3,
-    color: COLORS.white,
-  },
-  container: {
-    flex: 1,
-  },
-  editProfileButton: {
-    position: "absolute",
-    right: 20,
-    top: 20,
-    zIndex: 1,
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
-  },
-  logoutButton: {
-    position: "absolute",
-    right: 20,
-    top: 100, // Adjust the position based on your layout
-    zIndex: 3,
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
-  },
-});

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../auth";
-import { View, Text, ScrollView, Button } from "react-native";
+import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { Calendar } from "react-native-calendars";
 import moment from "moment";
-import { StackActions } from "@react-navigation/native";
 import { getTimesNum, availableSlotsByDate, fullyBookedDates } from "../../utils";
-import TimeContainer from "../../components/TimeContainer/TimeContainer";
+import { colors, sizes } from "../../constants";
+import { TimeContainer, Button } from "../../components";
 import { clientServer } from "../../server";
 
 export default function MakeAppointmentScreen({ route, navigation }) {
@@ -81,10 +81,10 @@ export default function MakeAppointmentScreen({ route, navigation }) {
   };
 
   return (
-    <View>
+    <View style={styles.container}>
       <ScrollView>
-        <View>
-          <Text>Selecte day:</Text>
+        <View style={styles.header_container}>
+          <Text style={styles.header}>Selecte day</Text>
         </View>
 
         <Calendar
@@ -97,26 +97,71 @@ export default function MakeAppointmentScreen({ route, navigation }) {
             [selectedDate]: {
               selected: true,
               disableTouchEvent: true,
-              selectedColor: "orange",
-              selectedTextColor: "red",
+              selectedColor: colors.primary,
+              selectedTextColor: colors.white,
             },
           }}
           minDate={today}
           maxDate={oneMonthsLater}
         />
         {selectedDate && (
-          <>
-            <Text>Available Times:</Text>
-            {renderAvailableTimes()}
-          </>
-        )}
-
-        {selectedTime && (
-          <View>
-            <Button title={"Book"} onPress={handleAddAppointment} />
+          <View style={styles.time_container}>
+            {availableTimes.map((time) => (
+              <TimeContainer
+                key={time}
+                time={time}
+                onPress={(time) => setSelectedTime(time)}
+                isSelected={selectedTime === time}
+              />
+            ))}
           </View>
         )}
+
+        {selectedTime && <Button text={"Book"} onPress={handleAddAppointment} style={styles.book_button} />}
       </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.white,
+  },
+  header_container: {
+    flex: 1,
+    margin: 16,
+  },
+  header: {
+    fontSize: sizes.h1,
+    color: colors.primary,
+    fontWeight: "bold",
+    flex: 1,
+  },
+  time_container: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    padding: 16,
+    justifyContent: "space-between",
+  },
+  book_button: {
+    container: {
+      marginHorizontal: 24,
+      marginBottom: 12,
+      borderRadius: 20,
+      padding: 8,
+      shadowColor: colors.gray,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      width: "90%",
+      backgroundColor: colors.primary,
+    },
+    text: {
+      textAlign: "center",
+      fontSize: sizes.h3,
+      padding: 4,
+      color: colors.white,
+      fontWeight: "bold",
+    },
+  },
+});

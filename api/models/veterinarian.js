@@ -32,25 +32,15 @@ const veterinarianSchema = new Schema({
   },
   location: {
     type: String,
-    required: true,
   },
   specialization: {
-    type: String,
-    required: true,
+    type: [String],
   },
   start: {
     type: Number,
-    min: 0,
-    max: 23,
-    default: 8,
-    required: true,
   },
   end: {
     type: Number,
-    min: 0,
-    max: 23,
-    default: 20,
-    required: true,
   },
 });
 

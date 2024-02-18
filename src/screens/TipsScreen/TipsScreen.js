@@ -1,9 +1,10 @@
 import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../../auth";
-import { View, TouchableOpacity, Text, TextInput, Button, FlatList, StyleSheet, Image } from "react-native";
-import { COLORS } from "../../constants";
+import { View, Text, FlatList, StyleSheet, Image } from "react-native";
+import { Input, Button, TipCard } from "../../components";
 import { MaterialIcons, AntDesign } from "@expo/vector-icons";
 import { clientServer } from "../../server";
+import { colors, sizes } from "../../constants";
 
 export default function TipsScreen() {
   const { authState } = useContext(AuthContext);
@@ -114,78 +115,70 @@ export default function TipsScreen() {
     setTip("");
   };
 
-  const renderAllItems = ({ item }) => {
-    if (!item) return null;
-    return (
-      <View style={styles.tipContainer}>
-        <Image source={{ uri: item.vetImage }} resizeMode="cover" style={styles.profileImage} />
-        <View style={styles.tipTextContainer}>
-          <Text style={styles.tipContent}>{item.content}</Text>
-          <Text style={styles.vetName}>By: {item.vetName}</Text>
-        </View>
-      </View>
-    );
-  };
-
   const renderItem = ({ item }) => {
     if (!item) return null;
     const isEditing = item?._id === editingTipId;
 
     return (
-      <View style={styles.tipContainer}>
+      <>
         {isEditing ? (
           <View>
-            <TextInput value={editedTipContent} onChangeText={(text) => setEditedTipContent(text)} />
-            <View style={{ flexDirection: "row", marginTop: 5 }}>
-              <Button title="Save" onPress={() => handleSavePress(item._id)} />
-              <Button title="Cancel" onPress={handleCancelPress} />
+            <Input
+              value={editedTipContent}
+              onChangeText={(text) => setEditedTipContent(text)}
+              multiline={true}
+              maxLength={120}
+            />
+            <View style={styles.buttoms_container}>
+              <Button text="Save" onPress={() => handleSavePress(item._id)} style={styles.save_button} />
+              <Button text="Cancel" onPress={handleCancelPress} style={styles.cancel_button} />
             </View>
           </View>
         ) : (
-          <View style={styles.tipTextContainer}>
-            <Text style={styles.tipContent}>{item.content}</Text>
-            <TouchableOpacity onPress={() => handleEditPress(item._id, item.content)}>
-              <MaterialIcons name="edit" size={24} color={COLORS.black} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleDeletePress(item._id)}>
-              <MaterialIcons name="delete" size={24} color="black" />
-            </TouchableOpacity>
+          <View style={styles.item_container}>
+            <View style={styles.tip_container}>
+              <Text style={styles.text_content}>{item.content}</Text>
+              <View style={styles.header_buttons}>
+                <MaterialIcons
+                  name="edit"
+                  size={24}
+                  color="black"
+                  onPress={() => handleEditPress(item._id, item.content)}
+                />
+                <MaterialIcons name="delete" size={24} color="black" onPress={() => handleDeletePress(item._id)} />
+              </View>
+            </View>
           </View>
         )}
-      </View>
+      </>
     );
   };
 
   return (
-    <View>
-      {authState.userType === "vet" && (
-        <View>
-          <Text>My Tips</Text>
-          {isAdding ? (
-            <>
-              <TextInput
-                multiline={true}
-                numberOfLines={10}
-                placeholder="Write your tip here..."
-                value={tip}
-                onChangeText={setTip}
-              />
-              <View style={{ flexDirection: "row", marginTop: 5 }}>
-                <Button title="Save" onPress={handleSave} />
-                <Button title="Cancel" onPress={handleCancel} />
-              </View>
-            </>
-          ) : (
-            <TouchableOpacity onPress={() => setIsAdding(true)}>
-              <AntDesign name="pluscircleo" size={24} color="black" />
-            </TouchableOpacity>
-          )}
-          <FlatList data={vetTips} renderItem={renderItem} keyExtractor={(item) => item?._id} />
+    <View style={styles.container}>
+      <View style={styles.segment_container}>
+        <View style={styles.header_container}>
+          <Text style={styles.header_text}>My Tips</Text>
+          <AntDesign name="pluscircleo" size={24} color="black" onPress={() => setIsAdding(true)} />
         </View>
-      )}
-      <View>
-        <Text>Vet Tips</Text>
-        <FlatList data={allTips} renderItem={renderAllItems} keyExtractor={(item) => item?._id} />
+        {isAdding && (
+          <>
+            <Input multiline={true} placeholder="Write your tip here..." value={tip} onChangeText={setTip} />
+            <View style={styles.buttoms_container}>
+              <Button text="Save" onPress={handleSave} style={styles.save_button} />
+              <Button text="Cancel" onPress={handleCancel} style={styles.cancel_button} />
+            </View>
+          </>
+        )}
+        {vetTips.length === 0 && <Text>You haven't added any tips.</Text>}
+        <FlatList data={vetTips} renderItem={renderItem} keyExtractor={(item) => item?._id} />
+      </View>
+
+      <View style={styles.segment_container}>
+        <View style={styles.header_container}>
+          <Text style={styles.header_text}>Vet Tips</Text>
+        </View>
+        <FlatList data={allTips} renderItem={({ item }) => <TipCard tip={item} />} keyExtractor={(item) => item?._id} />
       </View>
     </View>
   );
@@ -194,63 +187,102 @@ export default function TipsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 24,
+    backgroundColor: colors.white,
+  },
+  segment_container: {
+    marginVertical: 12,
+  },
+  item_container: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  header_container: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  header_text: {
+    fontSize: sizes.h1,
+    color: colors.primary,
+    fontWeight: "bold",
+    shadowColor: colors.gray,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+  },
+  header_buttons: {
+    flex: 1,
+    flexDirection: "row",
+    position: "absolute",
+    top: 10,
+    right: 10,
   },
   title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    marginTop: 60,
-    marginBottom: 40,
-    marginLeft: 0,
+    fontSize: sizes.h3,
   },
-  tipContainer: {
-    flexDirection: "row", // Set flexDirection to row to align items horizontally
-    backgroundColor: "#f0f0f0",
-    borderRadius: 2,
-    padding: 5,
-    marginBottom: 10,
-    alignItems: "center", // Align items vertically in the center
+  tip_container: {
+    flex: 1,
+    borderRadius: 20,
+    marginVertical: 16,
+    padding: 16,
+    backgroundColor: colors.lighter_gray,
   },
-  tipContent: {
-    fontSize: 16,
+  text_container: {
+    flex: 1,
   },
-  input: {
-    height: 40,
-    width: "100%", // Updated to span the entire width
-    borderColor: "#FFA500",
-    borderWidth: 1,
-    marginBottom: 20,
-    paddingLeft: 10,
-    borderRadius: 20, // Added to make it round
-    backgroundColor: "#FFFFFF", // White
-  },
-  vetName: {
-    fontStyle: "italic",
-    marginTop: 5,
-  },
-  editProfileButton: {
-    position: "absolute",
-    right: 20,
-    top: 20,
-    zIndex: 1,
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
-  },
-  profileImage: {
-    height: 60, // Adjust the size as needed
-    width: 60, // Adjust the size as needed
-    borderRadius: 20, // Make it round
-    marginRight: 15, // Add some spacing between the image and the text
-  },
-  tipTextContainer: {
-    flex: 1, // Take up the remaining space
+  text_content: {
+    flex: 1,
+    fontSize: sizes.h4,
   },
   addButton: {
     alignSelf: "flex-end",
     marginBottom: 10,
+  },
+  buttoms_container: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  save_button: {
+    container: {
+      flex: 1,
+      marginHorizontal: 4,
+      marginVertical: 4,
+      borderRadius: 20,
+      padding: 4,
+      shadowColor: colors.gray,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      width: "40%",
+      backgroundColor: colors.primary,
+    },
+    text: {
+      textAlign: "center",
+      fontSize: sizes.h3,
+      padding: 10,
+      color: colors.white,
+      fontWeight: "bold",
+    },
+  },
+  cancel_button: {
+    container: {
+      flex: 1,
+      marginHorizontal: 4,
+      marginVertical: 4,
+      borderRadius: 20,
+      padding: 4,
+      shadowColor: colors.gray,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      width: "40%",
+      backgroundColor: colors.white,
+    },
+    text: {
+      textAlign: "center",
+      fontSize: sizes.h3,
+      padding: 10,
+      color: colors.gray,
+      fontWeight: "bold",
+    },
   },
 });

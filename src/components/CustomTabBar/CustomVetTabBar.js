@@ -11,13 +11,13 @@ export default function CustomTabBar() {
     <View>
       <View style={styles.container}>
         <TouchableOpacity onPress={() => navigation.navigate("Vet Home Screen") & setFocused(1)}>
-          <Entypo name="home" size={24} color="black" />
+          <Entypo name="home" size={24} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Tips Screen") & setFocused(2)}>
-          <FontAwesome name="search" size={24} color="black" />
+          <FontAwesome name="search" size={24} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Vet Appointments") & setFocused(3)}>
-          <AntDesign name="calendar" size={24} color="black" />
+          <AntDesign name="calendar" size={24} />
         </TouchableOpacity>
       </View>
     </View>

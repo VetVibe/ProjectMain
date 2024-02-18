@@ -462,8 +462,8 @@ const addRate = async (req, res) => {
   try {
     const vetId = req.params.vetId;
     const petOwnerId = req.params.petOwnerId;
-    const { rate } = req.body;
-    const newRate = new Rate({ vetId, petOwnerId, rate });
+    const { rating } = req.body;
+    const newRate = new Rate({ vetId, petOwnerId, ...rating });
     await newRate.save();
 
     res.status(201).json(newRate);
