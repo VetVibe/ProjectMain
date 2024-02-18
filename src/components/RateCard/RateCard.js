@@ -11,8 +11,15 @@ export default function RateCard({ rate }) {
       <View style={styles.item_container}>
         <View style={styles.header_container}>
           <View style={styles.rate_header}>
-            {rate.title && <Test style={styles.rate_title}>{rate.title}</Test>}
-            <Rating readonly startingValue={rate.rate} onFinishRating={() => console.log(rate)} imageSize={10} />
+            {rate.title && <Text style={styles.rate_title}>{rate.title}</Text>}
+            <Rating
+              type="custom"
+              tintColor={colors.lighter_gray}
+              readonly
+              startingValue={rate.rate}
+              onFinishRating={() => console.log(rate)}
+              imageSize={15}
+            />
           </View>
           <View style={styles.user_details}>
             <Text style={styles.text}>{rate.when}</Text>
@@ -30,6 +37,7 @@ export default function RateCard({ rate }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    marginVertical: 8,
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
     borderRadius: 20,
@@ -64,7 +72,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: sizes.h4,
-    color: colors.light_gray,
+    color: colors.gray,
   },
   content_container: {
     flex: 1,
