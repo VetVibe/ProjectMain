@@ -89,88 +89,94 @@ export default function SignUpScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <View style={styles.header_container}>
-        <Text style={styles.title}>Sign Up</Text>
-        <Text style={styles.subTitle}>Create your account</Text>
-      </View>
+    <KeyboardAvoidingView style={styles.screen_container} behavior="padding">
+      <View style={styles.container}>
+        <View style={styles.header_container}>
+          <Text style={styles.title}>Sign Up</Text>
+          <Text style={styles.subTitle}>Create your account</Text>
+        </View>
 
-      <View style={styles.input_container}>
-        <TabsContainer tabs={ROLES_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
-        <Input
-          autoCapitalize="words"
-          autoComplete="name"
-          placeholder="Name"
-          onChangeText={setName}
-          error={invalidInput.name}
-          errorMessage={"Required field"}
-        />
-        {activeTab === "vet" && (
+        <View style={styles.input_container}>
+          <TabsContainer tabs={ROLES_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
           <Input
-            placeholder="Veterinarian ID"
-            value={id}
-            onChangeText={(value) => handleChangeID(value)}
-            keyboardType="numeric"
-            error={invalidInput.id}
+            autoCapitalize="words"
+            autoComplete="name"
+            placeholder="Name"
+            onChangeText={setName}
+            error={invalidInput.name}
             errorMessage={"Required field"}
           />
-        )}
-        <Input
-          autoComplete="email"
-          autoCorrect={false}
-          autoCapitalize={"none"}
-          placeholder="Email"
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          error={invalidInput.email}
-          errorMessage={email ? "Invalid email" : "Required field"}
-        />
-        <Input
-          placeholder="Password"
-          onChangeText={setPassword}
-          autoCorrect={false}
-          autoCapitalize={"none"}
-          error={invalidInput.password}
-          errorMessage={
-            password ? "Atlest 8 characters, 1 uppercase and 1 lowercase 1 digit, 1 special chacater" : "Required field"
-          }
-          secure
-        />
-        <Input
-          autoCorrect={false}
-          autoCapitalize={"none"}
-          placeholder="Password (Again)"
-          onChangeText={setPasswordAgain}
-          error={invalidInput.passwordAgain}
-          errorMessage={passwordAgain ? "Must match password" : "Required field"}
-          secure
-        />
-        <Input
-          placeholder="Phone Number"
-          onChangeText={setPhoneNumber}
-          keyboardType="phone-pad"
-          error={invalidInput.phoneNumber}
-          errorMessage={"Required field"}
-        />
-      </View>
+          {activeTab === "vet" && (
+            <Input
+              placeholder="Veterinarian ID"
+              value={id}
+              onChangeText={(value) => handleChangeID(value)}
+              keyboardType="numeric"
+              error={invalidInput.id}
+              errorMessage={"Required field"}
+            />
+          )}
+          <Input
+            autoComplete="email"
+            autoCorrect={false}
+            autoCapitalize={"none"}
+            placeholder="Email"
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            error={invalidInput.email}
+            errorMessage={email ? "Invalid email" : "Required field"}
+          />
+          <Input
+            placeholder="Password"
+            onChangeText={setPassword}
+            autoCorrect={false}
+            autoCapitalize={"none"}
+            error={invalidInput.password}
+            errorMessage={
+              password
+                ? "Atlest 8 characters, 1 uppercase and 1 lowercase 1 digit, 1 special chacater"
+                : "Required field"
+            }
+            secure
+          />
+          <Input
+            autoCorrect={false}
+            autoCapitalize={"none"}
+            placeholder="Password (Again)"
+            onChangeText={setPasswordAgain}
+            error={invalidInput.passwordAgain}
+            errorMessage={passwordAgain ? "Must match password" : "Required field"}
+            secure
+          />
+          <Input
+            placeholder="Phone Number"
+            onChangeText={setPhoneNumber}
+            keyboardType="phone-pad"
+            error={invalidInput.phoneNumber}
+            errorMessage={"Required field"}
+          />
+        </View>
 
-      <View style={styles.button_container}>
-        <Button text="Sign In" onPress={handleRegistration} style={styles.login} />
-        <Button
-          text={"Already have an account?"}
-          onPress={() => navigation.navigate("Sign In")}
-          style={styles.signIn}
-        />
+        <View style={styles.button_container}>
+          <Button text="Sign In" onPress={handleRegistration} style={styles.login} />
+          <Button
+            text={"Already have an account?"}
+            onPress={() => navigation.navigate("Sign In")}
+            style={styles.signIn}
+          />
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  screen_container: { flex: 1, backgroundColor: colors.white },
+
   container: {
     flex: 1,
     paddingHorizontal: 24,
-    backgroundColor: colors.white,
+    marginTop: 50,
   },
   header_container: {
     alignItems: "center",

@@ -51,52 +51,55 @@ export default function SignInScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <View style={styles.header_container}>
-        <Image style={styles.image_container} source={PawImage} resizeMode="contain" />
-        <Text style={styles.title}>Welcome to Vet Vibe</Text>
-        <Text style={styles.subTitle}>Enter your credential to login</Text>
-      </View>
+    <KeyboardAvoidingView style={styles.screen_container} behavior="padding">
+      <View style={styles.container}>
+        <View style={styles.header_container}>
+          <Image style={styles.image_container} source={PawImage} resizeMode="contain" />
+          <Text style={styles.title}>Welcome to Vet Vibe</Text>
+          <Text style={styles.subTitle}>Enter your credential to login</Text>
+        </View>
 
-      <View style={styles.input_container}>
-        <TabsContainer tabs={ROLES_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
-        <Input
-          autoComplete="email"
-          autoCorrect={false}
-          autoCapitalize={"none"}
-          placeholder="Email"
-          onChangeText={(value) => handleChangeText("email", value)}
-          keyboardType="email-address"
-          error={incorrectInput.incorrectEmail}
-          errorMessage={form.email ? `User with email: ${form.email} wasn't found.` : "Enter your email"}
-        />
+        <View style={styles.input_container}>
+          <TabsContainer tabs={ROLES_TABS} activeTab={activeTab} handleTabPress={handleTabPress} />
+          <Input
+            autoComplete="email"
+            autoCorrect={false}
+            autoCapitalize={"none"}
+            placeholder="Email"
+            onChangeText={(value) => handleChangeText("email", value)}
+            keyboardType="email-address"
+            error={incorrectInput.incorrectEmail}
+            errorMessage={form.email ? `User with email: ${form.email} wasn't found.` : "Enter your email"}
+          />
 
-        <Input
-          placeholder="Password"
-          onChangeText={(value) => handleChangeText("password", value)}
-          autoCorrect={false}
-          error={incorrectInput.incorrectPassword}
-          errorMessage={form.password ? "The password is incorrect." : "Enter password"}
-          secure
-        />
-      </View>
-      <View style={styles.button_container}>
-        <Button text={"Login"} onPress={onSignInPress} style={styles.login} />
-        <Button
-          text={"Don't have an account? Sign Up"}
-          onPress={() => navigation.navigate("Sign up")}
-          style={styles.signIn}
-        />
+          <Input
+            placeholder="Password"
+            onChangeText={(value) => handleChangeText("password", value)}
+            autoCorrect={false}
+            error={incorrectInput.incorrectPassword}
+            errorMessage={form.password ? "The password is incorrect." : "Enter password"}
+            secure
+          />
+        </View>
+        <View style={styles.button_container}>
+          <Button text={"Login"} onPress={onSignInPress} style={styles.login} />
+          <Button
+            text={"Don't have an account? Sign Up"}
+            onPress={() => navigation.navigate("Sign up")}
+            style={styles.signIn}
+          />
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  screen_container: { flex: 1, backgroundColor: colors.white },
   container: {
     flex: 1,
+    marginTop: 50,
     paddingHorizontal: 24,
-    backgroundColor: colors.white,
   },
   header_container: {
     alignItems: "center",

@@ -3,6 +3,7 @@ export const PET_OWNER_ENDPOINTS = {
   LOGIN: "/pet-owner/login",
   UPDATE_INFO: "/pet-owner/update-info/:petOwnerId",
   DETAILS: "/pet-owner/:petOwnerId",
+  PET_OWNER: "/pet-owner",
 };
 
 export const VETERINARIAN_ENDPOINTS = {

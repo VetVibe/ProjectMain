@@ -67,6 +67,15 @@ export const clientServer = {
     }
   },
 
+  getPetOwner: async (queryParams) => {
+    try {
+      const response = await clientServer.server.get(PET_OWNER_ENDPOINTS.PET_OWNER(queryParams));
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching pet owner:", error.response);
+    }
+  },
+
   // -------------------- Pet --------------------
   getPetDetails: async (petId) => {
     try {

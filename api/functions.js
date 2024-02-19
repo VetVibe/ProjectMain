@@ -49,19 +49,21 @@ const loginPetOwner = async (req, res) => {
 
 const updatePetOwnerInfo = async (req, res) => {
   const { petOwnerId } = req.params;
-  const updatedData = req.body.updatedData;
+  const updatedData = req.body;
+  console.log("Updated data:", updatedData);
 
   try {
     const petOwner = await PetOwner.findByIdAndUpdate(petOwnerId, updatedData);
+    console.log("Pet owner:", petOwner);
 
     if (!petOwner) {
       return res.status(404).json({ success: false, message: "Pet owner not found" });
     }
 
-    res.status(200);
-    console.log("DB | Update Pet owner details: Pet owner details updated successfully.");
+    res.status(200).json({ message: "Pet owner updated successfully" });
+    console.log(`DB | Update Pet owner | Pet owner ${petOwnerId} updated successfully.`);
   } catch (error) {
-    console.error("DB | Update Pet owner details | Error:", error);
+    console.error("DB | Update Pet owner | Error:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
@@ -80,6 +82,17 @@ const getPetOwnerDetails = async (req, res) => {
   } catch (error) {
     console.error("DB | Pet owner Details | Error:", error);
     res.status(500).json({ error: "Error fetching pet owner details" });
+  }
+};
+
+const getPetOwner = async (req, res) => {
+  try {
+    const { email } = req.query;
+    const pet_owner = await PetOwner.find({ email: email });
+    res.status(200).json(pet_owner);
+  } catch (error) {
+    console.error("Error fetching pet owner", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -217,7 +230,7 @@ const addTip = async (req, res) => {
     const newTip = new Tip({ vetId: vetId, content: content });
     await newTip.save();
 
-    res.status(201).json({ message: "Tip added successfully" });
+    res.status(201).json(newTip);
     console.log(`DB| Add tip | Added tip for vet ${vetId}.`);
   } catch (error) {
     console.error("DB| Add tip | Error:", error);
@@ -246,17 +259,16 @@ const getTip = async (req, res) => {
 const updateTipInfo = async (req, res) => {
   try {
     const tipId = req.params.tipId;
-    const updatedTipData = req.body.updatedData;
 
-    const updatedTip = await Tip.findByIdAndUpdate(tipId, updatedTipData);
+    const updatedTip = await Tip.findByIdAndUpdate(tipId, req.body);
 
     if (!updatedTip) {
       console.error(`DB| Update tip | Tip with ID ${tipId} not found.`);
       return res.status(404).json({ message: "Tip not found" });
     }
 
-    console.log(`DB| Update tip | Tip with ID ${tipId} updated successfully.`);
     res.status(200).json({ message: `Tip with ID ${tipId} updated successfully.` });
+    console.log(`DB| Update tip | Tip with ID ${tipId} updated successfully.`);
   } catch (error) {
     console.error("DB| Update tip | Error:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -292,6 +304,7 @@ const addPet = async (req, res) => {
     console.log(`DB | Add pet | Pet added successfully. Pet ID: ${newPet._id}`);
   } catch (error) {
     console.error("DB | Add pet | Error:", error);
+    console.log("DB | Add pet | Request body:", req.body);
     res.status(500).json({ message: "Error adding a pet" });
   }
 };
@@ -337,7 +350,6 @@ const updatePetInfo = async (req, res) => {
     const petId = req.params.petId;
     const updatedPetData = req.body;
 
-    // Use findOneAndUpdate to find the pet by its _id and update the data
     const updatedPet = await Pet.findByIdAndUpdate(petId, updatedPetData);
 
     if (!updatedPet) {
@@ -345,8 +357,8 @@ const updatePetInfo = async (req, res) => {
       return res.status(404).json({ message: "Pet not found" });
     }
 
-    console.log(`DB| Update Pet | Pet with ID ${petId} updated successfully.`);
     res.status(200).json({ message: `Pet with ID ${petId} updated successfully.` });
+    console.log(`DB| Update Pet | Pet with ID ${petId} updated successfully.`);
   } catch (error) {
     console.error("DB| Update Pet | Error:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -575,6 +587,7 @@ export {
   loginPetOwner,
   updatePetOwnerInfo,
   getPetOwnerDetails,
+  getPetOwner,
   registerVeterinarian,
   loginVeterinarian,
   getVeterinarians,

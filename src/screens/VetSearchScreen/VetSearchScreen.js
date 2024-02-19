@@ -7,8 +7,8 @@ import { clientServer } from "../../server";
 
 export default function VetSearchScreen({ navigation }) {
   const [veterinarians, setVeterinarians] = useState([]);
-  const [selectedLocation, setSelectedLocation] = useState("");
-  const [selectedSpecialization, setSelectedSpecialization] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState();
+  const [selectedSpecialization, setSelectedSpecialization] = useState();
 
   const handleFilterChange = async () => {
     const queryParams = new URLSearchParams();
@@ -39,7 +39,7 @@ export default function VetSearchScreen({ navigation }) {
 
   return (
     <ScrollView>
-      <View style={styles.searchSection}>
+      <View style={styles.container}>
         <View style={styles.header_container}>
           <Text style={styles.header_text}>Find a Vet</Text>
         </View>
@@ -48,12 +48,11 @@ export default function VetSearchScreen({ navigation }) {
           onSelectedSpecialization={setSelectedSpecialization}
           handleFilterChange={handleFilterChange}
         />
-
-        <View style={styles.results_container}>
-          {veterinarians && veterinarians.length > 0 ? (
-            veterinarians.map((vet, index) => (
-              <View style={styles.detailes_container}>
-                <TouchableWithoutFeedback key={index} onPress={() => handleVetPress(vet)}>
+        {veterinarians && veterinarians.length > 0 ? (
+          <View style={styles.results_container}>
+            {veterinarians.map((vet, index) => (
+              <View key={index} style={styles.detailes_container}>
+                <TouchableWithoutFeedback onPress={() => handleVetPress(vet)}>
                   <View style={styles.info_container}>
                     {vet?.imgSrc && <Image source={{ uri: vet.imgSrc }} style={styles.image} />}
                     <View style={styles.title_container}>
@@ -76,11 +75,11 @@ export default function VetSearchScreen({ navigation }) {
                   </View>
                 </TouchableWithoutFeedback>
               </View>
-            ))
-          ) : (
-            <Text>No veterinarians found</Text>
-          )}
-        </View>
+            ))}
+          </View>
+        ) : (
+          (selectedLocation || selectedSpecialization) && <Text style={styles.text}>No veterinarians found</Text>
+        )}
       </View>
     </ScrollView>
   );
@@ -89,9 +88,8 @@ export default function VetSearchScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 36,
+    marginTop: 60,
   },
-
   header_container: {
     marginHorizontal: 16,
     flexDirection: "row",
@@ -101,6 +99,7 @@ const styles = StyleSheet.create({
   header_text: {
     fontSize: sizes.h1,
     color: colors.primary,
+    fontWeight: "bold",
     marginVertical: 16,
     paddingHorizontal: 24,
   },

@@ -81,8 +81,8 @@ export default function MakeAppointmentScreen({ route, navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView>
+    <View style={styles.screen_container}>
+      <ScrollView style={styles.container}>
         <View style={styles.header_container}>
           <Text style={styles.header}>Selecte day</Text>
         </View>
@@ -124,9 +124,9 @@ export default function MakeAppointmentScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
+  screen_container: { flex: 1, backgroundColor: colors.white },
   container: {
-    flex: 1,
-    backgroundColor: colors.white,
+    marginTop: 50,
   },
   header_container: {
     flex: 1,

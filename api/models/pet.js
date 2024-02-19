@@ -9,14 +9,20 @@ const PetSchema = new Schema({
     type: String,
     required: true,
   },
-  animalType: {
+  species: {
     type: String,
-  },
-  age: {
-    type: Date,
+    required: true,
   },
   gender: {
     type: String,
+    required: true,
+  },
+  weight: {
+    type: Number,
+  },
+  birthdate: {
+    type: Date,
+    required: true,
   },
   lastVaccinationDate: {
     type: Date,

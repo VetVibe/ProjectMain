@@ -17,6 +17,7 @@ export default function Input({
   scrollEnabled,
   error,
   errorMessage,
+  editable,
 }) {
   const [focused, setFocused] = useState(false);
 
@@ -40,6 +41,7 @@ export default function Input({
           scrollEnabled={scrollEnabled}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
+          editable={editable}
         />
       </View>
       {error && <Text style={styles.error}>{errorMessage}</Text>}

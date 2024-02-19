@@ -2,7 +2,7 @@ import SignInScreen from "./SignInScreen/SignInScreen";
 import SignUpScreen from "./SignUpScreen/SignUpScreen";
 import PetOwnerHomeScreen from "./PetOwnerHomeScreen/PetOwnerHomeScreen";
 import PetProfileScreen from "./PetProfileScreen/PetProfileScreen";
-import EditPetProfileScreen from "./EditPetProfileScreen/EditPetProfileScreen";
+import AddPetScreen from "./AddPetScreen/AddPetScreen";
 import PetOwnerProfileScreen from "./PetOwnerProfileScreen/PetOwnerProfileScreen";
 import VetHomeScreen from "./VetHomeScreen/VetHomeScreen";
 import EditVetProfileScreen from "./EditVetProfileScreen/EditVetProfileScreen";
@@ -16,7 +16,7 @@ export {
   SignUpScreen,
   PetOwnerHomeScreen,
   PetProfileScreen,
-  EditPetProfileScreen,
+  AddPetScreen,
   PetOwnerProfileScreen,
   VetHomeScreen,
   EditVetProfileScreen,

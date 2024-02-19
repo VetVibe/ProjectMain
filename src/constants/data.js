@@ -1,4 +1,4 @@
-export const PET_TYPES = [
+export const species = [
   { label: "Dog", value: "Dog" },
   { label: "Cat", value: "Cat" },
   { label: "Bird", value: "Bird" },
@@ -11,7 +11,7 @@ export const PET_TYPES = [
   { label: "Farm Animal", value: "Farm Animal" },
 ];
 
-export const GENDERS = [
+export const genders = [
   { label: "Male", value: "Male" },
   { label: "Female", value: "Female" },
   { label: "Other", value: "Other" },

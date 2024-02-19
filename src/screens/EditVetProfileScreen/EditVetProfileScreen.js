@@ -71,7 +71,6 @@ export default function EditVetProfileScreen({ navigation }) {
   };
 
   const handleSpetializationAdd = async () => {
-    console.log(vetSpetializations);
     if (selectedSpecialization) {
       if (vetSpetializations) {
         setVetSpetializations((prev) => [...prev, selectedSpecialization]);
@@ -102,7 +101,7 @@ export default function EditVetProfileScreen({ navigation }) {
         text: "Cancel",
         style: "cancel",
       },
-      { text: "OK", onPress: () => handleLogout() },
+      { text: "Logout", onPress: () => handleLogout() },
     ]);
   };
 
@@ -126,7 +125,7 @@ export default function EditVetProfileScreen({ navigation }) {
   };
 
   return (
-    <ScrollView>
+    <ScrollView style={styles.screen_container}>
       <View style={styles.container}>
         <View style={styles.vetImage}>
           <Image source={{ uri: selectedImage }} style={styles.image} />
@@ -231,10 +230,9 @@ export default function EditVetProfileScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  screen_container: { flex: 1, backgroundColor: colors.white },
   container: {
-    flex: 1,
-    margin: 16,
-    backgroundColor: colors.white,
+    marginTop: 40,
     shadowColor: colors.gray,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -243,6 +241,8 @@ const styles = StyleSheet.create({
   },
   vetImage: {
     position: "relative",
+    marginTop: 16,
+    paddingHorizontal: 16,
   },
   image: {
     height: 200,
@@ -250,10 +250,10 @@ const styles = StyleSheet.create({
   },
   cameraIconContainer: {
     position: "absolute",
-    top: 10,
-    right: 10,
+    top: 5,
+    right: 15,
     backgroundColor: "transparent",
-    padding: 5,
+    padding: 10,
   },
   basicInfo: {
     marginTop: 20,

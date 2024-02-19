@@ -7,7 +7,7 @@ import {
   SignUpScreen,
   PetOwnerHomeScreen,
   PetProfileScreen,
-  EditPetProfileScreen,
+  AddPetScreen,
   VetHomeScreen,
   EditVetProfileScreen,
   PetOwnerProfileScreen,
@@ -18,6 +18,7 @@ import {
   VetAppointmentsScreen,
 } from "./src/screens";
 import { AuthContext } from "./src/auth";
+import { Entypo, MaterialIcons, Ionicons, AntDesign } from "@expo/vector-icons";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -27,14 +28,14 @@ function PetOwnerHomeTab() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Pet Owner Home" component={PetOwnerHomeScreen} />
       <Stack.Screen name="Pet Profile" component={PetProfileScreen} />
-      <Stack.Screen name="Edit Pet Profile" component={EditPetProfileScreen} />
+      <Stack.Screen name="Add Pet" component={AddPetScreen} />
     </Stack.Navigator>
   );
 }
 
 function PetOwnerAppointments() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Pet Owner Appointments" component={AppointmentsScreen} />
       <Stack.Screen name="Find Vets" component={VetSearchScreen} />
       <Stack.Screen name="Vet Home Screen" component={VetHomeScreen} />
@@ -45,17 +46,29 @@ function PetOwnerAppointments() {
 
 function PetOwnerTabs() {
   return (
-    <Tab.Navigator>
-      <Tab.Screen name="Pet Owner Home Tab" component={PetOwnerHomeTab} />
-      <Tab.Screen name="Pet Owner Appointments Tab" component={PetOwnerAppointments} />
-      <Tab.Screen name="Pet Owner Profile" component={PetOwnerProfileScreen} />
+    <Tab.Navigator screenOptions={{ headerShown: false }}>
+      <Tab.Screen
+        name="Pet Owner Home Tab"
+        component={PetOwnerHomeTab}
+        options={{ tabBarLabel: "", tabBarIcon: () => <Entypo name="home" size={24} /> }}
+      />
+      <Tab.Screen
+        name="Pet Owner Appointments Tab"
+        component={PetOwnerAppointments}
+        options={{ tabBarLabel: "", tabBarIcon: () => <AntDesign name="calendar" size={24} /> }}
+      />
+      <Tab.Screen
+        name="Pet Owner Profile"
+        component={PetOwnerProfileScreen}
+        options={{ tabBarLabel: "", tabBarIcon: () => <Ionicons name="person" size={24} /> }}
+      />
     </Tab.Navigator>
   );
 }
 
 function VetHome() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Vet Home Screen" component={VetHomeScreen} />
       <Stack.Screen name="Edit Vet Profile" component={EditVetProfileScreen} />
     </Stack.Navigator>
@@ -64,10 +77,22 @@ function VetHome() {
 
 function VetTabs() {
   return (
-    <Tab.Navigator>
-      <Tab.Screen name="Vet Home Tab" component={VetHome} />
-      <Tab.Screen name="Tips Screen" component={TipsScreen} />
-      <Tab.Screen name="Vet Appointments" component={VetAppointmentsScreen} />
+    <Tab.Navigator screenOptions={{ headerShown: false }}>
+      <Tab.Screen
+        name="Vet Home Tab"
+        component={VetHome}
+        options={{ tabBarLabel: "", tabBarIcon: () => <Entypo name="home" size={24} /> }}
+      />
+      <Tab.Screen
+        name="Tips Screen"
+        component={TipsScreen}
+        options={{ tabBarLabel: "", tabBarIcon: () => <MaterialIcons name="my-library-books" size={24} /> }}
+      />
+      <Tab.Screen
+        name="Vet Appointments"
+        component={VetAppointmentsScreen}
+        options={{ tabBarLabel: "", tabBarIcon: () => <AntDesign name="calendar" size={24} /> }}
+      />
     </Tab.Navigator>
   );
 }
@@ -85,7 +110,7 @@ export default function App() {
             <VetTabs />
           )
         ) : (
-          <Stack.Navigator>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Sign In" component={SignInScreen} />
             <Stack.Screen name="Sign up" component={SignUpScreen} />
           </Stack.Navigator>

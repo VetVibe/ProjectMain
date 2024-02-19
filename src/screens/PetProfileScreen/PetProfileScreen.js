@@ -1,68 +1,152 @@
 import React, { useState, useCallback } from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, TextInput } from "react-native";
-import { FontAwesome, MaterialIcons, MaterialCommunityIcons, Fontisto, FontAwesome5 } from "@expo/vector-icons";
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, TextInput, Alert } from "react-native";
+import { FontAwesome, MaterialIcons, MaterialCommunityIcons, Fontisto } from "@expo/vector-icons";
 import moment from "moment";
-import { mapPetDetails } from "../../utils";
-import { colors, sizes } from "../../constants";
+import { colors, sizes, genders, species } from "../../constants";
 import { clientServer } from "../../server";
 import { Button } from "../../components";
-import { Calendar, CalendarUtils } from "react-native-calendars";
+import { Calendar } from "react-native-calendars";
+import RNPickerSelect from "react-native-picker-select";
 
 export default function PetProfileScreen({ route, navigation }) {
-  const [petDetails, setPetDetails] = useState({});
-  const [basicInfo, setBasicInfo] = useState({});
-  const [medicalInfo, setMedicalInfo] = useState({});
   const [isLoading, setIsLoading] = useState(true);
+  const [pet, setPet] = useState({});
+  const [basicInfo, setBasicInfo] = useState({});
+  const [selectedSpecies, setSelectedSpecies] = useState();
+  const [selectedGender, setSelectedGender] = useState();
+  const [selectedVaccineDate, setSelectedVaccineDate] = useState();
+  const [selectedVetVisitDate, setSelectedVetVisitDate] = useState();
+  const [selectedMedication, setSelectedMedication] = useState();
+  const [selectedAllergie, setSelectedAllergie] = useState();
+  const [medications, setMedications] = useState("");
+  const [allergies, setAllergies] = useState("");
   const [isEditingBasicInfo, setIsEditingBasicInfo] = useState(false);
   const [isEditingMedicalRecords, setIsEditingMedicalRecords] = useState(false);
+  const [isEditingMedications, setIsEditingMedications] = useState(false);
+  const [isEditingAllergies, setIsEditingAllergies] = useState(false);
+  const [openCalendar, setOpenCalendar] = useState("");
   const petId = route.params.petId;
 
   const today = moment().format("YYYY-MM-DD");
 
   useFocusEffect(
     useCallback(() => {
-      const fetchPetDetails = async () => {
-        const mappedPetDetails = mapPetDetails(await clientServer.getPetDetails(petId));
-        setBasicInfo(mappedPetDetails.basicInfo);
-        setMedicalInfo(mappedPetDetails.medicalInfo);
-        setPetDetails(mappedPetDetails);
-      };
-
-      fetchPetDetails();
-      setIsLoading(false);
+      clientServer
+        .getPetDetails(petId)
+        .then((pet) => {
+          const {
+            name,
+            species,
+            weight,
+            gender,
+            birthdate,
+            lastVaccinationDate,
+            lastVetVisit,
+            medications,
+            allergies,
+          } = pet;
+          setPet(pet);
+          setBasicInfo({ name, species, weight, gender, birthdate });
+          setSelectedSpecies(species);
+          setSelectedGender(gender);
+          setSelectedVaccineDate(lastVaccinationDate ? new Date(lastVaccinationDate) : new Date(today));
+          setSelectedVetVisitDate(lastVetVisit ? new Date(lastVetVisit) : new Date(today));
+          setMedications(medications || []);
+          setAllergies(allergies || []);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
     }, [petId])
   );
 
   const handleSaveBasicInfo = async () => {
-    setPetDetails({ ...petDetails, basicInfo });
-    await clientServer.updatePetInfo(petId, petDetails);
-    setIsEditingBasicInfo(false);
+    try {
+      if (!basicInfo.name || !selectedSpecies || !selectedGender || !basicInfo.weight || !basicInfo.birthdate) {
+        Alert.alert("Error", "Please fill in all the fields.");
+        return;
+      }
+      const updated = {
+        ...basicInfo,
+        species: selectedSpecies,
+        gender: selectedGender,
+      };
+      setBasicInfo(updated);
+      setPet({ ...pet, updated });
+      await clientServer.updatePetInfo(petId, updated);
+      setIsEditingBasicInfo(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleSaveMedicalRecords = async () => {
-    setPetDetails({ ...petDetails, medicalInfo });
-    await clientServer.updatePetInfo(petId, petDetails);
-    setIsEditingMedicalRecords(false);
+    try {
+      const updated = { lastVaccinationDate: selectedVaccineDate, lastVetVisit: selectedVetVisitDate };
+      setPet({ ...pet, updated });
+      await clientServer.updatePetInfo(petId, updated);
+      setIsEditingMedicalRecords(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const deletePet = async () => {
-    await clientServer.deletePet(petId);
-    navigation.goBack();
+  const handleSaveMeds = async () => {
+    setPet({ ...pet, medications });
+    await clientServer.updatePetInfo(petId, { ...pet, medications });
+    setIsEditingMedications(false);
+  };
+
+  const handleSaveAllerg = async () => {
+    setPet({ ...pet, allergies });
+    await clientServer.updatePetInfo(petId, { ...pet, allergies });
+    setIsEditingAllergies(false);
+  };
+
+  const handleAddMedication = async () => {
+    setMedications([...medications, selectedMedication]);
+    setSelectedMedication("");
+  };
+
+  const handleAddAllergie = async () => {
+    setAllergies([...allergies, selectedAllergie]);
+    setSelectedAllergie("");
+  };
+
+  const handleDeletePet = async () => {
+    try {
+      await clientServer.deletePet(petId);
+      navigation.goBack();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const onDeletePet = async () => {
+    Alert.alert("Delete Pet", "Are you sure you want to delete pet?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      { text: "Delete", onPress: () => handleDeletePet() },
+    ]);
   };
 
   const handleImagePicker = async () => {};
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView>
       {isLoading ? (
         <Text>Loading...</Text>
       ) : (
-        <>
+        <View style={styles.container}>
           <View style={styles.petImage}>
-            <Image source={{ uri: petDetails.imgSrc }} style={styles.image} />
+            <Image source={{ uri: pet.imgSrc }} style={styles.image} />
             <TouchableOpacity style={styles.cameraIconContainer} onPress={handleImagePicker}>
-              <FontAwesome name="camera" size={24} color="black" />
+              <FontAwesome name="camera" size={24} style="black" />
             </TouchableOpacity>
           </View>
 
@@ -78,88 +162,94 @@ export default function PetProfileScreen({ route, navigation }) {
 
             <View style={styles.detail_container}>
               <View style={styles.item}>
-                <MaterialIcons name="pets" size={24} color="black" />
+                <MaterialIcons name="pets" size={24} style={styles.icon_color} />
                 <View style={styles.item_content}>
                   <Text style={styles.item_header}>Name</Text>
-                  {isEditingBasicInfo ? (
-                    <TextInput
-                      style={styles.item_value}
-                      value={basicInfo?.petName}
-                      onChangeText={(text) => setBasicInfo({ ...basicInfo, petName: text })}
-                    />
-                  ) : (
-                    <Text style={styles.item_value}>{basicInfo?.petName}</Text>
-                  )}
+                  <TextInput
+                    style={styles.item_value}
+                    value={basicInfo?.name}
+                    onChangeText={(text) => setBasicInfo({ ...basicInfo, name: text })}
+                    editable={isEditingBasicInfo}
+                  />
                 </View>
               </View>
 
               <View style={styles.item}>
-                <MaterialCommunityIcons name="unicorn" size={24} color="black" />
+                <MaterialCommunityIcons name="unicorn" size={24} style={styles.icon_color} />
                 <View style={styles.item_content}>
                   <Text style={styles.item_header}>Species</Text>
-                  {isEditingBasicInfo ? (
-                    <TextInput
-                      style={styles.item_value}
-                      value={basicInfo?.animalType}
-                      onChangeText={(text) => setBasicInfo({ ...basicInfo, animalType: text })}
-                    />
-                  ) : (
-                    <Text style={styles.item_value}>{basicInfo?.animalType}</Text>
-                  )}
+                  <RNPickerSelect
+                    style={styles.select_item}
+                    value={selectedSpecies}
+                    onDonePress={() => setBasicInfo({ ...basicInfo, species: selectedSpecies })}
+                    onValueChange={setSelectedSpecies}
+                    items={species}
+                    placeholder={{ label: "Species", value: null }}
+                    disabled={!isEditingBasicInfo}
+                  />
                 </View>
               </View>
 
               <View style={styles.item}>
-                <Fontisto name="intersex" size={24} color="black" />
+                <Fontisto name="intersex" size={24} style={styles.icon_color} />
                 <View style={styles.item_content}>
                   <Text style={styles.item_header}>Gender</Text>
-                  {isEditingBasicInfo ? (
-                    <TextInput
-                      style={styles.item_value}
-                      value={basicInfo?.gender}
-                      onChangeText={(text) => setBasicInfo({ ...basicInfo, gender: text })}
-                    />
-                  ) : (
-                    <Text style={styles.item_value}>{basicInfo?.gender}</Text>
-                  )}
+                  <RNPickerSelect
+                    style={styles.select_item}
+                    value={selectedGender}
+                    onDonePress={() => setBasicInfo({ ...basicInfo, gender: selectedGender })}
+                    onValueChange={setSelectedGender}
+                    items={genders}
+                    placeholder={{ label: "Gender", value: null }}
+                    disabled={!isEditingBasicInfo}
+                  />
                 </View>
               </View>
 
               <View style={styles.item}>
-                <MaterialCommunityIcons name="scale-bathroom" size={24} color="black" />
+                <MaterialCommunityIcons name="scale-bathroom" size={24} style={styles.icon_color} />
                 <View style={styles.item_content}>
                   <Text style={styles.item_header}>Weight</Text>
-                  {isEditingBasicInfo ? (
-                    <TextInput
-                      style={styles.item_value}
-                      value={basicInfo?.weight}
-                      onChangeText={(text) => setBasicInfo({ ...basicInfo, weight: text })}
-                    />
-                  ) : (
-                    <Text style={styles.item_value}>{basicInfo?.weight}</Text>
-                  )}
+                  <TextInput
+                    style={styles.item_value}
+                    value={`${basicInfo?.weight}  kg`}
+                    onChangeText={(text) => setBasicInfo({ ...basicInfo, weight: text })}
+                    editable={isEditingBasicInfo}
+                  />
                 </View>
               </View>
 
               <View style={styles.item}>
-                <FontAwesome name="birthday-cake" size={24} color="black" />
+                <FontAwesome name="birthday-cake" size={24} style={styles.icon_color} />
                 <View style={styles.item_content}>
                   <Text style={styles.item_header}>Birthdate</Text>
-                  <Text style={styles.item_value}>{new Date(basicInfo?.age).toLocaleDateString()}</Text>
+                  <Button
+                    style={styles.date_item}
+                    text={new Date(basicInfo?.birthdate).toLocaleDateString()}
+                    disabled={!isEditingBasicInfo}
+                    onPress={() => setOpenCalendar(openCalendar === "" ? "birthdate" : "")}
+                  />
                 </View>
               </View>
             </View>
-            {isEditingBasicInfo && (
+            {isEditingBasicInfo && openCalendar === "birthdate" && (
               <Calendar
-                current={new Date(basicInfo?.age).toLocaleDateString()}
-                onDayPress={(day) => setBasicInfo({ ...basicInfo, age: day })}
+                onDayPress={(day) => {
+                  setBasicInfo({ ...basicInfo, birthdate: day.dateString });
+                  setOpenCalendar("");
+                }}
                 markedDates={{
-                  [CalendarUtils.getCalendarDateString(new Date(basicInfo?.age).getDate())]: {
+                  [new Date(basicInfo?.birthdate).toISOString().split("T")[0]]: {
                     selected: true,
-                    dotColor: colors.primary,
+                    disableTouchEvent: true,
+                    selectedColor: colors.secondary,
+                    selectedTextColor: colors.white,
                   },
                 }}
+                minDate="2000-01-01"
+                initialDate={new Date(basicInfo?.birthdate).toISOString().split("T")[0] || today}
                 maxDate={today}
+                enableSwipeMonths={true}
                 disableAllTouchEventsForDisabledDays
               />
             )}
@@ -168,56 +258,182 @@ export default function PetProfileScreen({ route, navigation }) {
           <View style={styles.basicInfo}>
             <View style={styles.header_container}>
               <Text style={styles.header_text}>Medical Records</Text>
-              <Button style={styles.edit_button} text={"Edit"} onPress={() => setIsEditingMedicalRecords(true)} />
+              {isEditingMedicalRecords ? (
+                <Button style={styles.edit_button} text={"Save"} onPress={handleSaveMedicalRecords} />
+              ) : (
+                <Button style={styles.edit_button} text={"Edit"} onPress={() => setIsEditingMedicalRecords(true)} />
+              )}
             </View>
 
             <View style={styles.detail_container}>
               <View style={styles.item}>
-                <Fontisto name="injection-syringe" size={24} color="black" />
+                <Fontisto name="injection-syringe" size={24} style={styles.icon_color} />
                 <View style={styles.item_content}>
                   <Text style={styles.item_header}>Last Vaccination</Text>
-                  <Text style={styles.item_value}>{new Date(medicalInfo?.lastVaccinationDate).toDateString()}</Text>
+                  <Button
+                    style={styles.date_item}
+                    text={selectedVaccineDate?.toLocaleDateString()}
+                    disabled={!isEditingMedicalRecords}
+                    onPress={() => setOpenCalendar(openCalendar === "" ? "lastVaccinationDate" : "")}
+                  />
                 </View>
               </View>
+              {isEditingMedicalRecords && openCalendar == "lastVaccinationDate" && (
+                <Calendar
+                  onDayPress={(day) => {
+                    setSelectedVaccineDate(new Date(day.dateString));
+                    setOpenCalendar("");
+                  }}
+                  markedDates={{
+                    [selectedVaccineDate?.toISOString().split("T")[0]]: {
+                      selected: true,
+                      disableTouchEvent: true,
+                      selectedColor: colors.secondary,
+                      selectedTextColor: colors.white,
+                    },
+                  }}
+                  minDate="2000-01-01"
+                  initialDate={selectedVaccineDate?.toISOString().split("T")[0]}
+                  maxDate={today}
+                  enableSwipeMonths={true}
+                  disableAllTouchEventsForDisabledDays
+                />
+              )}
 
               <View style={styles.item}>
-                <Fontisto name="doctor" size={24} color="black" />
+                <Fontisto name="doctor" size={24} style={styles.icon_color} />
                 <View style={styles.item_content}>
                   <Text style={styles.item_header}>Last Vet Visit</Text>
-                  <Text style={styles.item_value}>{new Date(medicalInfo?.lastVetVisit).toDateString()}</Text>
+                  <Button
+                    style={styles.date_item}
+                    text={selectedVetVisitDate?.toLocaleDateString()}
+                    disabled={!isEditingMedicalRecords}
+                    onPress={() => setOpenCalendar(openCalendar === "" ? "lastVetVisit" : "")}
+                  />
                 </View>
-              </View>
-
-              <View style={styles.item}>
-                <MaterialCommunityIcons name="pill" size={24} color="black" />
-                <View style={styles.item_content}>
-                  <Text style={styles.item_header}>Medications</Text>
-                </View>
-              </View>
-              <View style={styles.list_container}>
-                {petDetails.medicalInfo?.medications.map((skill, index) => (
-                  <View key={index} style={styles.chip_container}>
-                    <Text style={styles.chips}>{skill}</Text>
-                  </View>
-                ))}
-              </View>
-
-              <View style={styles.item}>
-                <FontAwesome5 name="allergies" size={24} color="black" />
-                <View style={styles.item_content}>
-                  <Text style={styles.item_header}>Allergies</Text>
-                </View>
-              </View>
-              <View style={styles.list_container}>
-                {petDetails.medicalInfo?.allergies.map((skill, index) => (
-                  <View key={index} style={styles.chip_container}>
-                    <Text style={styles.chips}>{skill}</Text>
-                  </View>
-                ))}
               </View>
             </View>
+            {isEditingMedicalRecords && openCalendar === "lastVetVisit" && (
+              <Calendar
+                onDayPress={(day) => {
+                  setSelectedVetVisitDate(new Date(day.dateString));
+                  setOpenCalendar("");
+                }}
+                markedDates={{
+                  [selectedVetVisitDate?.toISOString().split("T")[0]]: {
+                    selected: true,
+                    disableTouchEvent: true,
+                    selectedColor: colors.secondary,
+                    selectedTextColor: colors.white,
+                  },
+                }}
+                minDate="2000-01-01"
+                initialDate={selectedVetVisitDate?.toISOString().split("T")[0]}
+                maxDate={today}
+                enableSwipeMonths={true}
+                disableAllTouchEventsForDisabledDays
+              />
+            )}
           </View>
-        </>
+
+          <View style={styles.basicInfo}>
+            <View style={styles.header_container}>
+              <Text style={styles.header_text}>Medications</Text>
+              {isEditingMedications ? (
+                <Button style={styles.edit_button} text={"Save"} onPress={handleSaveMeds} />
+              ) : (
+                <Button style={styles.edit_button} text={"Edit"} onPress={() => setIsEditingMedications(true)} />
+              )}
+            </View>
+            <View>
+              {isEditingMedications && (
+                <View style={styles.item}>
+                  <View style={styles.search_container}>
+                    <TextInput
+                      style={styles.item_value}
+                      value={selectedMedication}
+                      onChangeText={setSelectedMedication}
+                      placeholder={"Medications..."}
+                      onSubmitEditing={handleAddMedication}
+                    />
+                  </View>
+                </View>
+              )}
+
+              {medications && medications.length > 0 ? (
+                <View style={styles.chips_container}>
+                  <ScrollView horizontal={true}>
+                    {medications.map((medication) => {
+                      return (
+                        <View style={styles.chip_container} key={medication}>
+                          <Text style={styles.chips}>{medication}</Text>
+                          {isEditingMedications && (
+                            <Button
+                              text="x"
+                              onPress={() => setMedications(medications.filter((med) => med !== medication))}
+                              style={styles.delete_button}
+                            />
+                          )}
+                        </View>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              ) : (
+                <>{!isEditingMedications && <Text style={styles.text}>No medications</Text>}</>
+              )}
+            </View>
+          </View>
+
+          <View style={styles.basicInfo}>
+            <View style={styles.header_container}>
+              <Text style={styles.header_text}>Allergies</Text>
+              {isEditingAllergies ? (
+                <Button style={styles.edit_button} text={"Save"} onPress={handleSaveAllerg} />
+              ) : (
+                <Button style={styles.edit_button} text={"Edit"} onPress={() => setIsEditingAllergies(true)} />
+              )}
+            </View>
+            <View>
+              {isEditingAllergies && (
+                <View style={styles.item}>
+                  <View style={styles.search_container}>
+                    <TextInput
+                      style={styles.item_value}
+                      value={selectedAllergie}
+                      onChangeText={setSelectedAllergie}
+                      placeholder={"Allergies..."}
+                      onSubmitEditing={handleAddAllergie}
+                    />
+                  </View>
+                </View>
+              )}
+              {allergies && allergies.length > 0 ? (
+                <View style={styles.chips_container}>
+                  <ScrollView horizontal={true}>
+                    {allergies.map((allergie) => {
+                      return (
+                        <View style={styles.chip_container} key={allergie}>
+                          <Text style={styles.chips}>{allergie}</Text>
+                          {isEditingAllergies && (
+                            <Button
+                              text="x"
+                              onPress={() => setAllergies(allergies.filter((allerg) => allerg !== allergie))}
+                              style={styles.delete_button}
+                            />
+                          )}
+                        </View>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              ) : (
+                <>{!isEditingAllergies && <Text style={styles.text}>No allergies</Text>}</>
+              )}
+            </View>
+          </View>
+          <Button text={"Delete Pet"} onPress={onDeletePet} style={styles.delete_pet_button} />
+        </View>
       )}
     </ScrollView>
   );
@@ -226,6 +442,7 @@ export default function PetProfileScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    marginTop: 60,
     margin: 16,
     backgroundColor: colors.white,
     shadowColor: colors.gray,
@@ -233,6 +450,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     elevation: 4,
     borderRadius: 20,
+  },
+  loadingIndicator: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    color: colors.primary,
   },
   petImage: {
     position: "relative",
@@ -248,17 +471,19 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     padding: 5,
   },
+  icon_color: {
+    color: colors.secondary,
+  },
   edit_button: {
     container: {
       alignSelf: "flex-end",
     },
     text: {
-      color: colors.primary,
+      color: colors.secondary,
       fontSize: sizes.body1,
     },
   },
   basicInfo: {
-    marginTop: 20,
     borderBottomWidth: 1,
     borderBottomColor: colors.light_gray,
     paddingHorizontal: 16,
@@ -267,6 +492,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 20,
   },
   header_text: {
     fontSize: sizes.h3,
@@ -275,6 +501,7 @@ const styles = StyleSheet.create({
   detail_container: {
     justifyContent: "space-between",
     alignItems: "center",
+    marginVertical: 16,
     paddingHorizontal: 8,
   },
   item: {
@@ -290,24 +517,82 @@ const styles = StyleSheet.create({
   item_header: {
     flex: 1,
     fontSize: sizes.h4,
+    fontWeight: "bold",
   },
   item_value: {
     flex: 1,
     fontSize: sizes.h4,
-    color: colors.secondary,
+    marginLeft: 20,
   },
-  list_container: {
-    flex: 1,
+  select_item: {
+    inputIOS: {
+      fontSize: sizes.h4,
+      marginRight: 94,
+    },
+    inputAndroid: {
+      fontSize: sizes.h4,
+      marginRight: 94,
+    },
+  },
+  date_item: {
+    container: {
+      flex: 1,
+      marginLeft: 20,
+    },
+    text: {
+      fontSize: sizes.h4,
+    },
+  },
+  search_container: {
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.light_gray,
+    height: 30,
+    width: "100%",
+  },
+  chips_container: {
     flexDirection: "row",
+    marginBottom: 4,
   },
   chip_container: {
+    flexDirection: "row",
     borderRadius: 20,
     backgroundColor: colors.secondary,
     padding: 12,
     margin: 4,
   },
   chips: {
+    fontSize: sizes.body1,
     color: colors.white,
     alignSelf: "flex-start",
+    fontWeight: "bold",
+  },
+  delete_button: {
+    container: {
+      marginLeft: 4,
+    },
+    text: {
+      fontSize: sizes.body1,
+      color: colors.lighter_gray,
+    },
+  },
+  text: {
+    fontSize: sizes.h4,
+    color: colors.gray,
+    alignSelf: "center",
+    padding: 12,
+    margin: 4,
+  },
+  delete_pet_button: {
+    container: {
+      marginVertical: 12,
+      padding: 8,
+    },
+    text: {
+      textAlign: "center",
+      fontSize: sizes.h3,
+      color: colors.gray,
+      fontWeight: "bold",
+    },
   },
 });

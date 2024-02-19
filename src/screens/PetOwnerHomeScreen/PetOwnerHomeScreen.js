@@ -4,9 +4,8 @@ import { AuthContext } from "../../auth";
 import { colors, sizes } from "../../constants";
 import { PetCard, TipCard } from "../../components";
 import { calculateAge } from "../../utils";
-import { View, Text, StyleSheet, FlatList } from "react-native";
+import { View, Text, StyleSheet, FlatList, ActivityIndicator } from "react-native";
 import { MaterialIcons, AntDesign } from "@expo/vector-icons";
-import Icon from "react-native-vector-icons/FontAwesome";
 import { clientServer } from "../../server";
 
 const CARD_WIDTH = sizes.width - 100;
@@ -14,53 +13,60 @@ const CARD_WIDTH = sizes.width - 100;
 export default function PetOwnerHomeScreen() {
   const navigation = useNavigation();
   const { authState } = useContext(AuthContext);
+  const [loadingPets, setLoadingPets] = useState(true);
+  const [loadingTips, setLoadingTips] = useState(true);
   const [userPets, setUserPets] = useState([]);
   const [allTips, setAllTips] = useState([]);
 
-  const fetchAllTips = async () => {
-    try {
-      const allTips = await clientServer.getAllTips();
-      let filteredTips = allTips;
-
-      const tipsWithVetInfo = await Promise.all(
-        filteredTips.map(async (tip) => {
-          const vetDetails = await clientServer.getVetInfo(tip.vetId);
-          return {
-            ...tip,
-            vetName: vetDetails.name,
-            vetImage: vetDetails.profilePicture,
-          };
-        })
-      );
-
-      setAllTips(tipsWithVetInfo);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   useFocusEffect(
     useCallback(() => {
-      const fetchUserPetDetails = async () => {
-        try {
-          const petsInfo = await clientServer.getPetsByOwnerId(authState.id);
+      clientServer
+        .getPetsByOwnerId(authState.id)
+        .then((petsInfo) => {
           const mappedPets = petsInfo?.pets.map((pet) => ({
             ...pet,
-            age: calculateAge(pet.age),
+            age: calculateAge(pet.birthdate),
           }));
           setUserPets(mappedPets || []);
-        } catch (error) {
+        })
+        .finally(() => {
+          setLoadingPets(false);
+        })
+        .catch((error) => {
           console.error("Error fetching data:", error);
-        }
-      };
+        });
 
-      fetchUserPetDetails();
-      fetchAllTips();
+      clientServer
+        .getAllTips()
+        .then((allTips) => {
+          const promiseArray = allTips.map(async (tip) => {
+            return clientServer
+              .getVetInfo(tip.vetId)
+              .then((vetInfo) => {
+                tip.vetName = vetInfo.name;
+                tip.vetImage = vetInfo.profilePicture;
+                return tip;
+              })
+              .catch((error) => {
+                console.log("Error fetching vet info:", error);
+              });
+          });
+          return Promise.all(promiseArray);
+        })
+        .then((modified) => {
+          setAllTips(modified);
+        })
+        .catch((error) => {
+          console.log("Error fetching all tips:", error);
+        })
+        .finally(() => {
+          setLoadingTips(false);
+        });
     }, [authState.id])
   );
 
   const handleNavigateToEditProfile = () => {
-    navigation.navigate("Edit Pet Profile");
+    navigation.navigate("Add Pet");
   };
 
   const handlePetSelect = (pet) => {
@@ -83,31 +89,37 @@ export default function PetOwnerHomeScreen() {
           <Text style={styles.text}>Your Pets</Text>
           <AntDesign name="pluscircleo" size={24} style={styles.icon} onPress={handleNavigateToEditProfile} />
         </View>
-        {userPets?.length > 0 ? (
-          <View>
-            <FlatList
-              horizontal
-              snapToInterval={CARD_WIDTH + 24}
-              decelerationRate={"fast"}
-              showsHorizontalScrollIndicator={false}
-              initialNumToRender={2}
-              data={userPets}
-              keyExtractor={(item) => item._id}
-              renderItem={({ item }) => <PetCard pet={item} onSelect={() => handlePetSelect(item)} />}
-            />
-          </View>
+        {loadingPets || loadingTips ? (
+          <ActivityIndicator style={styles.loadingIndicator} size="large" />
         ) : (
-          <Text>No pets in your collection, add now!</Text>
+          <View>
+            {userPets?.length > 0 ? (
+              <FlatList
+                horizontal
+                snapToInterval={CARD_WIDTH + 24}
+                decelerationRate={"fast"}
+                showsHorizontalScrollIndicator={false}
+                initialNumToRender={2}
+                data={userPets}
+                keyExtractor={(item) => item._id}
+                renderItem={({ item }) => <PetCard pet={item} onSelect={() => handlePetSelect(item)} />}
+              />
+            ) : (
+              <Text>No pets in your collection, add now!</Text>
+            )}
+          </View>
         )}
       </View>
 
-      <View>
-        {allTips?.length > 0 && (
-          <View style={styles.segment_container}>
-            <View style={styles.segment_header_container}>
-              <Text style={styles.text}>Vet Tips</Text>
-            </View>
-            <View>
+      <View style={styles.segment_container}>
+        <View style={styles.segment_header_container}>
+          <Text style={styles.text}>Vet Tips</Text>
+        </View>
+        {loadingTips || loadingPets ? (
+          <ActivityIndicator style={styles.loadingIndicator} size="large" />
+        ) : (
+          <View>
+            {allTips?.length > 0 ? (
               <FlatList
                 horizontal
                 snapToInterval={CARD_WIDTH + 24}
@@ -115,10 +127,12 @@ export default function PetOwnerHomeScreen() {
                 showsHorizontalScrollIndicator={false}
                 initialNumToRender={2}
                 data={allTips}
-                keyExtractor={(item) => item._id}
+                keyExtractor={(item) => item?._id}
                 renderItem={({ item }) => <TipCard tip={item} onSelect={() => handleTipSelect(item)} />}
               />
-            </View>
+            ) : (
+              <Text>No tips available</Text>
+            )}
           </View>
         )}
       </View>
@@ -129,7 +143,7 @@ export default function PetOwnerHomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginBottom: 120,
+    marginTop: 40,
   },
   header_container: {
     marginVertical: 16,
@@ -138,10 +152,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   header_text: {
+    flex: 1,
     fontSize: sizes.h1,
     color: colors.primary,
     fontWeight: "bold",
-    flex: 1,
   },
   segment_container: {
     paddingHorizontal: 24,
@@ -155,6 +169,12 @@ const styles = StyleSheet.create({
   text: {
     fontSize: sizes.h2,
     fontWeight: "bold",
+  },
+  loadingIndicator: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    color: colors.primary,
   },
   icon: {
     color: colors.primary,

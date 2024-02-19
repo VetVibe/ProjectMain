@@ -5,6 +5,7 @@ import {
   loginPetOwner,
   updatePetOwnerInfo,
   getPetOwnerDetails,
+  getPetOwner,
   registerVeterinarian,
   loginVeterinarian,
   getVeterinarians,
@@ -47,6 +48,7 @@ router.post(PET_OWNER_ENDPOINTS.REGISTER, registerPetOwner);
 router.post(PET_OWNER_ENDPOINTS.LOGIN, loginPetOwner);
 router.put(PET_OWNER_ENDPOINTS.UPDATE_INFO, updatePetOwnerInfo);
 router.get(PET_OWNER_ENDPOINTS.DETAILS, getPetOwnerDetails);
+router.get(PET_OWNER_ENDPOINTS.PET_OWNER, getPetOwner);
 
 // Veterinarian routes
 router.post(VETERINARIAN_ENDPOINTS.REGISTER, registerVeterinarian);

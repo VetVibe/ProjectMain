@@ -5,6 +5,7 @@ export const PET_OWNER_ENDPOINTS = {
   LOGIN: `/pet-owner/login`,
   PET_OWNER_INFO: (petOwnerId) => `/pet-owner/${petOwnerId}`,
   UPDATE_PET_OWNER_INFO: (petOwnerId) => `/pet-owner/update-info/${petOwnerId}`,
+  PET_OWNER: (query) => `/pet-owner?${query}`,
 };
 
 export const PET_ENDPOINTS = {

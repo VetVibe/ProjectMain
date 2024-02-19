@@ -1,48 +1,44 @@
-import React, { useState, useCallback, useContext } from "react";
-import { useFocusEffect } from "@react-navigation/native";
+import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../auth";
-import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from "react-native";
-import Icon from "react-native-vector-icons/FontAwesome";
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
+import { AntDesign } from "@expo/vector-icons";
 import { colors, sizes } from "../../constants";
 import { clientServer } from "../../server";
 import AppointmentCard from "../../components/AppointmentCard/AppointmentCard";
 
 export default function AppointmentsScreen({ navigation }) {
   const { authState } = useContext(AuthContext);
+  const [isLoading, setIsLoading] = useState(true);
   const [appointmentList, setAppointmentList] = useState([]);
 
-  const fetchAllPetOwnerAppointments = async () => {
-    try {
-      const appointments = await clientServer.getAppointmentsByOwner(authState.id);
-      const updatedAppointments = await Promise.all(
-        appointments.map(async (appointment) => {
-          let { name, phoneNumber } = await clientServer.getVetInfo(appointment.vetId);
-          return {
-            ...appointment,
-            name: name,
-            phoneNumber: phoneNumber,
-          };
-        })
-      );
-      setAppointmentList(updatedAppointments);
-    } catch (error) {
-      console.log("Error fetching appointments by owner:", error);
-    }
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      const fetchData = async () => {
-        try {
-          fetchAllPetOwnerAppointments();
-        } catch (error) {
-          console.log(error);
-        }
-      };
-
-      fetchData();
-    }, [])
-  );
+  useEffect(() => {
+    clientServer
+      .getAppointmentsByOwner(authState.id)
+      .then((appointments) => {
+        const promiseArray = appointments.map(async (appointment) => {
+          return clientServer
+            .getVetInfo(appointment.vetId)
+            .then((vetInfo) => {
+              appointment.name = vetInfo.name;
+              appointment.phoneNumber = vetInfo.phoneNumber;
+              return appointment;
+            })
+            .catch((error) => {
+              console.log("Error fetching vet info:", error);
+            });
+        });
+        return Promise.all(promiseArray);
+      })
+      .then((modified) => {
+        setAppointmentList(modified);
+      })
+      .catch((error) => {
+        console.log("Error fetching appointments by owner:", error);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [authState.id]);
 
   const handleVetSearch = () => {
     navigation.navigate("Find Vets");
@@ -60,48 +56,55 @@ export default function AppointmentsScreen({ navigation }) {
   }
 
   return (
-    <ScrollView>
-      <View style={styles.header_container}>
-        <Text style={styles.header_text}>Your appointments</Text>
-        <Icon name="plus" size={20} style={styles.icon} onPress={handleVetSearch} />
-      </View>
-      <View style={styles.list_container}>
-        {!appointmentList || appointmentList?.length === 0 ? (
-          <Text style={styles.emptyViewText}>No appointments.</Text>
-        ) : (
-          <View>
-            {appointmentList.map((appointment) => {
-              return (
-                <AppointmentCard
-                  appointment={appointment}
-                  key={appointment._id}
-                  onPressCancel={() => removeAppointment(appointment._id)}
-                />
-              );
-            })}
+    <View style={styles.container}>
+      {isLoading ? (
+        <ActivityIndicator style={styles.loadingIndicator} size="large" />
+      ) : (
+        <ScrollView>
+          <View style={styles.header_container}>
+            <Text style={styles.header_text}>Your appointments</Text>
+            <AntDesign name="pluscircleo" size={24} style={styles.icon} onPress={handleVetSearch} />
           </View>
-        )}
-      </View>
-    </ScrollView>
+          <View style={styles.list_container}>
+            {!appointmentList || appointmentList?.length === 0 ? (
+              <Text style={styles.emptyViewText}>No appointments.</Text>
+            ) : (
+              <View>
+                {appointmentList.map((appointment) => {
+                  return (
+                    <AppointmentCard
+                      appointment={appointment}
+                      key={appointment._id}
+                      onPressCancel={() => removeAppointment(appointment._id)}
+                    />
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 36,
+    marginTop: 40,
   },
   header_container: {
-    marginHorizontal: 16,
+    marginVertical: 16,
+
+    paddingHorizontal: 24,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
   },
   header_text: {
+    flex: 1,
     fontSize: sizes.h1,
     color: colors.primary,
-    marginVertical: 16,
-    paddingHorizontal: 24,
+    fontWeight: "bold",
   },
   list_container: {
     flex: 1,
@@ -112,8 +115,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginHorizontal: 24,
   },
-  loading_container: {
-    position: "absolute",
+  loadingIndicator: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    color: colors.primary,
   },
   icon: {
     color: colors.primary,

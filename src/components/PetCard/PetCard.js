@@ -12,7 +12,7 @@ export default function PetCard({ pet, onSelect }) {
           {pet?.imgSrc && <Image source={{ uri: pet.imgSrc }} style={styles.image} />}
           <View style={styles.title_container}>
             <Text style={styles.title}>{pet.name}</Text>
-            <Text style={styles.type}>{pet.animalType}</Text>
+            <Text style={styles.type}>{pet.species}</Text>
             <Text style={styles.age}>{pet.age}</Text>
           </View>
         </View>
@@ -27,6 +27,7 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
     borderRadius: 20,
+    marginRight: 12,
     backgroundColor: colors.white,
     shadowColor: colors.gray,
     shadowOffset: { width: 0, height: 4 },

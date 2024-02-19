@@ -1,57 +1,64 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useCallback, useContext } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { AuthContext } from "../../auth";
-import { View, StyleSheet, Text, TouchableOpacity, Alert } from "react-native";
-import { Agenda, Timeline } from "react-native-calendars";
+import { View, StyleSheet, Text, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import { Agenda } from "react-native-calendars";
+import { colors, sizes } from "../../constants";
 import moment from "moment";
 import { clientServer } from "../../server";
 
 export default function VetAppointmentsScreen() {
   const { authState } = useContext(AuthContext);
-  const [vetAppointments, setVetAppointments] = useState([]);
+  const [vetAppointments, setVetAppointments] = useState();
   const [isOpenForBooking, setIsOpenForBooking] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const checkVetAvailability = async () => {
-      try {
-        const vetDetails = await clientServer.getVetInfo(authState.id);
-        setIsOpenForBooking(vetDetails.start && vetDetails.end);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    checkVetAvailability();
-    fetchAppointments();
-  }, []);
-
-  const fetchAppointments = async () => {
-    try {
-      const appointments = await clientServer.getAppointmentsByVet(authState.id);
-      const appointmentsWithDetails = await Promise.all(
-        appointments.map(async (appointment) => {
-          const petOwnerDetails = await clientServer.getPetOwnerInfo(appointment.petOwnerId);
-          return {
-            ...appointment,
-            name: petOwnerDetails.name,
-            phoneNumber: petOwnerDetails.phoneNumber,
-          };
+  useFocusEffect(
+    useCallback(() => {
+      clientServer
+        .getVetInfo(authState.id)
+        .then((vetDetails) => {
+          setIsOpenForBooking(vetDetails.start && vetDetails.end);
+          return vetDetails.start && vetDetails.end;
         })
-      );
-
-      const items = appointmentsWithDetails.reduce((obj, appointment) => {
-        const date = moment(appointment.date).format("YYYY-MM-DD");
-        if (!obj[date]) {
-          obj[date] = [];
-        }
-        obj[date].push(appointment);
-        return obj;
-      }, {});
-
-      setVetAppointments(items);
-    } catch (error) {
-      console.error("Error fetching vet appointments:", error);
-    }
-  };
-
+        .then(() => {
+          clientServer
+            .getAppointmentsByVet(authState.id)
+            .then((appointments) => {
+              const promiseArray = appointments.map(async (appointment) => {
+                return clientServer
+                  .getPetOwnerInfo(appointment.petOwnerId)
+                  .then((petOwnerDetails) => {
+                    appointment.name = petOwnerDetails.name;
+                    appointment.phoneNumber = petOwnerDetails.phoneNumber;
+                    return appointment;
+                  })
+                  .catch((error) => {
+                    console.error("Error fetching pet owner info:", error);
+                  });
+              });
+              return Promise.all(promiseArray);
+            })
+            .then((modefied) => {
+              const items = modefied.reduce((obj, appointment) => {
+                const date = moment(appointment.date).format("YYYY-MM-DD");
+                if (!obj[date]) {
+                  obj[date] = [];
+                }
+                obj[date].push(appointment);
+                return obj;
+              }, {});
+              setVetAppointments(items);
+            })
+            .catch((error) => {
+              console.error("Error fetching vet appointments:", error);
+            });
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }, [authState.id])
+  );
   const renderItem = (item) => {
     return (
       <TouchableOpacity style={styles.item}>
@@ -87,7 +94,13 @@ export default function VetAppointmentsScreen() {
   const deleteAppointment = async (appointmentId) => {
     try {
       await clientServer.deleteAppointment(appointmentId);
-      fetchAppointments();
+      setVetAppointments((prevAppointments) => {
+        const newAppointments = { ...prevAppointments };
+        for (const date in newAppointments) {
+          newAppointments[date] = newAppointments[date].filter((appointment) => appointment._id !== appointmentId);
+        }
+        return newAppointments;
+      });
     } catch (error) {
       console.error("Error deleting appointment:", error);
     }
@@ -108,26 +121,32 @@ export default function VetAppointmentsScreen() {
 
   return (
     <View style={styles.container}>
-      {isOpenForBooking ? (
-        <View>
-          <Text style={styles.title}>Vet Appointments</Text>
-          {vetAppointments && vetAppointments.length > 0 ? (
-            <Agenda
-              items={vetAppointments}
-              renderItem={renderItem}
-              rowHasChanged={(r1, r2) => r1.name !== r2.name}
-              renderEmptyDate={renderEmptyDate}
-              renderDay={(date, item) => renderDay(item.time)}
-              showOnlySelectedDayItems
-            />
-          ) : (
-            <Text>No appointments</Text>
-          )}
-        </View>
+      {isLoading ? (
+        <ActivityIndicator style={styles.loadingIndicator} size="large" />
       ) : (
         <View>
-          <Text style={styles.title}>Appointment manager isn't available.</Text>
-          <Text>Set your working hours to enable it.</Text>
+          {isOpenForBooking ? (
+            <View>
+              <Text style={styles.title}>Vet Appointments</Text>
+              {vetAppointments && vetAppointments.length > 0 ? (
+                <Agenda
+                  items={vetAppointments}
+                  renderItem={renderItem}
+                  rowHasChanged={(r1, r2) => r1.name !== r2.name}
+                  renderEmptyDate={renderEmptyDate}
+                  renderDay={(date, item) => renderDay(item.time)}
+                  showOnlySelectedDayItems
+                />
+              ) : (
+                <Text>No appointments</Text>
+              )}
+            </View>
+          ) : (
+            <View>
+              <Text style={styles.title}>Appointment manager isn't available.</Text>
+              <Text>Set your working hours to enable it.</Text>
+            </View>
+          )}
         </View>
       )}
     </View>
@@ -137,8 +156,14 @@ export default function VetAppointmentsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
+    marginTop: 40,
     padding: 20,
+  },
+  loadingIndicator: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    color: colors.primary,
   },
   title: {
     fontSize: 20,
