@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
+import { Schema, model } from "mongoose";
 
-const PetOwnerSchema = new mongoose.Schema({
+const PetOwnerSchema = new Schema({
   name: {
     type: String,
     required: true,
@@ -14,18 +14,14 @@ const PetOwnerSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  profilePicture: {
-    type: String,
-  },
-  location: {
+  phoneNumber: {
     type: String,
     required: true,
   },
-  pets: {
-    type: [mongoose.Types.ObjectId],
+  profilePicture: {
+    type: String,
   },
-  ratings:     { type: [String] ,default: []} ,
 });
 
-const PetOwner = mongoose.model("Pet Owner", PetOwnerSchema);
-module.exports = PetOwner;
+const PetOwner = model("Pet Owner", PetOwnerSchema);
+export default PetOwner;

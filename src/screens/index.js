@@ -1,25 +1,28 @@
-import HomeScreen from "./HomeScreen/HomeScreen";
+import SignInScreen from "./SignInScreen/SignInScreen";
 import SignUpScreen from "./SignUpScreen/SignUpScreen";
 import PetOwnerHomeScreen from "./PetOwnerHomeScreen/PetOwnerHomeScreen";
 import PetProfileScreen from "./PetProfileScreen/PetProfileScreen";
-import EditPetProfileScreen from "./EditPetProfileScreen/EditPetProfileScreen";
-import EditPetOwnerProfileScreen from "./EditPetOwnerProfileScreen/EditPetOwnerProfileScreen";
+import AddPetScreen from "./AddPetScreen/AddPetScreen";
+import PetOwnerProfileScreen from "./PetOwnerProfileScreen/PetOwnerProfileScreen";
 import VetHomeScreen from "./VetHomeScreen/VetHomeScreen";
-import ShareTipScreen from "./ShareTipScreen/ShareTipScreen";
 import EditVetProfileScreen from "./EditVetProfileScreen/EditVetProfileScreen";
 import TipsScreen from "./TipsScreen/TipsScreen";
-import TipsScreenPet from "./TipsScreenPet/TipsScreenPet";
-
+import VetSearchScreen from "./VetSearchScreen/VetSearchScreen";
+import AppointmentsScreen from "./AppointmentsScreen/AppointmentsScreen";
+import MakeAppointmentScreen from "./MakeAppointmentScreen/MakeAppointmentScreen";
+import VetAppointmentsScreen from "./VetAppointmentsScreen/VetAppointmentsScreen";
 export {
-  HomeScreen,
+  SignInScreen,
   SignUpScreen,
   PetOwnerHomeScreen,
   PetProfileScreen,
-  EditPetProfileScreen,
-  EditPetOwnerProfileScreen,
+  AddPetScreen,
+  PetOwnerProfileScreen,
   VetHomeScreen,
-  ShareTipScreen,
   EditVetProfileScreen,
   TipsScreen,
-  TipsScreenPet,
+  VetSearchScreen,
+  AppointmentsScreen,
+  MakeAppointmentScreen,
+  VetAppointmentsScreen,
 };

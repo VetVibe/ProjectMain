@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { colors, sizes } from "../../constants";
 
 export default function TabsContainer({ tabs, activeTab, handleTabPress }) {
   return (
@@ -6,10 +7,10 @@ export default function TabsContainer({ tabs, activeTab, handleTabPress }) {
       {Object.keys(tabs).map((key) => (
         <TouchableOpacity
           key={key}
-          style={[styles.tabButton, activeTab === key && styles.activeTab]}
+          style={activeTab === key ? styles.activeTab : styles.tabButton}
           onPress={() => handleTabPress(key)}
         >
-          <Text style={styles.tabButtonText}>{tabs[key].title}</Text>
+          <Text style={activeTab === key ? styles.activeTabButtonText : styles.tabButtonText}>{tabs[key].title}</Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -25,13 +26,23 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     paddingVertical: 10,
-    borderBottomWidth: 2,
     borderBottomColor: "transparent",
   },
   activeTab: {
-    borderBottomColor: "#FFA500", // Bright orange
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.primary,
+  },
+  activeTabButtonText: {
+    fontSize: sizes.h4,
+    color: colors.gray,
+    fontWeight: "bold",
   },
   tabButtonText: {
-    fontSize: 16,
+    fontSize: sizes.h4,
+    color: colors.light_gray,
+    fontWeight: "bold",
   },
 });

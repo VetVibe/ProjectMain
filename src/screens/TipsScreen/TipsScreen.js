@@ -1,123 +1,153 @@
-import React, { useState, useEffect } from "react";
-import { View, TouchableOpacity, Text, TextInput, Button, ScrollView, FlatList, StyleSheet, Image } from "react-native";
-import { COLORS, FONTS, SIZES, images } from "../../constants";
+import React, { useState, useContext, useEffect } from "react";
+import { AuthContext } from "../../auth";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator } from "react-native";
+import { Input, Button, TipCard } from "../../components";
 import { MaterialIcons, AntDesign } from "@expo/vector-icons";
-import axios from "axios";
-import TipsScreenPet, { useAllTips } from "../TipsScreenPet/TipsScreenPet";
+import { clientServer } from "../../server";
+import { colors, sizes } from "../../constants";
+const CARD_WIDTH = sizes.width - 100;
 
-
-export default function TipsScreen({ route, navigation }) {
+export default function TipsScreen() {
+  const { authState } = useContext(AuthContext);
+  const [isLoading, setLoading] = useState(true);
   const [vetTips, setVetTips] = useState([]);
+  const [allTips, setAllTips] = useState([]);
   const [editingTipId, setEditingTipId] = useState(null);
-  const [editedTipContent, setEditedTipContent] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const [tip, setTip] = useState("");
 
-  const vetId = route.params.vetId;
-  const userType = route.params.userType;
-  const   {fetchAllTips, vetTips: allVetTips} = useAllTips()
   useEffect(() => {
-    fetchAllTips();
-  },[navigation])
-  useEffect(() => {
-    const updateTips = async () => {
-      try {
-        const response = await axios.get(`http://localhost:3000/veterinarian/${vetId}/tips`);
-        const tipIds = response.data;
-
-        if (tipIds) {
-          const fetchTipsDetails = tipIds.map((tipId) =>
-            axios.get(`http://localhost:3000/tip/${tipId}`).then((response) => response.data)
-          );
-
-          // Wait for all fetches to complete
-          Promise.all(fetchTipsDetails).then((tipsDetailsArray) => {
-            setVetTips(tipsDetailsArray);
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching vet tips:", error);
-      }
-    };
-
-    // Listen for changes and update petDetails
-    const subscription = navigation.addListener("focus", updateTips);
-
-    // Clean up the subscription when the component unmounts
-    return () => {
-      if (subscription) {
-        subscription();
-      }
-    };
-  }, [vetId, navigation]);
-
-  const handleEditPress = (tipId, currentContent) => {
-    setEditingTipId(tipId);
-    setEditedTipContent(currentContent);
-  };
-
-  const handleSavePress = (tipId) => {
-    setVetTips((prevTips) => prevTips.map((tip) => (tip._id === tipId ? { ...tip, content: editedTipContent } : tip)));
-
-    axios
-      .put(`http://localhost:3000/tip/updateInfo/${tipId}`, {
-        updatedData: { vetId: vetId, content: editedTipContent },
+    clientServer
+      .getAllTips()
+      .then((allTips) => {
+        const promiseArray = allTips.map(async (tip) => {
+          return clientServer
+            .getVetInfo(tip.vetId)
+            .then((vetInfo) => {
+              tip.vetName = vetInfo.name;
+              tip.vetImage = vetInfo.profilePicture;
+              return tip;
+            })
+            .catch((error) => {
+              console.log("Error fetching vet info:", error);
+            });
+        });
+        return Promise.all(promiseArray);
+      })
+      .then((allTips) => {
+        const [vetTips, othersTips] = allTips.reduce(
+          (acc, tip) => {
+            if (tip.vetId === authState.id) {
+              acc[0].push(tip);
+            } else {
+              acc[1].push(tip);
+            }
+            return acc;
+          },
+          [[], []]
+        );
+        setAllTips(othersTips);
+        setVetTips(vetTips);
       })
       .catch((error) => {
-        console.error(`Error during updating tip ${tipId} details:`, error);
+        console.log(error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
+  }, [authState.id]);
 
-    // Clear editing state
-    setEditingTipId(null);
-    setEditedTipContent("");
+  const handleInput = (tipId, currentContent) => {
+    setEditingTipId(tipId);
+    setTip(currentContent);
+    setIsAdding(tipId === null);
+  };
+
+  const handleDeletePress = async (tipId) => {
+    try {
+      await clientServer.deleteTip(tipId);
+      setVetTips((prevTips) => prevTips.filter((tip) => tip._id !== tipId));
+    } catch (error) {
+      console.error("Error deleting tip:", error);
+    }
+  };
+
+  const handleSavePress = async () => {
+    setLoading(true);
+    if (isAdding) {
+      await clientServer
+        .addTip(authState.id, tip)
+        .then((newTip) => {
+          setVetTips((prevTips) => [...prevTips, newTip]);
+        })
+        .catch((error) => {
+          console.error("Error adding tip:", error);
+        })
+        .finally(() => {
+          setIsAdding(false);
+          setTip("");
+          setLoading(false);
+        });
+    }
+    if (editingTipId) {
+      await clientServer
+        .updateTip(editingTipId, {
+          vetId: authState.id,
+          content: tip,
+        })
+        .then(() => {
+          setVetTips((prevTips) =>
+            prevTips.map((prev_tip) => (prev_tip._id === editingTipId ? { ...prev_tip, content: tip } : prev_tip))
+          );
+          setEditingTipId(null);
+          setIsAdding(false);
+          setTip("");
+        })
+        .catch((error) => {
+          console.error("Error updating tip:", error);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
   };
 
   const handleCancelPress = () => {
-    // Clear editing state
+    setIsAdding(false);
     setEditingTipId(null);
-    setEditedTipContent("");
+    setTip("");
   };
 
-  const ShareTipClick = () => {
-    navigation.navigate("Share Tip Screen", { vetId: vetId });
-  };
-
-  const renderItemOtherVet = ({ item }) => {
-    if(item.vetId == vetId) return null
+  const renderInput = () => {
     return (
-      <View style={styles.tipContainer}>
-        <Image
-          source={{ uri : item.VetImage}} // Make sure to update this to use item-specific images if available
-          resizeMode="cover"
-          style={styles.profileImage}
-        />
-        <View style={styles.tipTextContainer}>
-          <Text style={styles.tipContent}>{item.content}</Text>
-          <Text style={styles.vetName}>By: {item.vetName}</Text>
+      <View style={styles.new_tip_container}>
+        <Input value={tip || ""} onChangeText={(text) => setTip(text)} multiline={true} maxLength={120} />
+
+        <View style={styles.buttoms_container}>
+          <Button text="Save" onPress={handleSavePress} style={styles.save_button} />
+          <Button text="Cancel" onPress={handleCancelPress} style={styles.cancel_button} />
+          <Text style={styles.length_text}>{tip?.length || 0}/120</Text>
         </View>
       </View>
     );
   };
 
   const renderItem = ({ item }) => {
-    const isEditing = item._id === editingTipId;
-
+    if (!item) return null;
+    const isEditing = item?._id === editingTipId;
     return (
-      <View style={{ marginBottom: 10 }}>
+      <View>
         {isEditing ? (
-          <View>
-            <TextInput value={editedTipContent} onChangeText={(text) => setEditedTipContent(text)} />
-            <View style={{ flexDirection: "row", marginTop: 5 }}>
-              <Button title="Save" onPress={() => handleSavePress(item._id)} />
-              <Button title="Cancel" onPress={handleCancelPress} />
-            </View>
-          </View>
+          renderInput()
         ) : (
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text>{item.content}</Text>
-            {userType == "vet" && (
-              <TouchableOpacity onPress={() => handleEditPress(item._id, item.content)}>
-                <MaterialIcons name="edit" size={24} color={COLORS.black} />
-              </TouchableOpacity>
-            )}
+          <View style={styles.item_container}>
+            <View style={styles.tip_container}>
+              <Text style={styles.text_content}>{item.content}</Text>
+            </View>
+            <View style={styles.header_buttons}>
+              <MaterialIcons name="edit" size={20} color="black" onPress={() => handleInput(item._id, item.content)} />
+              <MaterialIcons name="delete" size={20} color="black" onPress={() => handleDeletePress(item._id)} />
+            </View>
           </View>
         )}
       </View>
@@ -125,19 +155,38 @@ export default function TipsScreen({ route, navigation }) {
   };
 
   return (
-    <View>
-      {userType === "vet" && (
-        <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}> My Tips:</Text>
+    <View style={styles.container}>
+      {isLoading ? (
+        <ActivityIndicator style={styles.loadingIndicator} size="large" />
+      ) : (
+        <View>
+          <View style={styles.segment_container}>
+            <View style={styles.header_container}>
+              <Text style={styles.header_text}>Vet Tips</Text>
+            </View>
+            <FlatList
+              horizontal
+              snapToInterval={CARD_WIDTH + 24}
+              decelerationRate={"fast"}
+              showsHorizontalScrollIndicator={false}
+              initialNumToRender={2}
+              data={allTips}
+              renderItem={({ item }) => <TipCard tip={item} />}
+              keyExtractor={(item) => item?._id}
+            />
+          </View>
+
+          <View style={styles.segment_container}>
+            <View style={styles.header_container}>
+              <Text style={styles.header_text}>My Tips</Text>
+              <AntDesign name="pluscircleo" size={24} color="black" onPress={() => setIsAdding(true)} />
+            </View>
+            {isAdding && renderInput()}
+            {vetTips.length === 0 && !isAdding && <Text>You haven't added any tips.</Text>}
+            <FlatList data={vetTips} renderItem={renderItem} keyExtractor={(item) => item?._id} />
+          </View>
+        </View>
       )}
-      {userType === "vet" && (
-        <TouchableOpacity onPress={ShareTipClick}>
-          <AntDesign name="pluscircleo" size={24} color="black" />
-        </TouchableOpacity>
-      )}
-      {/* <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>My Tips</Text> */}
-      <FlatList data={vetTips} renderItem={renderItem} keyExtractor={(item) => item._id} />
-      <Text style={{ fontSize: 20, marginTop: 10, fontWeight: "bold", marginBottom: 10 }}> Vet Tips:</Text>
-      <FlatList data={allVetTips} renderItem={renderItemOtherVet} keyExtractor={(item) => item._id} />
     </View>
   );
 }
@@ -145,63 +194,99 @@ export default function TipsScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    marginTop: 40,
   },
-  title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    marginTop: 60,
-    marginBottom: 40,
-    marginLeft: 0,
-  },
-  tipContainer: {
-    flexDirection: 'row', // Set flexDirection to row to align items horizontally
-    backgroundColor: "#f0f0f0",
-    borderRadius: 2,
-    padding: 5,
-    marginBottom: 10,
-    alignItems: 'center', // Align items vertically in the center
-  },
-  tipContent: {
-    fontSize: 16,
-  },
-  input: {
-    height: 40,
-    width: "100%", // Updated to span the entire width
-    borderColor: "#FFA500",
-    borderWidth: 1,
-    marginBottom: 20,
-    paddingLeft: 10,
-    borderRadius: 20, // Added to make it round
-    backgroundColor: "#FFFFFF", // White
-  },
-  vetName: {
-    fontStyle: 'italic',
-    marginTop: 5,
-  },
-  editProfileButton: {
-    position: "absolute",
-    right: 20,
-    top: 20,
-    zIndex: 1,
-    width: 36,
-    height: 36,
-    alignItems: "center",
+  loadingIndicator: {
+    flex: 1,
     justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
+    alignItems: "center",
+    color: colors.primary,
   },
-  profileImage: {
-    height: 60, // Adjust the size as needed
-    width: 60, // Adjust the size as needed
-    borderRadius: 20, // Make it round
-    marginRight: 15, // Add some spacing between the image and the text
+  segment_container: {
+    padding: 16,
   },
-  tipTextContainer: {
-    flex: 1, // Take up the remaining space
+  item_container: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    borderRadius: 20,
+    padding: 16,
+    backgroundColor: colors.white,
+  },
+  header_container: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  header_text: {
+    fontSize: sizes.h1,
+    color: colors.primary,
+    fontWeight: "bold",
+    shadowColor: colors.gray,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+  },
+  header_buttons: {
+    alignItems: "flex-end",
+  },
+  tip_container: {
+    flex: 1,
+  },
+  text_content: {
+    fontSize: sizes.h4,
+  },
+  new_tip_container: {
+    marginHorizontal: 12,
+    marginBottom: 12,
+  },
+  length_text: {
+    fontSize: sizes.body2,
+    color: colors.gray,
   },
   addButton: {
-    alignSelf: 'flex-end',
-    marginBottom: 10,
+    alignSelf: "flex-end",
+  },
+  buttoms_container: {
+    flexDirection: "row",
+  },
+  save_button: {
+    container: {
+      flex: 1,
+      marginHorizontal: 6,
+      borderRadius: 20,
+      shadowColor: colors.gray,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      width: "40%",
+      backgroundColor: colors.primary,
+    },
+    text: {
+      textAlign: "center",
+      fontSize: sizes.body1,
+      padding: 5,
+      color: colors.white,
+      fontWeight: "bold",
+    },
+  },
+  cancel_button: {
+    container: {
+      flex: 1,
+      marginHorizontal: 6,
+      borderRadius: 20,
+      shadowColor: colors.gray,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      width: "40%",
+      backgroundColor: colors.white,
+    },
+    text: {
+      textAlign: "center",
+      fontSize: sizes.body1,
+      padding: 5,
+      color: colors.gray,
+      fontWeight: "bold",
+    },
   },
 });

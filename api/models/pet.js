@@ -1,22 +1,28 @@
-const mongoose = require("mongoose");
+import { Schema, Types, model } from "mongoose";
 
-const PetSchema = new mongoose.Schema({
+const PetSchema = new Schema({
   ownerId: {
-    type: mongoose.Types.ObjectId,
+    type: Types.ObjectId,
     required: true,
   },
   name: {
     type: String,
     required: true,
   },
-  animalType: {
+  species: {
     type: String,
-  },
-  age: {
-    type: Number,
+    required: true,
   },
   gender: {
     type: String,
+    required: true,
+  },
+  weight: {
+    type: Number,
+  },
+  birthdate: {
+    type: Date,
+    required: true,
   },
   lastVaccinationDate: {
     type: Date,
@@ -25,16 +31,16 @@ const PetSchema = new mongoose.Schema({
     type: Date,
   },
   medications: {
-    type: String,
+    type: [String],
   },
   allergies: {
-    type: String,
+    type: [String],
   },
   imgSrc: {
     type: String,
   },
 });
 
-const Pet = mongoose.model("Pet", PetSchema);
+const Pet = model("Pet", PetSchema);
 
-module.exports = Pet;
+export default Pet;

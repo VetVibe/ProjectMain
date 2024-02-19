@@ -1,334 +1,422 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  SafeAreaView,
-  ScrollView,
-  Switch,
-  StyleSheet,
-} from "react-native";
+import React, { useState, useCallback, useContext } from "react";
+import { AuthContext } from "../../auth";
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, FlatList, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { COLORS, FONTS, SIZES } from "../../constants";
-import { StatusBar } from "expo-status-bar";
-import { MaterialIcons } from "@expo/vector-icons";
-import { mapVetDetails } from "../../utils";
-import axios from "axios";
-import { style } from "twrnc";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import Rating from "../../components/Rating/Rating";
+import { EvilIcons, Feather, Fontisto } from "@expo/vector-icons";
+import { formatDateForRating, mapVetDetailsToSchema } from "../../utils";
+import { RateCard, RateVet, Button, Input } from "../../components";
+import { colors, sizes } from "../../constants";
+import { clientServer } from "../../server";
+
+const CARD_WIDTH = sizes.width - 100;
 
 export default function VetHomeScreen({ route, navigation }) {
+  const { authState } = useContext(AuthContext);
   const [vetDetails, setVetDetails] = useState({});
+  const [vetTips, setVetTips] = useState([]);
+  const [vetRatings, setVetRatings] = useState();
+  const [petOwnerRate, setPetOwnerRate] = useState();
+  const [ratingCount, setRatingCount] = useState();
+  const [editAbout, setEditAbout] = useState(false);
+  const [rate, setRate] = useState();
+  const id = authState.userType === "vet" ? authState.id : route.params?.vetId;
+  const [isLoading, setIsLoading] = useState(true);
 
-  const vetId = route.params.userId;
-  const userType = route.params.userType;
-
-  // Function to fetch vet details
-  const fetchVetDetails = () => {
-    axios
-      .get(`http://localhost:3000/veterinarian/${vetId}`)
-      .then((response) => {
-        const mapedVetDetails = mapVetDetails(response.data);
-        setVetDetails(mapedVetDetails);
-      })
-      .catch((error) => {
-        console.error("Error fetching vet details:", error);
-      });
-  };
-
-  // Use useEffect to fetch vet details on component mount
-  useEffect(() => {
-    fetchVetDetails();
-  }, [vetId]);
-
-  // Use useFocusEffect to fetch vet details when the screen comes into focus
   useFocusEffect(
-    React.useCallback(() => {
-      fetchVetDetails();
-    }, [])
+    useCallback(() => {
+      clientServer
+        .getVetInfo(id)
+        .then((vetDetails) => {
+          setVetDetails(vetDetails);
+        })
+        .then(() => {
+          clientServer
+            .getRateByVetId(id)
+            .then((vetRatings) => {
+              const ratingsLenght = vetRatings.length;
+              const totalRate = vetRatings.map((rate) => rate.rate).reduce((a, b) => a + b, 0) / ratingsLenght;
+
+              setRatingCount(ratingsLenght);
+              setRate(totalRate || 0);
+
+              const promiseArray = vetRatings.map(async (rating) => {
+                return clientServer
+                  .getPetOwnerInfo(rating.petOwnerId)
+                  .then((petOwnerInfo) => {
+                    rating.userName = petOwnerInfo.name;
+                    rating.when = formatDateForRating(rating.when);
+                    return rating;
+                  })
+                  .catch((error) => {
+                    console.log("Error fetching pet owner info:", error);
+                  });
+              });
+              return Promise.all(promiseArray);
+            })
+            .then((modified) => {
+              if (authState.userType === "petOwner") {
+                clientServer
+                  .getRateByVetOwner(authState.id, id)
+                  .then(
+                    (petOwnerRate) => {
+                      const filteredRating = modified.filter((rate) => rate.petOwnerId !== authState.id);
+                      setVetRatings(filteredRating);
+                      setPetOwnerRate(petOwnerRate);
+                    },
+                    () => {
+                      setVetRatings(modified);
+                    }
+                  )
+                  .catch((error) => {
+                    console.log("Error fetching pet owner rate:", error);
+                  });
+
+                clientServer
+                  .getTipsByVetId(id)
+                  .then((vetTipsRaw) => {
+                    setVetTips(vetTipsRaw);
+                  })
+                  .catch((error) => {
+                    console.log("Error fetching vet tips:", error);
+                  });
+              } else {
+                setVetRatings(modified);
+              }
+            })
+            .catch((error) => {
+              console.log("Error fetching vet ratings:", error);
+            });
+        })
+        .catch((error) => {
+          console.log("Error fetching vet info:", error);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }, [id])
   );
 
-  const toggleSwitch = () => {
-    // Update the local state
-    setVetDetails((prevUserInput) => ({
-      ...prevUserInput,
-      isAvailable: !vetDetails.isAvailable,
-    }));
-
-    // Make a PUT request to update the availability on the server
-    axios
-      .put(`http://localhost:3000/veterinarian/updateInfo/${vetId}`, {
-        updatedData: { isAvailable: !vetDetails.isAvailable },
-      })
-      .then((response) => {
-        // Handle success if needed
-        console.log("Availability updated successfully");
-      })
-      .catch((error) => {
-        // Handle error if needed
-        console.error("Error updating availability:", error);
-      });
+  const onSave = async () => {
+    const vetDetailsSchema = mapVetDetailsToSchema(vetDetails);
+    setEditAbout(false);
+    try {
+      await clientServer.updateVetInfo(authState.id, vetDetailsSchema);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const EditVetProfileClick = () => {
-    navigation.navigate("Edit Vet Profile Screen", { vetId: vetId });
+  const randerTip = (item) => {
+    return (
+      <View style={styles.tip_container}>
+        <Text>{item.content}</Text>
+      </View>
+    );
   };
-  const LogoutClick = () => {
-    clearAuthToken();
+
+  const onNewRating = async (newRating) => {
+    try {
+      if (petOwnerRate) {
+        await clientServer.updateRate(petOwnerRate._id, newRating);
+      } else {
+        const responce = await clientServer.addRate(authState.id, id, newRating);
+        setPetOwnerRate(responce);
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
-  const clearAuthToken = async () => {
-    await AsyncStorage.removeItem("authToken");
-    console.log("Cleared auth token");
-    navigation.replace("Home");
+
+  const onBooking = () => {
+    navigation.navigate("Make Appointment", { vetId: id });
   };
-  const ShowTips = () => {
-    navigation.navigate("Tips Screen", { vetId: vetId, userType: userType });
+
+  const navigateToEditScreen = () => {
+    navigation.navigate("Edit Vet Profile");
   };
 
   return (
-    <SafeAreaView style={styles.safeAreaContainer}>
-      <StatusBar backgroundColor={COLORS.gray} />
-      <ScrollView style={{ flex: 1 }}>
-        <View style={{ alignItems: "center" }}>
-          {userType === "vet" ? (
-            <>
-              <TouchableOpacity
-                style={styles.editProfileButton}
-                onPress={EditVetProfileClick}
-              >
-                <MaterialIcons name="edit" size={24} color={COLORS.white} />
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.tipsButton} onPress={ShowTips}>
-                <MaterialIcons
-                  name="my-library-books"
-                  size={24}
-                  color={COLORS.white}
-                />
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <View style={styles.nonVetAvailabilityContainer}>
-                <MaterialIcons
-                  name={
-                    vetDetails.isAvailable ? "fiber-manual-record" : "cancel"
-                  }
-                  size={12}
-                  color={vetDetails.isAvailable ? "green" : "red"}
-                />
-                <Text
-                  style={{ ...FONTS.h3, color: COLORS.black, marginRight: 10 }}
-                >
-                  {vetDetails.isAvailable ? " Available" : " Unavailable"}
-                </Text>
+    <View style={styles.screen_container}>
+      {isLoading ? (
+        <ActivityIndicator style={styles.loadingIndicator} size="large" />
+      ) : (
+        <ScrollView style={styles.container}>
+          <View style={styles.header_container}>
+            <View style={styles.image_container}>
+              <Image source={{ uri: vetDetails.profilePicture }} style={styles.image} />
+            </View>
+          </View>
+          <View style={styles.info_header_container}>
+            <Text style={styles.header_text}>{vetDetails.name}</Text>
+            {authState.userType === "vet" && (
+              <Button text="Edit" onPress={navigateToEditScreen} style={styles.edit_button} />
+            )}
+          </View>
+          <View style={styles.header_container}>
+            <View style={styles.info_container}>
+              <View style={styles.icon_container}>
+                <Fontisto name="doctor" size={16} color={colors.gray} />
+                <Text style={styles.icon_text}>{vetDetails.vetId}</Text>
               </View>
-            </>
-          )}
-          <Image
-            source={{ uri: vetDetails.profilePicture }}
-            style={styles.vetProfileImage}
-          />
-
-          <Text style={styles.name}>{vetDetails.name}</Text>
-          <Text style={styles.specialization}>{vetDetails.specialization}</Text>
-
-          <View style={styles.detailsContainer}>
-            <MaterialIcons name="location-on" size={24} color="black" />
-            <Text style={styles.location}>{vetDetails.location}</Text>
-          </View>
-
-          <View style={styles.detailsContainer}>
-            <MaterialIcons name="phone" size={24} color="black" />
-            <Text style={styles.location}>{vetDetails.phoneNumber}</Text>
-          </View>
-
-          <View style={{ paddingVertical: 8, flexDirection: "row" }}>
-            <View style={styles.infoBox}>
-              <Text style={{ ...FONTS.h3, color: "black" }}>
-                {+vetDetails.rateCount > 0
-                  ? (+vetDetails.rate / +vetDetails.rateCount).toFixed(1)
-                  : 0}
-              </Text>
-              <Text style={{ ...FONTS.body4, color: "black" }}>Rating</Text>
+              <View style={styles.icon_container}>
+                <Feather name="phone" size={16} color={colors.gray} />
+                <Text style={styles.icon_text}>{vetDetails.phoneNumber}</Text>
+              </View>
+              {vetDetails.location && (
+                <View style={styles.icon_container}>
+                  <EvilIcons name="location" size={16} color={colors.gray} />
+                  <Text style={styles.icon_text}>{vetDetails.location}</Text>
+                </View>
+              )}
             </View>
           </View>
 
-          {vetDetails.about !== "" && (
-            <View style={styles.aboutContainer}>
-              <Text style={styles.aboutTitle}>About</Text>
-              <Text style={styles.description}>{vetDetails.about}</Text>
+          {vetDetails.specialization && (
+            <View style={styles.spetialization_container}>
+              <ScrollView horizontal={true}>
+                {vetDetails.specialization.map((spetialization) => {
+                  return (
+                    <View style={styles.chip_container} key={spetialization}>
+                      <Text style={styles.chips}>{spetialization}</Text>
+                    </View>
+                  );
+                })}
+              </ScrollView>
             </View>
           )}
 
-          {userType === "vet" ? (
-            <>
-              <TouchableOpacity
-                style={styles.logoutButton}
-                onPress={LogoutClick}
-              >
-                <MaterialIcons name="logout" size={24} color={COLORS.white} />
-              </TouchableOpacity>
-              <View style={styles.availabilityContainer}>
-                <Text
-                  style={{ ...FONTS.h4, color: COLORS.black, marginRight: 10 }}
-                >
-                  {vetDetails.isAvailable ? "Available" : "Unavailable"}
-                </Text>
-                <Switch
-                  trackColor={{ false: "#767577", true: "#FFA500" }}
-                  thumbColor={vetDetails.isAvailable ? "#FFFFFF" : "#FFFFFF"}
-                  ios_backgroundColor="#3e3e3e"
-                  onValueChange={toggleSwitch}
-                  value={vetDetails.isAvailable}
-                />
+          {(vetDetails.about || authState.userType == "vet") && (
+            <View style={styles.segment_container}>
+              <View style={styles.segment_header}>
+                <Text style={styles.header_text}>About</Text>
+                {authState.userType === "vet" && (
+                  <>
+                    {!editAbout ? (
+                      <Button text="Edit" onPress={() => setEditAbout(true)} style={styles.edit_button} />
+                    ) : (
+                      <Button text="Save" onPress={onSave} style={styles.edit_button} />
+                    )}
+                  </>
+                )}
               </View>
-            </>
-          ) : (
-            <>
+              {editAbout && (
+                <View style={styles.segment_content}>
+                  <Input
+                    value={vetDetails.about}
+                    onChangeText={(text) => setVetDetails({ ...vetDetails, about: text })}
+                    multiline={true}
+                    maxLength={120}
+                  />
+                </View>
+              )}
+              {vetDetails.about && !editAbout && (
+                <View style={styles.segment_content}>
+                  <Text style={styles.text}>{vetDetails.about}</Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {vetTips?.length > 0 && (
+            <View style={styles.segment_container}>
+              <View style={styles.segment_header}>
+                <Text style={styles.header_text}>Vet Tips</Text>
+                {authState.userType === "vet" && (
+                  <TouchableOpacity onPress={navigateToEditScreen}>
+                    <Text>Edit</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
               <View>
-                <Rating
-                  vetDetails={vetDetails}
-                  onNewRating={({ newRating, newRatingCount }) =>
-                    setVetDetails({
-                      ...vetDetails,
-                      rating: newRating,
-                      ratingCount: newRatingCount,
-                    })
-                  }
+                <FlatList
+                  horizontal
+                  snapToInterval={CARD_WIDTH + 24}
+                  decelerationRate={"fast"}
+                  showsHorizontalScrollIndicator={false}
+                  initialNumToRender={2}
+                  data={vetTips}
+                  keyExtractor={(item) => item._id}
+                  renderItem={({ item }) => randerTip(item)}
                 />
               </View>
-            </>
+            </View>
           )}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+
+          <View style={styles.segment_container}>
+            <View style={styles.segment_header}>
+              <Text style={styles.header_text}>Ratings & Reviews</Text>
+            </View>
+            <View style={styles.segment_header}>
+              <View style={styles.segment_header}>
+                <Text style={styles.rating_text}>{rate ? rate.toFixed(1) : 0}</Text>
+                <Text style={styles.out_of_count}>out of 5</Text>
+              </View>
+              <Text style={styles.rating_count}>{ratingCount} Ratings</Text>
+            </View>
+            {vetRatings?.length > 0 && (
+              <View>
+                <FlatList
+                  horizontal
+                  snapToInterval={CARD_WIDTH + 24}
+                  decelerationRate={"fast"}
+                  showsHorizontalScrollIndicator={false}
+                  initialNumToRender={2}
+                  data={vetRatings}
+                  keyExtractor={(item) => item._id}
+                  renderItem={({ item }) => <RateCard rate={item} />}
+                />
+              </View>
+            )}
+            {authState.userType === "petOwner" && <RateVet petOwnerRate={petOwnerRate} onNewRating={onNewRating} />}
+          </View>
+        </ScrollView>
+      )}
+      {authState.userType == "petOwner" && !isLoading && (
+        <Button text={"Book"} style={styles.book_button} onPress={onBooking} />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeAreaContainer: { flex: 1, backgroundColor: COLORS.white },
-  detailsContainer: {
+  screen_container: { flex: 1, backgroundColor: colors.white },
+  container: {
+    marginTop: 40,
+  },
+  loadingIndicator: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    color: colors.primary,
+  },
+  header_container: {
     flexDirection: "row",
-    marginVertical: 6,
-    alignItems: "center",
+    paddingHorizontal: 16,
   },
-  aboutContainer: { width: "100%", paddingHorizontal: SIZES.padding },
-  button: {
-    width: "90%",
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primary,
+  image_container: {
+    flex: 1,
+    marginTop: 24,
+  },
+  image: {
+    height: 150,
+    resizeMode: "cover",
     borderRadius: 10,
-    marginBottom: 20,
   },
-  nonVetAvailabilityContainer: {
-    position: "absolute",
-    left: 20, // Adjust based on your layout
-    top: 20, // Align with the height of the first icon on the right
+  info_header_container: {
     flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 8,
+    paddingHorizontal: 16,
+  },
+  info_container: {
+    flex: 1,
+    alignItems: "flex-start",
+    justifyContent: "space-evenly",
+    padding: 8,
+  },
+  icon_container: {
+    flexDirection: "row",
+    paddingLeft: 6,
+    marginVertical: 10,
+  },
+  icon_text: {
+    fontSize: sizes.h4,
+    marginLeft: 12,
+  },
+  edit_button: {
+    container: {
+      alignItems: "flex-end",
+    },
+    text: {
+      color: colors.primary,
+    },
+  },
+  text: {
+    fontSize: sizes.h4,
+    color: colors.gray,
+  },
+  segment_container: {
+    borderTopColor: colors.light_gray,
+    borderTopWidth: 4,
+    marginTop: 12,
+    padding: 16,
+  },
+  segment_header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
   },
-  availabilityContainer: {
-    ...FONTS.h2,
-    color: COLORS.black,
-    textAlign: "left",
-    marginTop: 15,
+  header_text: {
+    fontSize: sizes.h2,
+    fontWeight: "bold",
   },
-  infoBox: {
-    flexDirection: "column",
-    alignItems: "center",
-    marginHorizontal: SIZES.padding,
-    backgroundColor: COLORS.gray,
-    borderRadius: 10,
-    padding: 10,
+  sub_header_text: {
+    paddingTop: 16,
+    paddingBottom: 8,
+    fontSize: sizes.h4,
   },
-  viewProfileButton: {
-    position: "absolute",
-    left: 20,
-    top: 20,
-    zIndex: 1,
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
+  segment_content: {
+    flex: 1,
+    marginTop: 16,
+    justifyContent: "space-evenly",
   },
-  editProfileButton: {
-    position: "absolute",
-    right: 20,
-    top: 20,
-    zIndex: 1,
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
+  spetialization_container: {
+    flex: 1,
+    paddingHorizontal: 8,
+    paddingTop: 8,
   },
-  tipsButton: {
-    position: "absolute",
-    right: 20,
-    top: 60,
-    zIndex: 2,
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
+  chips: {
+    alignSelf: "flex-start",
+    color: colors.primary,
   },
-  vetProfileImage: {
-    height: 155,
-    width: 155,
+  chip_container: {
     borderRadius: 20,
-    borderColor: COLORS.primary,
-    borderWidth: 3,
-    marginTop: 50,
+    borderColor: colors.primary,
+    borderWidth: 1,
+    padding: 12,
   },
-  name: {
-    ...FONTS.h2,
-    color: COLORS.primary,
-    marginVertical: 8,
+  tip_container: {
+    flex: 1,
+    width: CARD_WIDTH,
+    height: 100,
+    borderRadius: 20,
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: colors.lighter_gray,
   },
-  specialization: { color: COLORS.black, ...FONTS.body4 },
-  location: { ...FONTS.body4, marginLeft: 4 },
-  aboutTitle: {
-    ...FONTS.h2,
-    color: COLORS.black,
-    textAlign: "left",
-    marginTop: 15,
+  rating_text: {
+    fontSize: sizes.h1,
+    fontWeight: "bold",
   },
-  description: {
-    ...FONTS.body4,
-    color: COLORS.darkgray,
-    textAlign: "left",
-    marginTop: 10,
+  out_of_count: {
+    fontSize: sizes.body1,
+    color: colors.gray,
+    paddingLeft: 8,
+    paddingTop: 8,
   },
-  shreTipButton: {
-    width: "90%",
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
-    marginBottom: 20,
-    marginTop: 20,
+  rating_count: {
+    fontSize: sizes.body1,
+    color: colors.gray,
   },
-  logoutButton: {
-    position: "absolute",
-    right: 20,
-    top: 100, // Adjust the position based on your layout
-    zIndex: 3,
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
+  book_button: {
+    container: {
+      marginHorizontal: 24,
+      marginBottom: 12,
+      borderRadius: 20,
+      padding: 8,
+      shadowColor: colors.gray,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      width: "90%",
+      backgroundColor: colors.primary,
+    },
+    text: {
+      textAlign: "center",
+      fontSize: sizes.h3,
+      padding: 10,
+      color: colors.white,
+      fontWeight: "bold",
+    },
   },
 });

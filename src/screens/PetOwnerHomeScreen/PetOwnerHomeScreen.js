@@ -1,330 +1,182 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Image,
-  FlatList,
-} from "react-native";
-import Icon from "react-native-vector-icons/FontAwesome";
-import PetContainer from "./PetContainer";
-import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import VetSearchForm from "../../components/VetSearchForm/VetSearchForm";
-import { MaterialIcons } from "@expo/vector-icons";
-import { COLORS, FONTS, SIZES, images } from "../../constants";
+import React, { useState, useCallback, useContext } from "react";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { AuthContext } from "../../auth";
+import { colors, sizes } from "../../constants";
+import { PetCard, TipCard } from "../../components";
+import { calculateAge } from "../../utils";
+import { View, Text, StyleSheet, FlatList, ActivityIndicator } from "react-native";
+import { MaterialIcons, AntDesign } from "@expo/vector-icons";
+import { clientServer } from "../../server";
 
-export default function PetOwnerHomeScreen({ route, navigation }) {
+const CARD_WIDTH = sizes.width - 100;
+
+export default function PetOwnerHomeScreen() {
+  const navigation = useNavigation();
+  const { authState } = useContext(AuthContext);
+  const [loadingPets, setLoadingPets] = useState(true);
+  const [loadingTips, setLoadingTips] = useState(true);
   const [userPets, setUserPets] = useState([]);
-  const [veterinarians, setVeterinarians] = useState([]);
-  const [selectedLocation, setSelectedLocation] = useState("");
-  const [selectedSpecialization, setSelectedSpecialization] = useState("");
+  const [allTips, setAllTips] = useState([]);
 
-  const petOwnerId = route.params.userId;
-
-  useEffect(() => {
-    const updateUserPetDetails = async () => {
-      try {
-        const response = await axios.get(
-          `http://localhost:3000/petOwner/${petOwnerId}/pets`
-        );
-        const petIds = response.data.pets;
-
-        // Fetch details of each pet concurrently
-        const fetchPetDetails = petIds.map((petId) =>
-          axios
-            .get(`http://localhost:3000/pet/${petId}`)
-            .then((response) => response.data)
-        );
-
-        // Wait for all fetches to complete
-        Promise.all(fetchPetDetails).then((petDetailsArray) => {
-          setUserPets(petDetailsArray);
+  useFocusEffect(
+    useCallback(() => {
+      clientServer
+        .getPetsByOwnerId(authState.id)
+        .then((petsInfo) => {
+          const mappedPets = petsInfo?.pets.map((pet) => ({
+            ...pet,
+            age: calculateAge(pet.birthdate),
+          }));
+          setUserPets(mappedPets || []);
+        })
+        .finally(() => {
+          setLoadingPets(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching data:", error);
         });
-      } catch (error) {
-        console.error("Error fetching user pets:", error);
-      }
-    };
 
-    const focusListener = navigation.addListener("focus", () => {
-      updateUserPetDetails();
-
-      // resetModalState();
-    });
-
-    // Clean up the subscription when the component unmounts
-    return () => {
-      if (focusListener) {
-        focusListener();
-      }
-    };
-  }, [petOwnerId, navigation]);
-
-  const LogoutClick = () => {
-    clearAuthToken();
-  };
-  const clearAuthToken = async () => {
-    await AsyncStorage.removeItem("authToken");
-    console.log("Cleared auth token");
-    navigation.replace("Home");
-  };
-
-  const handleSearch = () => {
-    const queryParams = new URLSearchParams();
-    if (selectedLocation) queryParams.append("location", selectedLocation);
-    if (selectedSpecialization)
-      queryParams.append("specialization", selectedSpecialization);
-
-    axios
-      .get(`http://localhost:3000/veterinarians?${queryParams.toString()}`)
-      .then((response) => {
-        setVeterinarians(response.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching veterinarians:", error);
-      });
-  };
+      clientServer
+        .getAllTips()
+        .then((allTips) => {
+          const promiseArray = allTips.map(async (tip) => {
+            return clientServer
+              .getVetInfo(tip.vetId)
+              .then((vetInfo) => {
+                tip.vetName = vetInfo.name;
+                tip.vetImage = vetInfo.profilePicture;
+                return tip;
+              })
+              .catch((error) => {
+                console.log("Error fetching vet info:", error);
+              });
+          });
+          return Promise.all(promiseArray);
+        })
+        .then((modified) => {
+          setAllTips(modified);
+        })
+        .catch((error) => {
+          console.log("Error fetching all tips:", error);
+        })
+        .finally(() => {
+          setLoadingTips(false);
+        });
+    }, [authState.id])
+  );
 
   const handleNavigateToEditProfile = () => {
-    navigation.navigate("Pet Profile Screen Edit", { petOwnerId: petOwnerId });
-  };
-
-  const handleNavigateToEditPetOwnerProfile = () => {
-    navigation.navigate("Edit Pet Owner Profile Screen", {
-      petOwnerId: petOwnerId,
-    });
-  };
-
-  const handleNavigateToTipsScreen = () => {
-    navigation.navigate("Tips Screen Pet");
-  };
-
-  const handleVetPress = (vet) => {
-    // Navigate to VetHomeScreen with the selected vet's ID and pet owner's ID
-    navigation.navigate("Vet Home Screen", {
-      userId: vet._id,
-      userType: "petOwner", // ID of the pet owner
-    });
+    navigation.navigate("Add Pet");
   };
 
   const handlePetSelect = (pet) => {
-    // Navigate to Pet Profile Screen with the selected pet's ID
-    navigation.navigate("Pet Profile Screen", { petId: pet._id });
+    navigation.navigate("Pet Profile", { petId: pet._id });
+  };
+
+  const handleTipSelect = (tip) => {
+    navigation.navigate("Pet Owner Appointments Tab", { screen: "Vet Home Screen", params: { vetId: tip.vetId } });
   };
 
   return (
-    <ScrollView>
-      <View style={styles.addButton}>
-        <TouchableOpacity onPress={handleNavigateToEditProfile}>
-          <Icon name="plus" size={20} color="black" />
-        </TouchableOpacity>
+    <View style={styles.container}>
+      <View style={styles.header_container}>
+        <Text style={styles.header_text}>Vet Vibe</Text>
+        <MaterialIcons name="pets" size={24} color={colors.primary} />
       </View>
 
-      {/* Horizontal FlatList for Pets */}
-      <View style={styles.petsContainer}>
-        {userPets.length > 0 ? (
-          <FlatList
-            data={userPets}
-            horizontal={true}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => handlePetSelect(item)}
-                style={styles.petItem}
-              >
-                <Image source={{ uri: item.imgSrc }} style={styles.petImage} />
-                <Text style={styles.petName}>{item.name}</Text>
-              </TouchableOpacity>
-            )}
-          />
+      <View style={styles.segment_container}>
+        <View style={styles.segment_header_container}>
+          <Text style={styles.text}>Your Pets</Text>
+          <AntDesign name="pluscircleo" size={24} style={styles.icon} onPress={handleNavigateToEditProfile} />
+        </View>
+        {loadingPets || loadingTips ? (
+          <ActivityIndicator style={styles.loadingIndicator} size="large" />
         ) : (
-          <Text>No pets in your collection</Text>
+          <View>
+            {userPets?.length > 0 ? (
+              <FlatList
+                horizontal
+                snapToInterval={CARD_WIDTH + 24}
+                decelerationRate={"fast"}
+                showsHorizontalScrollIndicator={false}
+                initialNumToRender={2}
+                data={userPets}
+                keyExtractor={(item) => item._id}
+                renderItem={({ item }) => <PetCard pet={item} onSelect={() => handlePetSelect(item)} />}
+              />
+            ) : (
+              <Text>No pets in your collection, add now!</Text>
+            )}
+          </View>
         )}
       </View>
 
-      <View style={styles.searchSection}>
-        <Text style={styles.title}>Find a Vet</Text>
-        <VetSearchForm
-          setSelectedLocation={setSelectedLocation}
-          setSelectedSpecialization={setSelectedSpecialization}
-        />
-        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-          <Text style={styles.buttonText}>Search</Text>
-        </TouchableOpacity>
-
-        {veterinarians.map((vet, index) => (
-          <TouchableOpacity
-            key={index}
-            onPress={() => handleVetPress(vet)}
-            style={styles.vetItem}
-          >
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Image
-                source={{
-                  uri: vet.profilePicture
-                    ? vet.profilePicture
-                    : "https://www.behance.net/gallery/189614555/VetProfile.jpg",
-                }}
-                resizeMode="cover"
-                style={styles.profileImage}
+      <View style={styles.segment_container}>
+        <View style={styles.segment_header_container}>
+          <Text style={styles.text}>Vet Tips</Text>
+        </View>
+        {loadingTips || loadingPets ? (
+          <ActivityIndicator style={styles.loadingIndicator} size="large" />
+        ) : (
+          <View>
+            {allTips?.length > 0 ? (
+              <FlatList
+                horizontal
+                snapToInterval={CARD_WIDTH + 24}
+                decelerationRate={"fast"}
+                showsHorizontalScrollIndicator={false}
+                initialNumToRender={2}
+                data={allTips}
+                keyExtractor={(item) => item?._id}
+                renderItem={({ item }) => <TipCard tip={item} onSelect={() => handleTipSelect(item)} />}
               />
-              <View
-                style={[
-                  styles.availabilityIndicator,
-                  vet.isAvailable ? styles.available : styles.notAvailable,
-                ]}
-              />
-              <Text style={{ marginLeft: 5 }}>
-                {vet.name} - {vet.location}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+            ) : (
+              <Text>No tips available</Text>
+            )}
+          </View>
+        )}
       </View>
-      <TouchableOpacity
-        style={styles.editProfileButton}
-        onPress={handleNavigateToEditPetOwnerProfile}
-      >
-        <MaterialIcons name="edit" size={24} color={COLORS.white} />
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.tipsButton}
-        onPress={handleNavigateToTipsScreen}
-      >
-        <MaterialIcons name="my-library-books" size={24} color={COLORS.white} />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.logoutButton} onPress={LogoutClick}>
-        <MaterialIcons name="logout" size={24} color={COLORS.white} />
-      </TouchableOpacity>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  addButton: {},
   container: {
     flex: 1,
-    padding: 20,
-    alignItems: "center",
-    justifyContent: "center",
+    marginTop: 40,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  searchInput: {
-    height: 40,
-    width: "80%",
-    borderColor: "gray",
-    borderWidth: 1,
-    marginBottom: 20,
-    paddingLeft: 10,
-  },
-  searchButton: {
-    backgroundColor: "#FFA500",
-    padding: 10,
-    borderRadius: 5,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  profileButton: {
-    backgroundColor: "#FFA500",
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 20,
-  },
-  searchSection: {
-    paddingTop: 90, // Added top padding to push the entire section down
-  },
-  vetItem: {
+  header_container: {
+    marginVertical: 16,
+    paddingHorizontal: 24,
     flexDirection: "row",
     alignItems: "center",
+  },
+  header_text: {
+    flex: 1,
+    fontSize: sizes.h1,
+    color: colors.primary,
+    fontWeight: "bold",
+  },
+  segment_container: {
+    paddingHorizontal: 24,
+    marginBottom: 24,
+  },
+  segment_header_container: {
+    marginVertical: 8,
+    flexDirection: "row",
     justifyContent: "space-between",
   },
-  availabilityIndicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginLeft: 5,
+  text: {
+    fontSize: sizes.h2,
+    fontWeight: "bold",
   },
-  available: {
-    backgroundColor: "#00FF00",
-  },
-  notAvailable: {
-    backgroundColor: "red",
-  },
-  logoutButton: {
-    position: "absolute",
-    right: 20,
-    top: 100, // Adjust the position based on your layout
-    zIndex: 3,
-    width: 36,
-    height: 36,
-    alignItems: "center",
+  loadingIndicator: {
+    flex: 1,
     justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
-  },
-  viewTipsButton: {
-    backgroundColor: "#FFA500",
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  editProfileButton: {
-    position: "absolute",
-    right: 20,
-    top: 20,
-    zIndex: 1,
-    width: 36,
-    height: 36,
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
+    color: colors.primary,
   },
-  tipsButton: {
-    position: "absolute",
-    right: 20,
-    top: 60,
-    zIndex: 2,
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
-  },
-  profileImage: {
-    height: 60, // Adjust the size as needed
-    width: 60, // Adjust the size as needed
-    borderRadius: 20, // Make it round
-    marginRight: 15, // Add some spacing between the image and the text
-  },
-  petsContainer: {
-    height: 150, // Adjust as needed
-    alignItems: "center",
-    padding: 10,
-  },
-  petItem: {
-    marginHorizontal: 10,
-    alignItems: "center",
-  },
-  petImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
-  petName: {
-    textAlign: "center",
-    marginTop: 5,
+  icon: {
+    color: colors.primary,
   },
 });

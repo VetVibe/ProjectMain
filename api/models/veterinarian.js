@@ -1,7 +1,7 @@
 // Import the mongoose library
-const mongoose = require("mongoose");
+import { Schema, Types, model } from "mongoose";
 
-const veterinarianSchema = new mongoose.Schema({
+const veterinarianSchema = new Schema({
   name: {
     type: String,
     required: true,
@@ -27,38 +27,22 @@ const veterinarianSchema = new mongoose.Schema({
   profilePicture: {
     type: String,
   },
-  rate: {
-    type: Number,
-    default: 0,
-  },
-  rateCount: {
-    type: Number,
-    default: 0,
-  },
-  clientsCount: {
-    type: Number,
-    default: 0,
-  },
   about: {
     type: String,
   },
-  tips: {
-    type: [mongoose.Types.ObjectId],
-  },
-  isAvailable: {
-    type: Boolean,
-    default: false,
-  },
   location: {
     type: String,
-    required: true,
   },
-
   specialization: {
-    type: String,
-    required: true,
+    type: [String],
+  },
+  start: {
+    type: Number,
+  },
+  end: {
+    type: Number,
   },
 });
 
-const Veterinarian = mongoose.model("Veterinarian", veterinarianSchema);
-module.exports = Veterinarian;
+const Veterinarian = model("Veterinarian", veterinarianSchema);
+export default Veterinarian;

@@ -1,49 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import RNPickerSelect from 'react-native-picker-select';
-import axios from 'axios';
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import RNPickerSelect from "react-native-picker-select";
+import { colors } from "../../constants";
+import { locations, specializations } from "../../constants";
 
-const VetSearchForm = ({ setSelectedLocation, setSelectedSpecialization }) => {
-  const [cityList, setCityList] = useState([]);
-  const [specializationList, setSpecializationList] = useState([]);
-
-  useEffect(() => {
-    axios
-      .get("http://localhost:3000/cities")
-      .then(response => {
-        const cities = response.data.map(cityObject => cityObject.city);
-        setCityList(cities.map(city => ({ label: city, value: city })));
-      })
-      .catch(error => {
-        console.error("Error fetching cities:", error);
-      });
-  }, []);
-
-  useEffect(() => {
-    axios
-      .get("http://localhost:3000/specialization")
-      .then(response => {
-        const specializations = response.data.map(specObject => specObject.specialisation);
-        setSpecializationList(specializations.map(spec => ({ label: spec, value: spec })));
-      })
-      .catch(error => {
-        console.error("Error fetching specializations:", error);
-      });
-  }, []);
-
+const VetSearchForm = ({ onSelectedLocation, onSelectedSpecialization, handleFilterChange }) => {
   return (
     <>
-      <RNPickerSelect
-        onValueChange={(value) => setSelectedLocation(value)}
-        items={cityList}
-        placeholder={{ label: 'Select Location', value: null }}
-      />
-      <RNPickerSelect
-        onValueChange={(value) => setSelectedSpecialization(value)}
-        items={specializationList}
-        placeholder={{ label: 'Select Specialization', value: null }}
-      />
+      <View style={styles.search_container}>
+        <RNPickerSelect
+          onDonePress={handleFilterChange}
+          onValueChange={(value) => onSelectedLocation(value)}
+          items={locations}
+          placeholder={{ label: "Select Location", value: null }}
+        />
+      </View>
+      <View style={styles.search_container}>
+        <RNPickerSelect
+          onDonePress={handleFilterChange}
+          onValueChange={(value) => onSelectedSpecialization(value)}
+          items={specializations}
+          placeholder={{ label: "Select Specialization", value: null }}
+        />
+      </View>
     </>
   );
 };
+
+const styles = StyleSheet.create({
+  search_container: {
+    backgroundColor: colors.white,
+    padding: 12,
+    borderRadius: 20,
+    marginHorizontal: 40,
+    marginVertical: 8,
+    flexDirection: "row",
+    shadowColor: colors.gray,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    elevation: 6,
+  },
+});
 
 export default VetSearchForm;

@@ -10,7 +10,8 @@ export const TITELS = {
   name: "Name",
   email: "Email",
   phoneNumber: "Phone Number",
+  password: "Password",
   about: "About",
-  location: "Location",
-  specialization: "Specialization",
+  location: "Select Location",
+  specialization: "Select Specialization",
 };
