@@ -97,13 +97,13 @@ export default function PetProfileScreen({ route, navigation }) {
 
   const handleSaveMeds = async () => {
     setPet({ ...pet, medications });
-    await clientServer.updatePetInfo(petId, { ...pet, medications });
+    await clientServer.updatePetInfo(petId, { ...pet, medications: medications });
     setIsEditingMedications(false);
   };
 
   const handleSaveAllerg = async () => {
     setPet({ ...pet, allergies });
-    await clientServer.updatePetInfo(petId, { ...pet, allergies });
+    await clientServer.updatePetInfo(petId, { ...pet, allergies: allergies });
     setIsEditingAllergies(false);
   };
 
