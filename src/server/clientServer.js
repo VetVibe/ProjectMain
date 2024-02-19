@@ -8,7 +8,6 @@ import {
   APPOINTMENT_ENDPOINTS,
   RATE_ENDPOINTS,
 } from "./endpoints";
-import { Alert } from "react-native";
 
 export const clientServer = {
   server: axios.create({ baseURL: BASE_URL }),
@@ -139,21 +138,20 @@ export const clientServer = {
       return response.data?.id;
     } catch (error) {
       if (error.response) {
-        // The request was made and the server responded with a status code
         const status = error.response.status;
 
         if (status === 404) {
-          Alert.alert("User not found");
+          console.log("User not found");
         } else if (status === 401) {
-          Alert.alert("Invalid password", "The password is incorrect.");
+          console.log("Invalid password", "The password is incorrect.");
         } else {
-          Alert.alert("Login error", "An error occurred during login.");
+          console.log("Login error", "An error occurred during login.");
         }
       } else {
-        // The request was made but no response was received
-        Alert.alert("Network error", "Unable to connect to the server.");
+        console.log("Network error", "Unable to connect to the server.");
       }
       console.error("Error logging in vet:", error.response);
+      throw error;
     }
   },
 
