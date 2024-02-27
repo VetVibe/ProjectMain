@@ -50,7 +50,7 @@ export default function PetOwnerProfileScreen() {
   );
 
   const handleLogout = async () => {
-    setAuthState({ id: "", signedIn: false, userType: "" });
+    setAuthState({ id: "", signedIn: false, isOwner: false });
     console.log("Pet owner logged out: cleared auth.");
   };
 

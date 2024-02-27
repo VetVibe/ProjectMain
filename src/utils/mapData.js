@@ -1,37 +1,3 @@
-export const mapVetDetails = (vetData) => {
-  return {
-    name: vetData.name || "",
-    email: vetData.email || "",
-    vetId: vetData.vetId,
-    password: vetData.password || "",
-    phoneNumber: vetData?.phoneNumber || "",
-    profilePicture:
-      vetData?.profilePicture ||
-      "https://mir-s3-cdn-cf.behance.net/projects/max_808_webp/3c6f95189614555.Y3JvcCwxMDI0LDgwMCwwLDExMQ.jpg",
-    about: vetData?.about || "",
-    location: vetData?.location || "",
-    specialization: vetData?.specialization || [],
-    start: vetData?.start || 8,
-    end: vetData?.end || 20,
-  };
-};
-
-export const mapVetDetailsToSchema = (vetDetails) => {
-  return {
-    name: vetDetails.name,
-    email: vetDetails.email,
-    vetId: vetDetails.vetId,
-    password: vetDetails.password,
-    phoneNumber: vetDetails.phoneNumber,
-    profilePicture: vetDetails.profilePicture,
-    about: vetDetails.about,
-    location: vetDetails.location,
-    specialization: vetDetails.specialization,
-    start: vetDetails.start,
-    end: vetDetails.end,
-  };
-};
-
 export const getTimesNum = (start, end) => {
   const timesList = [];
   for (let i = start; i < end; i++) {
@@ -40,21 +6,8 @@ export const getTimesNum = (start, end) => {
   return timesList;
 };
 
-export const appointmentsTimeByDate = (appointments, currentDate) => {
-  const timeList = [];
-
-  appointments.forEach((appointment) => {
-    const date = new Date(appointment.date);
-    if (date.getDate() === currentDate) {
-      timeList.push(appointment.time);
-    }
-  });
-
-  return timeList;
-};
-
 export const availableSlotsByDate = (appointments, currentDate, timeSlots) => {
-  const bookedSlots = appointmentsTimeByDate(appointments, currentDate);
+  const bookedSlots = appointments[currentDate.toISOString().split("T")[0]];
   return bookedSlots ? timeSlots.filter((time) => !bookedSlots.includes(time)) : timeSlots;
 };
 
@@ -67,9 +20,34 @@ export const fullyBookedDates = (appointments, timeSlots) => {
     const date = i.getDate();
     const availableSlots = availableSlotsByDate(appointments, date, timeSlots);
     if (availableSlots.length === 0) {
-      bookedDates.push(i);
+      bookedDates.push(i.toISOString().split("T")[0]);
     }
   }
-  bookedDates.push(today);
   return bookedDates;
+};
+
+export const mapAppointmentsByDate = (appointments) => {
+  const appointmentsByDate = {};
+  if (appointments && appointments.length > 0) {
+    appointments.forEach((appointment) => {
+      const date = new Date(appointment.date).toISOString().split("T")[0];
+      if (!appointmentsByDate[date]) {
+        appointmentsByDate[date] = [];
+      }
+      appointmentsByDate[date].push(appointment.time);
+    });
+  }
+  return appointmentsByDate;
+};
+
+export const createRating = (vet, vetRating) => {
+  const ratingSet = vetRating && vetRating.length > 0;
+  const ratingCount = ratingSet ? vetRating.length : 0;
+  const rate = ratingSet ? vetRating.map((rate) => rate.rate).reduce((a, b) => a + b, 0) / ratingCount : 0;
+
+  return {
+    ...vet,
+    _id: vet._id,
+    rating: rate,
+  };
 };

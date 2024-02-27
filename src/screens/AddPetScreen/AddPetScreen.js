@@ -1,14 +1,14 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../../auth";
-import { View, Text, Image, TouchableOpacity, StyleSheet, TextInput, Alert } from "react-native";
-import { FontAwesome, MaterialIcons, MaterialCommunityIcons, Fontisto } from "@expo/vector-icons";
+import { View, Text, Image, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { FontAwesome } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import RNPickerSelect from "react-native-picker-select";
 import { clientServer } from "../../server";
 import { encodeImageAsBase64 } from "../../../imageUtils";
 import { Calendar } from "react-native-calendars";
 import { colors, sizes, genders, species } from "../../constants";
-import { Button } from "../../components";
+import { Button, Input } from "../../components";
 import { ScrollView } from "react-native-gesture-handler";
 
 export default function EditPetProfileScreen({ navigation }) {
@@ -20,7 +20,7 @@ export default function EditPetProfileScreen({ navigation }) {
   );
   const [selectedSpecies, setSelectedSpecies] = useState();
   const [selectedGender, setSelectedGender] = useState();
-  const [selectedDate, setSelectedDate] = useState(today);
+  const [selectedDate, setSelectedDate] = useState();
   const [openCalendar, setOpenCalendar] = useState(false);
 
   const onSave = async () => {
@@ -69,173 +69,143 @@ export default function EditPetProfileScreen({ navigation }) {
   };
 
   return (
-    <ScrollView>
-      <View style={styles.container}>
-        <View style={styles.petImage}>
-          <Image source={{ uri: petImage }} style={styles.image} />
-          <TouchableOpacity style={styles.cameraIconContainer} onPress={handleImagePicker}>
-            <FontAwesome name="camera" size={24} style="black" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.basicInfo}>
-          <View style={styles.header_container}>
-            <Text style={styles.header_text}>Pet Info</Text>
-          </View>
-
-          <View style={styles.detail_container}>
-            <View style={styles.item}>
-              <MaterialIcons name="pets" size={24} style={styles.icon_color} />
-              <View style={styles.item_content}>
-                <Text style={styles.item_header}>Name</Text>
-                <TextInput
-                  style={styles.item_value}
-                  value={pet?.name}
-                  onChangeText={(text) => setPet({ ...pet, name: text })}
-                  placeholder="Name"
-                />
-              </View>
-            </View>
-
-            <View style={styles.item}>
-              <MaterialCommunityIcons name="unicorn" size={24} style={styles.icon_color} />
-              <View style={styles.item_content}>
-                <Text style={styles.item_header}>Species</Text>
-                <RNPickerSelect
-                  style={styles.select_item}
-                  value={pet?.species && pet.species}
-                  onDonePress={() => setPet({ ...pet, species: selectedSpecies })}
-                  onValueChange={setSelectedSpecies}
-                  items={species}
-                  placeholder={{ label: "Species", value: null }}
-                />
-              </View>
-            </View>
-
-            <View style={styles.item}>
-              <Fontisto name="intersex" size={24} style={styles.icon_color} />
-              <View style={styles.item_content}>
-                <Text style={styles.item_header}>Gender</Text>
-                <RNPickerSelect
-                  style={styles.select_item}
-                  value={pet?.gender && pet.gender}
-                  onDonePress={() => setPet({ ...pet, gender: selectedGender })}
-                  onValueChange={setSelectedGender}
-                  items={genders}
-                  placeholder={{ label: "Gender", value: null }}
-                />
-              </View>
-            </View>
-
-            <View style={styles.item}>
-              <MaterialCommunityIcons name="scale-bathroom" size={24} style={styles.icon_color} />
-              <View style={styles.item_content}>
-                <Text style={styles.item_header}>Weight</Text>
-                <TextInput
-                  style={styles.item_value}
-                  value={pet?.weight && `${pet?.weight}`}
-                  onChangeText={(text) => setPet({ ...pet, weight: text })}
-                  placeholder="Weight"
-                />
-              </View>
-            </View>
-
-            <View style={styles.item}>
-              <FontAwesome name="birthday-cake" size={24} style={styles.icon_color} />
-              <View style={styles.item_content}>
-                <Text style={styles.item_header}>Birthdate</Text>
-                <Button style={styles.date_item} text={selectedDate} onPress={() => setOpenCalendar(!openCalendar)} />
-              </View>
-            </View>
-          </View>
-          {openCalendar && (
-            <Calendar
-              onDayPress={(day) => {
-                setSelectedDate(day.dateString);
-                setPet({ ...pet, birthdate: day.dateString });
-                setOpenCalendar(false);
-              }}
-              markedDates={{
-                [selectedDate]: {
-                  selected: true,
-                  disableTouchEvent: true,
-                  selectedColor: colors.secondary,
-                  selectedTextColor: colors.white,
-                },
-              }}
-              minDate="2000-01-01"
-              initialDate={selectedDate}
-              maxDate={today}
-              enableSwipeMonths={true}
-              disableAllTouchEventsForDisabledDays
-            />
-          )}
-        </View>
-        <Button text={"Save"} onPress={onSave} style={styles.save_button} />
+    <ScrollView style={styles.container}>
+      <View style={styles.petImage}>
+        <Image source={{ uri: petImage }} style={styles.image} />
+        <TouchableOpacity style={styles.cameraIconContainer} onPress={handleImagePicker}>
+          <FontAwesome name="camera" size={24} style="black" />
+        </TouchableOpacity>
       </View>
+
+      <View style={styles.detail_container}>
+        <View style={styles.item}>
+          <Text style={styles.item_header}>Name</Text>
+          <View style={styles.item_content}>
+            <Input value={pet.name} onChangeText={(text) => setPet({ ...pet, name: text })} placeholder="Name" />
+          </View>
+        </View>
+
+        <View style={styles.item}>
+          <Text style={styles.item_header}>Species</Text>
+          <View style={styles.select_content}>
+            <RNPickerSelect
+              style={styles.select_item}
+              value={selectedSpecies}
+              onDonePress={() => setPet({ ...pet, species: selectedSpecies })}
+              onValueChange={setSelectedSpecies}
+              items={species}
+              placeholder={{ label: "Species", value: null }}
+            />
+          </View>
+        </View>
+
+        <View style={styles.item}>
+          <Text style={styles.item_header}>Gender</Text>
+          <View style={styles.select_content}>
+            <RNPickerSelect
+              style={styles.select_item}
+              value={selectedGender}
+              onDonePress={() => setPet({ ...pet, gender: selectedGender })}
+              onValueChange={setSelectedGender}
+              items={genders}
+              placeholder={{ label: "Gender", value: null }}
+            />
+          </View>
+        </View>
+
+        <View style={styles.item}>
+          <Text style={styles.item_header}>Weight</Text>
+          <View style={styles.item_content}>
+            <Input
+              value={pet?.weight && `${pet?.weight}`}
+              onChangeText={(text) => setPet({ ...pet, weight: text })}
+              placeholder="Weight (kg)"
+            />
+          </View>
+        </View>
+
+        <View style={styles.item}>
+          <Text style={styles.item_header}>Birthdate</Text>
+          <View style={styles.select_content}>
+            <Button style={styles.date_item} text={selectedDate || ""} onPress={() => setOpenCalendar(!openCalendar)} />
+          </View>
+        </View>
+
+        {openCalendar && (
+          <Calendar
+            onDayPress={(day) => {
+              setSelectedDate(day.dateString);
+              setPet({ ...pet, birthdate: day.dateString });
+              setOpenCalendar(false);
+            }}
+            markedDates={{
+              [selectedDate || today]: {
+                selected: true,
+                disableTouchEvent: true,
+                selectedColor: colors.secondary,
+                selectedTextColor: colors.white,
+              },
+            }}
+            minDate="2000-01-01"
+            initialDate={today}
+            maxDate={today}
+            enableSwipeMonths={true}
+            disableAllTouchEventsForDisabledDays
+          />
+        )}
+      </View>
+      <Button text={"Save"} onPress={onSave} style={styles.save_button} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    margin: 16,
     backgroundColor: colors.white,
-    shadowColor: colors.gray,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    elevation: 4,
-    borderRadius: 20,
-    marginTop: 55,
   },
   petImage: {
-    position: "relative",
+    overflow: "hidden",
+    alignItems: "center",
+    padding: 8,
   },
   image: {
-    height: 200,
     resizeMode: "cover",
+    borderRadius: 10,
+    width: sizes.width / 1.1,
+    height: sizes.height / 5,
   },
   cameraIconContainer: {
     position: "absolute",
     top: 10,
-    right: 10,
+    right: 20,
     backgroundColor: "transparent",
     padding: 5,
   },
-  icon_color: {
-    color: colors.secondary,
-  },
-  basicInfo: {
-    paddingHorizontal: 16,
-  },
   header_container: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flex: 1,
+    padding: 16,
+    marginBottom: 12,
     alignItems: "center",
-    marginTop: 20,
   },
   header_text: {
-    fontSize: sizes.h3,
+    fontSize: sizes.h2,
+    color: colors.primary,
     fontWeight: "bold",
   },
   detail_container: {
     justifyContent: "space-between",
-    alignItems: "center",
-    marginVertical: 16,
-    paddingHorizontal: 8,
+    marginTop: 12,
+    paddingHorizontal: 24,
   },
   item: {
-    flexDirection: "row",
-    marginVertical: 16,
+    flex: 1,
+    marginVertical: 6,
   },
   item_content: {
-    flex: 1,
-    paddingLeft: 10,
-    flexDirection: "row",
+    marginVertical: 12,
   },
   item_header: {
-    flex: 1,
-    fontSize: sizes.h4,
+    fontSize: sizes.h3,
     fontWeight: "bold",
   },
   item_value: {
@@ -243,14 +213,21 @@ const styles = StyleSheet.create({
     fontSize: sizes.h4,
     marginLeft: 20,
   },
+  select_content: {
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.light_gray,
+    marginVertical: 12,
+    height: 50,
+    width: "100%",
+  },
   select_item: {
     inputIOS: {
-      fontSize: sizes.h4,
-      marginRight: 77,
+      fontSize: sizes.body1,
     },
     inputAndroid: {
-      fontSize: sizes.h4,
-      marginRight: 77,
+      fontSize: sizes.body1,
     },
   },
   date_item: {
@@ -259,18 +236,20 @@ const styles = StyleSheet.create({
       marginLeft: 20,
     },
     text: {
-      fontSize: sizes.h4,
+      fontSize: sizes.body1,
     },
   },
   save_button: {
     container: {
-      marginVertical: 12,
+      margin: 30,
       padding: 8,
+      borderRadius: 20,
+      backgroundColor: colors.primary,
     },
     text: {
       textAlign: "center",
       fontSize: sizes.h3,
-      color: colors.gray,
+      color: colors.white,
       fontWeight: "bold",
     },
   },

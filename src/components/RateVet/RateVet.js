@@ -5,19 +5,17 @@ import { colors, sizes } from "../../constants";
 import Input from "../Input/Input";
 import Button from "../Button/Button";
 
-const CARD_WIDTH = sizes.width - 100;
-const CARD_HEIGHT = 110;
-
 export default function RateVet({ petOwnerRate, onNewRating }) {
-  const [rating, setRating] = useState(petOwnerRate?.rate);
+  const [rating, setRating] = useState(petOwnerRate || { rate: 0 });
   const [isAdding, setIsAdding] = useState(false);
-  const [title, setTitle] = useState();
-  const [content, setContent] = useState();
+  const [title, setTitle] = useState(petOwnerRate?.title || null);
+  const [content, setContent] = useState(petOwnerRate?.content || null);
   const [isSubmitedEmpy, setIsSubmitedEmpy] = useState(false);
 
   const saveRating = async (newRating) => {
-    setRating(newRating);
-    onNewRating({ rate: rating });
+    const rate = { ...rating, rate: newRating };
+    setRating(rate);
+    onNewRating(rate);
   };
 
   const saveReview = async () => {
@@ -26,11 +24,12 @@ export default function RateVet({ petOwnerRate, onNewRating }) {
       return;
     }
     const newReview = {
-      rate: rating,
-      title,
-      content,
+      ...rating,
+      title: title,
+      content: content || "",
     };
     onNewRating(newReview);
+    setIsAdding(false);
   };
 
   const onChangeTitle = (text) => {
@@ -42,7 +41,7 @@ export default function RateVet({ petOwnerRate, onNewRating }) {
     <View style={styles.container}>
       <View style={styles.header_container}>
         <Text style={styles.text}>Click to Rate:</Text>
-        <Rating startingValue={rating} onFinishRating={saveRating} imageSize={25} fractions={1} minValue={0} />
+        <Rating startingValue={rating?.rate} onFinishRating={saveRating} imageSize={25} fractions={1} minValue={0} />
       </View>
       <View style={styles.add_review_container}>
         {isAdding ? (
@@ -51,19 +50,19 @@ export default function RateVet({ petOwnerRate, onNewRating }) {
               placeholder="Title"
               style={styles.add_title_input}
               autoCorrect={true}
-              value={petOwnerRate?.title || title}
+              value={title}
               onChangeText={onChangeTitle}
-              maxLength={60}
+              maxLength={40}
               error={isSubmitedEmpy}
               errorMessage={"Title is required"}
             />
-            <Text style={styles.content_length}>{title?.length || 0}/60</Text>
+            <Text style={styles.content_length}>{title?.length || 0}/40</Text>
 
             <Input
               placeholder="Review (optional)"
               style={styles.add_content_input}
               autoCorrect={true}
-              value={petOwnerRate?.content || content}
+              value={content}
               onChangeText={setContent}
               maxLength={200}
               multiline={true}
@@ -89,12 +88,13 @@ export default function RateVet({ petOwnerRate, onNewRating }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: CARD_WIDTH,
   },
   header_container: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginVertical: 12,
+    alignItems: "center",
+    marginHorizontal: 24,
+    marginVertical: 8,
   },
   text: {
     fontSize: sizes.h3,
@@ -108,7 +108,6 @@ const styles = StyleSheet.create({
   },
   add_content_input: {
     marginHorizontal: 30,
-    height: CARD_HEIGHT,
   },
   content_length: {
     fontSize: sizes.body2,
@@ -121,13 +120,11 @@ const styles = StyleSheet.create({
   },
   add_review_text: {
     container: {
-      padding: 8,
       justifyContent: "flex-start",
+      marginHorizontal: 24,
     },
     text: {
-      textAlign: "center",
       fontSize: sizes.body1,
-      padding: 10,
       color: colors.primary,
       fontWeight: "bold",
     },

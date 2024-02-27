@@ -36,7 +36,7 @@ export default function SignInScreen({ navigation }) {
   const onSignInPress = async () => {
     try {
       const id = activeTab === "petOwner" ? await clientServer.loginPetOwner(form) : await clientServer.loginVet(form);
-      setAuthState({ id: id, signedIn: true, userType: activeTab });
+      setAuthState({ id: id, signedIn: true, isOwner: activeTab === "petOwner" });
     } catch (error) {
       if (error.response && error.response.status === 404) {
         setIncorrectInput((prevState) => ({ ...prevState, incorrectEmail: true }));

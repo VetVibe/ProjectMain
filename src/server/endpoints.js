@@ -40,7 +40,7 @@ export const APPOINTMENT_ENDPOINTS = {
 };
 
 export const RATE_ENDPOINTS = {
-  ADD: (petOwnerId, vetId) => `/rate/addRate/${petOwnerId}/${vetId}`,
+  ADD: `/rate/addRate`,
   GET_BY_VET_OWNER: (petOwnerId, vetId) => `/rate/vet-owner/${petOwnerId}/${vetId}`,
   GET_BY_VET: (vetId) => `/rate/vet/${vetId}`,
   DETAILS: (rateId) => `/rate/rate-details/${rateId}`,

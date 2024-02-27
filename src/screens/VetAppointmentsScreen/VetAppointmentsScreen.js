@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useContext } from "react";
+import React, { useState, useCallback, useContext, useEffect, useMemo } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { AuthContext } from "../../auth";
 import { View, StyleSheet, Text, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
@@ -10,82 +10,105 @@ import { clientServer } from "../../server";
 export default function VetAppointmentsScreen() {
   const { authState } = useContext(AuthContext);
   const [vetAppointments, setVetAppointments] = useState();
+  const [petOwners, setPetOwners] = useState({});
   const [isOpenForBooking, setIsOpenForBooking] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const today = moment().format("YYYY-MM-DD");
+  const [selectedDate, setSelectedDate] = useState(today);
+
+  const agendaFormat = () => {
+    const agendaData = {};
+    if (vetAppointments && vetAppointments.length > 0) {
+      vetAppointments.forEach((appointment) => {
+        const date = new Date(appointment.date).toISOString().split("T")[0];
+        if (!agendaData[date]) {
+          agendaData[date] = [];
+        }
+        agendaData[date].push({
+          _id: appointment._id,
+          start: `${appointment.time}:00`,
+          end: `${appointment.time + 1}:00`,
+          title: petOwners[appointment.petOwnerId]?.name,
+          summary: petOwners[appointment.petOwnerId]?.phoneNumber,
+        });
+      });
+    }
+    return agendaData;
+  };
 
   useFocusEffect(
     useCallback(() => {
-      clientServer
-        .getVetInfo(authState.id)
-        .then((vetDetails) => {
-          setIsOpenForBooking(vetDetails.start && vetDetails.end);
-          return vetDetails.start && vetDetails.end;
-        })
-        .then(() => {
-          clientServer
-            .getAppointmentsByVet(authState.id)
-            .then((appointments) => {
-              const promiseArray = appointments.map(async (appointment) => {
-                return clientServer
-                  .getPetOwnerInfo(appointment.petOwnerId)
-                  .then((petOwnerDetails) => {
-                    appointment.name = petOwnerDetails.name;
-                    appointment.phoneNumber = petOwnerDetails.phoneNumber;
-                    return appointment;
-                  })
-                  .catch((error) => {
-                    console.error("Error fetching pet owner info:", error);
-                  });
-              });
-              return Promise.all(promiseArray);
-            })
-            .then((modefied) => {
-              const items = modefied.reduce((obj, appointment) => {
-                const date = moment(appointment.date).format("YYYY-MM-DD");
-                if (!obj[date]) {
-                  obj[date] = [];
-                }
-                obj[date].push(appointment);
-                return obj;
-              }, {});
-              setVetAppointments(items);
-            })
-            .catch((error) => {
-              console.error("Error fetching vet appointments:", error);
-            });
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+      const fetchAvailableHours = async () => {
+        const vetDetails = await clientServer.getVetInfo(authState.id);
+        setIsOpenForBooking(vetDetails.start && vetDetails.end);
+      };
+      fetchAvailableHours();
+
+      const fetchAppointments = async () => {
+        const appointmentsData = await clientServer.getAppointmentsByVet(authState.id);
+        setVetAppointments(appointmentsData);
+      };
+      fetchAppointments();
     }, [authState.id])
   );
-  const renderItem = (item) => {
+
+  useEffect(() => {
+    const fetchPetOwnersInfo = async () => {
+      const uniqueIds = Array.from(new Set(vetAppointments?.map((appointment) => appointment.petOwnerId)));
+      uniqueIds.forEach(async (petOwnerId) => {
+        if (!petOwners[petOwnerId]) {
+          const petOwnerDetails = await clientServer.getPetOwnerInfo(petOwnerId);
+          setPetOwners((prevOwners) => ({
+            ...prevOwners,
+            [petOwnerId]: {
+              name: petOwnerDetails.name,
+              phoneNumber: petOwnerDetails.phoneNumber,
+            },
+          }));
+        }
+      });
+    };
+    fetchPetOwnersInfo();
+  }, [vetAppointments]);
+
+  const appointmentList = useMemo(() => agendaFormat(), [vetAppointments, petOwners]);
+
+  const renderItem = (item, firstItemInDay) => {
     return (
-      <TouchableOpacity style={styles.item}>
-        <Text>{item.name}</Text>
-        <Text>{item.phoneNumber}</Text>
+      <View style={styles.item}>
+        <View style={styles.item_content}>
+          <Text style={styles.item_title}>{item.title}</Text>
+          <Text style={styles.item_summary}>{item.summary}</Text>
+        </View>
         <TouchableOpacity onPress={() => handleDelete(item._id)}>
-          <Text style={styles.deleteButton}>Delete</Text>
+          <Text style={styles.deleteButton}>Cancel</Text>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </View>
     );
   };
 
-  const renderDay = (time) => {
-    if (time) {
+  const renderDay = (day, item) => {
+    if (day) {
       return (
-        <View style={styles.customDay}>
-          <Text>{`${String(time).padStart(2, "0")}:00`}</Text>
-          <Text>{`${String(time + 1).padStart(2, "0")}:00`}</Text>
+        <View style={styles.time_container}>
+          <Text style={styles.time}>{item.start}</Text>
+          <Text style={styles.time}>{item.end}</Text>
         </View>
       );
     }
     return <View style={styles.dayItem} />;
   };
 
-  const renderEmptyDate = () => {
+  const renderEmptyData = () => {
+    if (!isOpenForBooking) {
+      return (
+        <View>
+          <Text style={styles.title}>Appointment manager isn't available.</Text>
+          <Text>Set your working hours to enable it.</Text>
+        </View>
+      );
+    }
     return (
-      <View style={styles.emptyDate}>
+      <View>
         <Text>No appointments</Text>
       </View>
     );
@@ -95,11 +118,7 @@ export default function VetAppointmentsScreen() {
     try {
       await clientServer.deleteAppointment(appointmentId);
       setVetAppointments((prevAppointments) => {
-        const newAppointments = { ...prevAppointments };
-        for (const date in newAppointments) {
-          newAppointments[date] = newAppointments[date].filter((appointment) => appointment._id !== appointmentId);
-        }
-        return newAppointments;
+        prevAppointments.filter((appointment) => appointment._id !== appointmentId);
       });
     } catch (error) {
       console.error("Error deleting appointment:", error);
@@ -120,78 +139,77 @@ export default function VetAppointmentsScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {isLoading ? (
-        <ActivityIndicator style={styles.loadingIndicator} size="large" />
-      ) : (
-        <View>
-          {isOpenForBooking ? (
-            <View>
-              <Text style={styles.title}>Vet Appointments</Text>
-              {vetAppointments && vetAppointments.length > 0 ? (
-                <Agenda
-                  items={vetAppointments}
-                  renderItem={renderItem}
-                  rowHasChanged={(r1, r2) => r1.name !== r2.name}
-                  renderEmptyDate={renderEmptyDate}
-                  renderDay={(date, item) => renderDay(item.time)}
-                  showOnlySelectedDayItems
-                />
-              ) : (
-                <Text>No appointments</Text>
-              )}
-            </View>
-          ) : (
-            <View>
-              <Text style={styles.title}>Appointment manager isn't available.</Text>
-              <Text>Set your working hours to enable it.</Text>
-            </View>
-          )}
-        </View>
-      )}
-    </View>
+    <Agenda
+      items={appointmentList}
+      onDayPress={(day) => {
+        setSelectedDate(day.dateString);
+      }}
+      selected={selectedDate}
+      current={selectedDate}
+      initialDate={today}
+      renderItem={(item, firstItemInDay) => renderItem(item, firstItemInDay)}
+      renderDay={(day, item) => renderDay(day, item)}
+      renderEmptyData={renderEmptyData}
+      rowHasChanged={(r1, r2) => {
+        return r1.text !== r2.text;
+      }}
+      showClosingKnob={appointmentList ? true : false}
+      markedDates={{
+        [Object.keys(appointmentList)]: {
+          marked: true,
+          disabled: false,
+          dotColor: colors.primary,
+        },
+        [selectedDate]: {
+          selected: true,
+          selectedColor: colors.primary,
+          selectedTextColor: colors.white,
+        },
+      }}
+      showOnlySelectedDayItems={true}
+      disabledByDefault={true}
+      pastScrollRange={1}
+      futureScrollRange={1}
+      hideExtraDays={true}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    marginTop: 40,
-    padding: 20,
-  },
-  loadingIndicator: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    color: colors.primary,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
   item: {
     backgroundColor: "white",
-    padding: 20,
+    padding: 16,
     borderRadius: 5,
     marginVertical: 8,
     marginHorizontal: 10,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: colors.light_gray,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  item_content: {
+    flex: 1,
+  },
+  item_title: {
+    fontSize: sizes.h3,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+  item_summary: {
+    fontSize: sizes.body2,
+    color: colors.grey,
   },
   deleteButton: {
-    color: "red",
+    color: colors.error,
   },
-  emptyDate: {
-    height: 15,
-    flex: 1,
-    paddingTop: 30,
+  time_container: {
+    alignItems: "center",
+    marginVertical: 12,
   },
-  customDay: {
-    padding: 20,
-    borderRadius: 5,
-    marginVertical: 8,
-    marginHorizontal: 10,
+  time: {
+    fontSize: sizes.h4,
+    color: colors.gray,
+    margin: 5,
   },
   dayItem: {
     marginLeft: 34,

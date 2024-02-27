@@ -1,97 +1,50 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useContext } from "react";
 import { AuthContext } from "../../auth";
-import { View, Text, TouchableOpacity, ScrollView, Image, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, ScrollView, TextInput, StyleSheet, Alert, FlatList } from "react-native";
 import { Button, Input } from "../../components";
-import { FontAwesome } from "@expo/vector-icons";
 import RNPickerSelect from "react-native-picker-select";
-import * as ImagePicker from "expo-image-picker";
-import { encodeImageAsBase64 } from "../../../imageUtils";
-import { mapVetDetailsToSchema, mapVetDetails } from "../../utils";
 import { locations, specializations } from "../../constants";
 import { colors, sizes } from "../../constants";
 import { clientServer } from "../../server";
 
-export default function EditVetProfileScreen({ navigation }) {
+export default function EditVetProfileScreen({ route, navigation }) {
   const { authState, setAuthState } = useContext(AuthContext);
-  const [vetDetails, setVetDetails] = useState({});
-  const [selectedImage, setSelectedImage] = useState();
-  const [vetSpetializations, setVetSpetializations] = useState([]);
-  const [availableSpecializations, setAvailableSpecializations] = useState([]);
+  const [vetDetails, setVetDetails] = useState(route.params.vet);
   const [selectedSpecialization, setSelectedSpecialization] = useState();
-  const [selectedLocation, setSelectedLocation] = useState();
+  const [selectedLocation, setSelectedLocation] = useState(vetDetails.location);
   const [invalidName, setInvalidName] = useState(false);
 
-  useEffect(() => {
-    const fetchVetDetails = async () => {
-      try {
-        const data = await clientServer.getVetInfo(authState.id);
-        const mapedVetDetails = mapVetDetails(data);
-        setVetDetails(mapedVetDetails);
-        setSelectedImage(mapedVetDetails.profilePicture);
-        setSelectedLocation(mapedVetDetails?.location);
-
-        const vetSpec = mapedVetDetails.specialization;
-        setVetSpetializations(vetSpec);
-
-        const availableSpecializations = specializations.filter((spetialization) => !vetSpec?.includes(spetialization));
-
-        setAvailableSpecializations(availableSpecializations);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchVetDetails();
-  }, []);
-
-  const handleImagePicker = async () => {
-    // Request permission to access the device's photo library
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (status === "granted") {
-      // Launch the image picker
-      let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 4],
-        quality: 1,
-      });
-
-      if (!result.canceled && result.assets.length > 0) {
-        const selectedAsset = result.assets[0];
-        try {
-          const base64Image = await encodeImageAsBase64(selectedAsset.uri);
-          setSelectedImage(`data:image/jpeg;base64,${base64Image}`);
-        } catch (error) {
-          Alert.alert("Error", "Failed to encode image as Base64");
-        }
-      }
-    } else {
-      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
-    }
+  const randeSpecialization = (item) => {
+    return (
+      <View style={styles.chip_container} key={item}>
+        <Text style={styles.chip_text}>{item}</Text>
+        <Button
+          text="x"
+          onPress={() =>
+            setVetDetails((prev) => ({
+              ...prev,
+              specialization: prev.specialization.filter((spes) => spes !== item),
+            }))
+          }
+          style={styles.delete_button}
+        />
+      </View>
+    );
   };
 
-  const handleSpetializationAdd = async () => {
-    if (selectedSpecialization) {
-      if (vetSpetializations) {
-        setVetSpetializations((prev) => [...prev, selectedSpecialization]);
-      } else {
-        setVetSpetializations([selectedSpecialization]);
-      }
-      setAvailableSpecializations((prev) =>
-        prev?.filter((spetialization) => spetialization !== selectedSpecialization)
-      );
-
-      setSelectedSpecialization(null);
+  const handleSpetializationAdd = () => {
+    if (
+      selectedSpecialization &&
+      selectedSpecialization !== "" &&
+      !vetDetails.specialization.includes(selectedSpecialization)
+    ) {
+      setVetDetails((prev) => ({ ...prev, specialization: [...prev.specialization, selectedSpecialization] }));
+      setSelectedSpecialization("");
     }
-  };
-
-  const handleSpetializationRemove = async (spetialization) => {
-    setVetSpetializations((prev) => prev.filter((item) => item !== spetialization));
-    setAvailableSpecializations((prev) => [...prev, spetialization]);
   };
 
   const handleLogout = async () => {
-    setAuthState({ signedIn: false, userType: "", id: "" });
+    setAuthState({ signedIn: false, isOwner: false, id: "" });
     console.log("Vet logged out: cleared storage.");
   };
 
@@ -110,14 +63,8 @@ export default function EditVetProfileScreen({ navigation }) {
       setInvalidName(true);
       return;
     }
-    const updatedData = {
-      ...vetDetails,
-      specialization: vetSpetializations,
-      profilePicture: selectedImage,
-    };
-    const vetDetailsSchema = mapVetDetailsToSchema(updatedData);
     try {
-      await clientServer.updateVetInfo(authState.id, vetDetailsSchema);
+      await clientServer.updateVetInfo(authState.id, vetDetails);
     } catch (error) {
       console.log(error);
     }
@@ -125,162 +72,131 @@ export default function EditVetProfileScreen({ navigation }) {
   };
 
   return (
-    <ScrollView style={styles.screen_container}>
-      <View style={styles.container}>
-        <View style={styles.vetImage}>
-          <Image source={{ uri: selectedImage }} style={styles.image} />
-          <TouchableOpacity style={styles.cameraIconContainer} onPress={handleImagePicker}>
-            <FontAwesome name="camera" size={24} color="black" />
-          </TouchableOpacity>
+    <View style={styles.screen_container}>
+      <ScrollView style={styles.container}>
+        <View style={styles.header_container}>
+          <Text style={styles.header_text}>Clinic Info</Text>
         </View>
 
-        <View style={styles.basicInfo}>
-          <View style={styles.header_container}>
-            <Text style={styles.header_text}>Clinic Info</Text>
+        <View style={styles.item}>
+          <Text style={styles.item_header}>Name</Text>
+          <View style={styles.item_content}>
+            <Input
+              autoCapitalize="words"
+              placeholder="Name"
+              onChangeText={(text) => setVetDetails({ ...vetDetails, name: text })}
+              value={vetDetails.name}
+              error={invalidName}
+              errorMessage={"Required field"}
+            />
           </View>
+        </View>
 
-          <View style={styles.item}>
-            <View style={styles.item_content}>
-              <Input
-                autoCapitalize="words"
-                placeholder="Name"
-                onChangeText={(text) => setVetDetails({ ...vetDetails, name: text })}
-                value={vetDetails.name}
-                error={invalidName}
-                errorMessage={"Required field"}
-              />
-            </View>
+        <View style={styles.item}>
+          <Text style={styles.item_header}>Location</Text>
+          <View style={styles.search_container}>
+            <RNPickerSelect
+              style={styles.item_value}
+              value={selectedLocation}
+              onDonePress={() => setVetDetails((prev) => ({ ...prev, location: selectedLocation }))}
+              onValueChange={setSelectedLocation}
+              items={locations}
+              placeholder={{ label: "City", value: null }}
+            />
           </View>
+        </View>
 
-          <View style={styles.item}>
-            <View style={styles.search_container}>
-              <RNPickerSelect
-                style={styles.item_value}
-                value={selectedLocation}
-                onDonePress={() => setVetDetails({ ...vetDetails, location: selectedLocation })}
-                onValueChange={setSelectedLocation}
-                items={locations}
-                placeholder={{ label: "City", value: null }}
-              />
-            </View>
+        <View style={styles.item}>
+          <Text style={styles.item_header}>Specializations</Text>
+          <View style={styles.search_container}>
+            <RNPickerSelect
+              style={styles.item_value}
+              value={selectedSpecialization}
+              onDonePress={handleSpetializationAdd}
+              onValueChange={setSelectedSpecialization}
+              items={specializations}
+              placeholder={{ label: "Specialization", value: null }}
+            />
           </View>
-
-          <View style={styles.item}>
-            <View style={styles.search_container}>
-              <RNPickerSelect
-                style={styles.item_value}
-                onDonePress={handleSpetializationAdd}
-                onValueChange={setSelectedSpecialization}
-                items={availableSpecializations}
-                placeholder={{ label: "Specializations", value: null }}
-              />
-            </View>
+          <View style={{ flex: 1, marginBottom: 4 }}>
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={true}
+              data={vetDetails.specialization}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => randeSpecialization(item)}
+            />
           </View>
+        </View>
 
-          <View style={{ flex: 1 }}>
-            <ScrollView horizontal={true}>
-              {vetSpetializations?.map((spetialization) => {
-                return (
-                  <View style={styles.chip_container} key={spetialization}>
-                    <Text style={styles.chips}>{spetialization}</Text>
-                    <Button
-                      text="x"
-                      onPress={() => handleSpetializationRemove(spetialization)}
-                      style={styles.delete_button}
-                    />
-                  </View>
-                );
-              })}
-            </ScrollView>
-          </View>
-
+        <View style={styles.item}>
+          <Text style={styles.item_header}>Opening Hours</Text>
           <View style={styles.opening_hours_container}>
-            <View style={styles.item}>
-              <Text style={styles.item_header}>Opening Hours</Text>
-              <View style={styles.times_container}>
-                <View style={styles.time_content}>
-                  <TextInput
-                    placeholder="From"
-                    value={`${vetDetails.start}`}
-                    onChangeText={(text) => setVetDetails({ ...vetDetails, start: text })}
-                    maxLength={2}
-                    keyboardType="numeric"
-                  />
-                  <Text> : 00</Text>
-                </View>
-                <View style={styles.time_content}>
-                  <TextInput
-                    placeholder="To"
-                    value={`${vetDetails.end}`}
-                    onChangeText={(text) => setVetDetails({ ...vetDetails, end: text })}
-                    maxLength={2}
-                    keyboardType="numeric"
-                  />
-                  <Text> : 00</Text>
-                </View>
+            <View style={styles.times_container}>
+              <Text style={styles.text}>From</Text>
+              <View style={styles.time_content}>
+                <TextInput
+                  placeholder="From"
+                  value={vetDetails.start ? `${vetDetails.start}` : null}
+                  onChangeText={(text) => setVetDetails({ ...vetDetails, start: text })}
+                  maxLength={2}
+                  keyboardType="numeric"
+                />
+                <TextInput placeholder=" : 00" editable={false} />
+              </View>
+            </View>
+            <View style={styles.times_container}>
+              <Text style={styles.text}>To</Text>
+              <View style={styles.time_content}>
+                <TextInput
+                  placeholder="To"
+                  value={vetDetails.end ? `${vetDetails.end}` : null}
+                  onChangeText={(text) => setVetDetails({ ...vetDetails, end: text })}
+                  maxLength={2}
+                  keyboardType="numeric"
+                />
+                <TextInput placeholder=" : 00" editable={false} />
               </View>
             </View>
           </View>
         </View>
-      </View>
+      </ScrollView>
       <Button text={"Save"} style={styles.save_button} onPress={onSave} />
       <Button text={"Logout"} style={styles.logout_button} onPress={LogoutClick} />
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen_container: { flex: 1, backgroundColor: colors.white },
   container: {
-    marginTop: 40,
-    shadowColor: colors.gray,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    elevation: 4,
-    borderRadius: 20,
-  },
-  vetImage: {
-    position: "relative",
-    marginTop: 16,
-    paddingHorizontal: 16,
-  },
-  image: {
-    height: 200,
-    resizeMode: "cover",
-  },
-  cameraIconContainer: {
-    position: "absolute",
-    top: 5,
-    right: 15,
-    backgroundColor: "transparent",
-    padding: 10,
-  },
-  basicInfo: {
-    marginTop: 20,
-    paddingHorizontal: 16,
+    margin: 8,
   },
   header_container: {
-    flexDirection: "row",
+    padding: 16,
+    marginBottom: 12,
     alignItems: "center",
   },
   header_text: {
-    fontSize: sizes.h3,
+    fontSize: sizes.h2,
+    color: colors.primary,
     fontWeight: "bold",
   },
   item: {
-    flex: 1,
-    flexDirection: "row",
+    marginVertical: 20,
+    paddingHorizontal: 24,
   },
   item_content: {
-    flex: 1,
+    marginVertical: 12,
   },
   item_header: {
-    flex: 1,
-    fontSize: sizes.h4,
+    fontSize: sizes.h3,
+    fontWeight: "bold",
   },
   item_value: {
     flex: 1,
     fontSize: sizes.h4,
+    marginLeft: 20,
   },
   search_container: {
     backgroundColor: colors.white,
@@ -293,6 +209,15 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
   },
+  input_container: {
+    marginVertical: 12,
+    borderColor: colors.light_gray,
+    borderBottomWidth: 1,
+    borderRadius: 20,
+    shadowColor: colors.gray,
+    shadowOpacity: 0.3,
+    padding: 12,
+  },
   list_container: {
     flex: 1,
     flexDirection: "row",
@@ -300,78 +225,77 @@ const styles = StyleSheet.create({
   chip_container: {
     flexDirection: "row",
     borderRadius: 20,
-    backgroundColor: colors.secondary,
-    padding: 12,
-    margin: 4,
+    borderColor: colors.primary,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginHorizontal: 6,
   },
-  chips: {
-    color: colors.white,
-    fontSize: sizes.body2,
+  chip_text: {
+    flex: 1,
+    fontSize: sizes.body1,
+    color: colors.primary,
     alignSelf: "flex-start",
   },
   delete_button: {
     container: {
-      marginLeft: 4,
+      flex: 1,
+      marginLeft: 6,
     },
     text: {
-      fontSize: sizes.body2,
-      color: colors.lighter_gray,
+      fontSize: sizes.body1,
+      color: colors.gray,
     },
   },
   opening_hours_container: {
     flex: 1,
     margin: 4,
-    marginBottom: 16,
+    marginVertical: 16,
     borderWidth: 1,
     borderRadius: 20,
     borderColor: colors.light_gray,
     padding: 16,
+    flexDirection: "row",
   },
   times_container: {
     flex: 1,
-    flexDirection: "row",
+    alignItems: "center",
   },
   time_content: {
-    flex: 1,
     flexDirection: "row",
-    alignItems: "center",
+  },
+  text: {
+    fontSize: sizes.h4,
+    marginBottom: 8,
   },
   save_button: {
     container: {
-      marginHorizontal: 24,
-      marginBottom: 4,
-      borderRadius: 20,
+      marginVertical: 12,
+      marginHorizontal: 30,
       padding: 8,
-      shadowColor: colors.gray,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.2,
-      width: "90%",
+      borderRadius: 20,
       backgroundColor: colors.primary,
     },
     text: {
       textAlign: "center",
       fontSize: sizes.h3,
-      padding: 10,
       color: colors.white,
       fontWeight: "bold",
     },
   },
   logout_button: {
     container: {
-      marginHorizontal: 24,
-      marginVertical: 12,
-      borderRadius: 20,
+      marginBottom: 30,
+      marginHorizontal: 30,
       padding: 8,
-      shadowColor: colors.gray,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.2,
-      width: "90%",
+      borderRadius: 20,
+      borderColor: colors.error,
+      borderWidth: 1,
       backgroundColor: colors.white,
     },
     text: {
       textAlign: "center",
       fontSize: sizes.h3,
-      padding: 10,
       color: colors.error,
       fontWeight: "bold",
     },

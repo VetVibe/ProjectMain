@@ -1,21 +1,19 @@
 import { Image, StyleSheet, Text, View, TouchableWithoutFeedback } from "react-native";
 import { colors, sizes } from "../../constants";
 
-const CARD_WIDTH = sizes.width - 100;
-const CARD_HEIGHT = 150;
+const CARD_WIDTH = sizes.width / 1.3;
+const CARD_HEIGHT = sizes.height / 5.3;
 
 export default function TipCard({ tip, onSelect }) {
   return (
     <TouchableWithoutFeedback onPress={onSelect}>
       <View style={styles.container}>
-        <View style={styles.item_container}>
-          <View style={styles.header_container}>
-            {tip?.vetImage && <Image source={{ uri: tip.vetImage }} style={styles.image} />}
-            <Text style={styles.title}>{tip.vetName}</Text>
-          </View>
-          <View style={styles.content_container}>
-            <Text style={styles.content}>{tip.content}</Text>
-          </View>
+        <View style={styles.header_container}>
+          {tip?.vetImage && <Image source={{ uri: tip.vetImage }} style={styles.image} />}
+          <Text style={styles.title}>{tip.vetName}</Text>
+        </View>
+        <View style={styles.content_container}>
+          <Text style={styles.content}>{tip.content}</Text>
         </View>
       </View>
     </TouchableWithoutFeedback>
@@ -25,34 +23,32 @@ export default function TipCard({ tip, onSelect }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginRight: 12,
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
     borderRadius: 20,
+    marginLeft: 16,
+    marginBottom: 6,
     backgroundColor: colors.white,
     shadowColor: colors.gray,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: -10, height: 2 },
     shadowOpacity: 0.1,
-    elevation: 4,
-  },
-  item_container: {
-    flex: 1,
-    margin: 16,
+    padding: 8,
   },
   header_container: {
     flexDirection: "row",
     marginBottom: 12,
   },
   image: {
-    alignItems: "center",
-    borderRadius: 50,
-    overflow: "hidden",
-    width: 36,
-    height: 36,
+    borderRadius: 10,
+    width: CARD_WIDTH / 4.5,
+    height: CARD_HEIGHT / 3.5,
+    marginRight: 8,
   },
   title: {
+    alignItems: "center",
     fontSize: sizes.h3,
     color: colors.primary,
+    fontWeight: "bold",
   },
   content_container: {
     flex: 1,

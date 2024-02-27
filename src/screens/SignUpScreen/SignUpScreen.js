@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../../auth";
-import { View, Text, Alert, StyleSheet, KeyboardAvoidingView } from "react-native";
+import { View, Text, Alert, StyleSheet, KeyboardAvoidingView, ScrollView } from "react-native";
 import { TabsContainer, Input, Button } from "../../components";
 import { ROLES_TABS, colors, sizes } from "../../constants";
 import { clientServer } from "../../server";
@@ -76,10 +76,8 @@ export default function SignUpScreen({ navigation }) {
     try {
       const id =
         activeTab === "vet" ? await clientServer.registerVet(newUser) : await clientServer.registerPetOwner(newUser);
-      setAuthState({ id: id, signedIn: true, userType: activeTab });
+      setAuthState({ id: id, signedIn: true, isOwner: activeTab === "petOwner" });
     } catch (error) {
-      console.error("Error registering user:", error);
-
       if (error.response && error.response.status === 409) {
         Alert.alert("Registration failed", "This user is already registered.");
       } else {
@@ -90,7 +88,7 @@ export default function SignUpScreen({ navigation }) {
 
   return (
     <KeyboardAvoidingView style={styles.screen_container} behavior="padding">
-      <View style={styles.container}>
+      <ScrollView style={styles.container}>
         <View style={styles.header_container}>
           <Text style={styles.title}>Sign Up</Text>
           <Text style={styles.subTitle}>Create your account</Text>
@@ -165,7 +163,7 @@ export default function SignUpScreen({ navigation }) {
             style={styles.signIn}
           />
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

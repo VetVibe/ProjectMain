@@ -472,12 +472,8 @@ const getAppointmentsByVet = async (req, res) => {
 // ----------- Rate -----------
 const addRate = async (req, res) => {
   try {
-    const vetId = req.params.vetId;
-    const petOwnerId = req.params.petOwnerId;
-    const { rating } = req.body;
-    const newRate = new Rate({ vetId, petOwnerId, ...rating });
+    const newRate = new Rate(req.body);
     await newRate.save();
-
     res.status(201).json(newRate);
     console.log(`DB | Add rate | Rate added successfully.`);
   } catch (error) {
@@ -546,10 +542,8 @@ const getRate = async (req, res) => {
 const updateRate = async (req, res) => {
   try {
     const rateId = req.params.rateId;
-    const updatedRateData = req.body.updatedData;
-
+    const updatedRateData = req.body;
     const updatedRate = await Rate.findByIdAndUpdate(rateId, updatedRateData);
-
     if (!updatedRate) {
       console.error(`DB | Update rate | Rate with ID ${rateId} not found.`);
       return res.status(404).json({ message: "Rate not found" });

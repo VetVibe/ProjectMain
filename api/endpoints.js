@@ -38,7 +38,7 @@ export const APPOINTMENT_ENDPOINTS = {
 };
 
 export const RATE_ENDPOINTS = {
-  ADD: "/rate/addRate/:petOwnerId/:vetId",
+  ADD: "/rate/addRate",
   GET_BY_VET_OWNER: "/rate/vet-owner/:petOwnerId/:vetId",
   GET_BY_VET: "/rate/vet/:vetId",
   DETAILS: "/rate/rate-details/:rateId",

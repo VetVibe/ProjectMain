@@ -1,5 +1,5 @@
 import { createContext } from "react";
 export const AuthContext = createContext({
-  authState: { id: "", userType: "", signedIn: false },
+  authState: { id: "", isOwner: false, signedIn: false },
   setAuthState: () => {},
 });

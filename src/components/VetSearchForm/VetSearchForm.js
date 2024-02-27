@@ -4,12 +4,13 @@ import RNPickerSelect from "react-native-picker-select";
 import { colors } from "../../constants";
 import { locations, specializations } from "../../constants";
 
-const VetSearchForm = ({ onSelectedLocation, onSelectedSpecialization, handleFilterChange }) => {
+const VetSearchForm = ({ location, specialization, onSelectedLocation, onSelectedSpecialization, onChange }) => {
   return (
     <>
       <View style={styles.search_container}>
         <RNPickerSelect
-          onDonePress={handleFilterChange}
+          value={location || null}
+          onDonePress={onChange}
           onValueChange={(value) => onSelectedLocation(value)}
           items={locations}
           placeholder={{ label: "Select Location", value: null }}
@@ -17,7 +18,8 @@ const VetSearchForm = ({ onSelectedLocation, onSelectedSpecialization, handleFil
       </View>
       <View style={styles.search_container}>
         <RNPickerSelect
-          onDonePress={handleFilterChange}
+          value={specialization || null}
+          onDonePress={onChange}
           onValueChange={(value) => onSelectedSpecialization(value)}
           items={specializations}
           placeholder={{ label: "Select Specialization", value: null }}
