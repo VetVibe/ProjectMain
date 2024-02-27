@@ -12,6 +12,8 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { FontAwesome, MaterialIcons, MaterialCommunityIcons, Fontisto } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import { encodeImageAsBase64 } from "../../../imageUtils";
 import { colors, sizes } from "../../constants";
 import { clientServer } from "../../server";
 import { Button } from "../../components";
@@ -67,7 +69,31 @@ export default function PetProfileScreen({ route, navigation }) {
     navigation.navigate("Edit Pet", { pet: pet, isBasic: section === "basic" });
   };
 
-  const handleImagePicker = async () => {};
+  const handleImagePicker = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status === "granted") {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets.length > 0) {
+        const selectedAsset = result.assets[0];
+        try {
+          const base64Image = await encodeImageAsBase64(selectedAsset.uri);
+          setPet({ ...pet, imgSrc: `data:image/jpeg;base64,${base64Image}` });
+          await clientServer.updatePetInfo(petId, { ...pet, imgSrc: `data:image/jpeg;base64,${base64Image}` });
+        } catch (error) {
+          Alert.alert("Error", "Failed to encode image as Base64");
+        }
+      }
+    } else {
+      Alert.alert("Permission denied", "Permission to access the photo library was denied.");
+    }
+  };
 
   return (
     <ScrollView>

@@ -3,6 +3,8 @@ import { useFocusEffect } from "@react-navigation/native";
 import { AuthContext } from "../../auth";
 import { View, Text, Image, ScrollView, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from "react-native";
 import { EvilIcons, Feather, Fontisto, FontAwesome } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import { encodeImageAsBase64 } from "../../../imageUtils";
 import { formatDateForRating } from "../../utils";
 import { RateCard, Button, Input } from "../../components";
 import { colors, sizes } from "../../constants";
@@ -74,14 +76,6 @@ export default function VetHomeScreen({ route, navigation }) {
     }, [fetchData, fetched])
   );
 
-  // useEffect(() => {
-  //   const unsubscribe = navigation.addListener("blur", () => {
-  //     setFetched(false);
-  //   });
-
-  //   return unsubscribe;
-  // }, [navigation]);
-
   useFocusEffect(
     useCallback(() => {
       setFetched(false);
@@ -132,15 +126,13 @@ export default function VetHomeScreen({ route, navigation }) {
   }, [navigation]);
 
   const handleImagePicker = async () => {
-    // Request permission to access the device's photo library
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (status === "granted") {
-      // Launch the image picker
       let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [4, 4],
+        aspect: [4, 3],
         quality: 1,
       });
 
@@ -148,7 +140,11 @@ export default function VetHomeScreen({ route, navigation }) {
         const selectedAsset = result.assets[0];
         try {
           const base64Image = await encodeImageAsBase64(selectedAsset.uri);
-          setSelectedImage(`data:image/jpeg;base64,${base64Image}`);
+          setVetDetails((prev) => ({ ...prev, profilePicture: `data:image/jpeg;base64,${base64Image}` }));
+          await clientServer.updateVetInfo(authState.id, {
+            ...vetDetails,
+            profilePicture: `data:image/jpeg;base64,${base64Image}`,
+          });
         } catch (error) {
           Alert.alert("Error", "Failed to encode image as Base64");
         }
