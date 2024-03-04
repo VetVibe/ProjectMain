@@ -12,11 +12,13 @@ Welcome to VetVibe! This application is designed to streamline the process of fi
 
 
 ![Simulator Screenshot - iPhone 15 Pro Max - 2024-03-04 at 13 41 57](https://github.com/VetVibe/ProjectMain/assets/118671563/f854ecf5-6a02-4813-85cd-fa80f6b955f6)
+![Simulator Screenshot - iPhone 15 Pro Max - 2024-03-04 at 13 40 25](https://github.com/VetVibe/ProjectMain/assets/118671563/d0d53375-3ae6-4b83-9759-ea3bb588318d)
+
+
+
+![Simulator Screenshot - iPhone 15 Pro Max - 2024-03-04 at 13 12 52](https://github.com/VetVibe/ProjectMain/assets/118671563/f949da2b-1eac-4044-96eb-bac2d15e690f)
 
 ## Features
-
-
-
 
 ### For Pet Owners:
 
