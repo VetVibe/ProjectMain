@@ -123,7 +123,7 @@ export default function VetHomeScreen({ route, navigation }) {
 
   const navigateToReviewsScreen = useCallback(() => {
     navigation.navigate("Vet Reviews", { vetId: id, owners: petOwners, ratings: vetRatings });
-  }, [navigation]);
+  }, [navigation, id, petOwners, vetRatings]);
 
   const handleImagePicker = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();

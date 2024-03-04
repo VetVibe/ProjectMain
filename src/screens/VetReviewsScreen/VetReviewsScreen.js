@@ -19,16 +19,16 @@ export default function VetReviewsScreen({ route }) {
   const [ratingCount, setRatingCount] = useState(0);
 
   const calcRating = useCallback(
-    (ratings, petOwnerRate) => {
-      if (ratings.length) {
-        const count = petOwnerRate ? ratings.length + 1 : ratings.length;
-        setRatingCount(count);
-        const totalRate =
-          ratings.reduce((acc, rating) => acc + rating.rate, 0) + (petOwnerRate ? petOwnerRate.rate : 0);
-        setRating(totalRate / count);
-      }
+    (ratings, ownerRate = undefined) => {
+      let count = 0;
+      let totalRate = 0;
+
+      count = ownerRate ? ratings.length + 1 : ratings.length;
+      totalRate = ratings.reduce((acc, rating) => acc + rating.rate, 0) + (ownerRate ? ownerRate.rate : 0);
+      setRating(totalRate / count);
+      setRatingCount(count);
     },
-    [petOwnerRate]
+    [petOwnerRate, vetRatings]
   );
 
   const getRatings = useCallback(
@@ -50,16 +50,15 @@ export default function VetReviewsScreen({ route }) {
 
   const fetchRating = useCallback(async () => {
     let filteredRatings = vetRatings;
+    let ownerRate = null;
     if (authState.isOwner) {
-      const ownerRate = await fetchPetOwnerRate();
+      ownerRate = await fetchPetOwnerRate();
       if (ownerRate) {
         setPetOwnerRate(ownerRate);
         filteredRatings = vetRatings.filter((rating) => rating.petOwnerId !== authState.id);
-        calcRating(filteredRatings, ownerRate);
       }
-    } else {
-      calcRating(vetRatings);
     }
+    calcRating(filteredRatings, ownerRate);
 
     const ratingList = await getRatings(filteredRatings, petOwners);
     setRatingList(ratingList);
@@ -85,12 +84,13 @@ export default function VetReviewsScreen({ route }) {
         const newRate = { rate: rate.rate, vetId: id, petOwnerId: authState.id };
         responce = await clientServer.addRate(newRate);
       }
+
       setFetched(false);
     },
     [petOwnerRate, fetchPetOwnerRate]
   );
 
-  const renderHeader = () => {
+  const renderHeader = useCallback(() => {
     return (
       <>
         <View style={styles.header}>
@@ -107,7 +107,7 @@ export default function VetReviewsScreen({ route }) {
         {authState.isOwner && <RateVet petOwnerRate={petOwnerRate} onNewRating={onNewRating} />}
       </>
     );
-  };
+  }, [authState.isOwner, petOwnerRate, onNewRating, rating, ratingCount]);
 
   return (
     <View style={styles.screen_container}>
