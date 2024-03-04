@@ -1,8 +1,7 @@
 # VetVibe
 
 Welcome to VetVibe! This application is designed to streamline the process of finding and booking appointments with veterinarians for your beloved pets. Whether you're a pet owner looking for reliable veterinary care or a veterinarian seeking to connect with pet owners, VetVibe has got you covered.
-![image](![Simulator Screenshot - iPhone 15 Pro Max - 2024-03-04 at 11 59 35](https://github.com/VetVibe/ProjectMain/assets/118671563/1025a0c4-5b0e-416a-a73b-9ce90bfa775b)
-)
+<img src="https://github.com/VetVibe/ProjectMain/assets/118671563/1025a0c4-5b0e-416a-a73b-9ce90bfa775b" alt="VetVibe Screenshot" width="200" height="400" />
 
 ## Features
 
