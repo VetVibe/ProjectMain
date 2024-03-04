@@ -21,7 +21,7 @@ Welcome to VetVibe! This application is designed to streamline the process of fi
 
 To get started with VetVibe, follow these steps:
 
-1. **Clone the Repository**: Clone this repository to your local machine using `git clone https://github.com/your-username/VetVibe.git`.
+1. **Clone the Repository**: Clone this repository to your local machine using `git clone https://github.com/your-username/VetVibe.git'.
 
 2. **Install Dependencies**: Navigate to the project directory and install dependencies by running `npm install` or `yarn install`, depending on your preferred package manager.
 
