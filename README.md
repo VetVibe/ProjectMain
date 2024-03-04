@@ -36,17 +36,7 @@ To get started with VetVibe, follow these steps:
 - Frontend: React.js
 - Backend: Node.js, Express.js
 - Database: MongoDB
-- Additional Libraries: Redux (for state management), Axios (for API requests), etc.
 
-## Contributing
-
-We welcome contributions from the community to improve VetVibe. If you'd like to contribute, please follow these steps:
-
-1. Fork the repository.
-2. Create a new branch for your feature or bug fix.
-3. Make your changes and commit them with descriptive messages.
-4. Push your changes to your fork.
-5. Submit a pull request to the main repository.
 
 ## License
 
