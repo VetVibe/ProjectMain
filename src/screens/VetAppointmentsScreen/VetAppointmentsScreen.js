@@ -30,6 +30,9 @@ export default function VetAppointmentsScreen() {
           title: petOwners[appointment.petOwnerId]?.name,
           summary: petOwners[appointment.petOwnerId]?.phoneNumber,
         });
+        agendaData[date].sort((a, b) => {
+          return a.start > b.start ? 1 : -1;
+        });
       });
     }
     return agendaData;
@@ -75,6 +78,10 @@ export default function VetAppointmentsScreen() {
   const renderItem = (item, firstItemInDay) => {
     return (
       <View style={styles.item}>
+        <View style={styles.time_container}>
+          <Text style={styles.time}>{item.start}</Text>
+          <Text style={styles.time}>{item.end}</Text>
+        </View>
         <View style={styles.item_content}>
           <Text style={styles.item_title}>{item.title}</Text>
           <Text style={styles.item_summary}>{item.summary}</Text>
@@ -84,18 +91,6 @@ export default function VetAppointmentsScreen() {
         </TouchableOpacity>
       </View>
     );
-  };
-
-  const renderDay = (day, item) => {
-    if (day) {
-      return (
-        <View style={styles.time_container}>
-          <Text style={styles.time}>{item.start}</Text>
-          <Text style={styles.time}>{item.end}</Text>
-        </View>
-      );
-    }
-    return <View style={styles.dayItem} />;
   };
 
   const renderEmptyData = () => {
@@ -148,7 +143,9 @@ export default function VetAppointmentsScreen() {
       current={selectedDate}
       initialDate={today}
       renderItem={(item, firstItemInDay) => renderItem(item, firstItemInDay)}
-      renderDay={(day, item) => renderDay(day, item)}
+      renderDay={(day, item) => {
+        <></>;
+      }}
       renderEmptyData={renderEmptyData}
       rowHasChanged={(r1, r2) => {
         return r1.text !== r2.text;
@@ -204,14 +201,11 @@ const styles = StyleSheet.create({
   },
   time_container: {
     alignItems: "center",
-    marginVertical: 12,
+    marginRight: 16,
+    marginVertical: 6,
   },
   time: {
-    fontSize: sizes.h4,
+    fontSize: sizes.body1,
     color: colors.gray,
-    margin: 5,
-  },
-  dayItem: {
-    marginLeft: 34,
   },
 });
