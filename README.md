@@ -2,11 +2,6 @@
 
 Welcome to VetVibe! This application is designed to streamline the process of finding and booking appointments with veterinarians for your beloved pets. Whether you're a pet owner looking for reliable veterinary care or a veterinarian seeking to connect with pet owners, VetVibe has got you covered.
 
-You can download our final presentation here: 
-
-(https://www.icloud.com/attachment/?u=https%3A%2F%2Fcvws.icloud-content.com%2FB%2FAf9Bkr0HHMiH3HF0S52pZxeKwOP0AScOBJkCRWmkJJg2EOyVQ5IlbUm2%2F%24%7Bf%7D%3Fo%3DAj90eM1yT7xht-GI5CFEH15IkMOJk4N5Ae_oHAuwwD_R%26v%3D1%26x%3D3%26a%3DCAogr8q0L_b9quds7jXyebpPq7W53Gngwiu167R0mkiyW48SeBD0v-HT4TEY9M_cp-sxIgEAKgkC6AMA_3PDnnRSBIrA4_RaBCVtSbZqJikm2a9MnX2qXzDVVGDvXj_v5eERSdFUBpyI1igXX32dHDiP3nmYciZ8v01nXSgqY_wGfBoI-jkxn8y4bFmN6TFHnz61rLoek4ZBgShuOw%26e%3D1712433080%26fl%3D%26r%3D08896FCB-21CF-4C00-91E8-712E8CEDF09B-1%26k%3D%24%7Buk%7D%26ckc%3Dcom.apple.largeattachment%26ckz%3D5D0E9810-122B-4DEF-9E89-FDD832F01857%26p%3D113%26s%3DpyWDmI3n_NOtwd8u_iMsVF3Om0Y&uk=YxMpdqweRuMNWzuIx5wYGg&f=מצגת%20סופית.pptx&sz=128867847)
-
-
 
 
 ![img](https://github.com/VetVibe/ProjectMain/assets/93255163/699e19b8-7bce-4338-9e13-e52601aafbb4)
